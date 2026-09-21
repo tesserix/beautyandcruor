@@ -1,0 +1,21 @@
+import { chromium } from 'playwright';
+const S='/private/tmp/claude-501/-Users-mayu-Projects-tesserix-beautyandcruor/a0481450-8f38-4875-a9b0-8e39b1b5a8cd/scratchpad';
+const O=S+'/review/';
+const b=await chromium.launch(); const errs=[];
+const m=await b.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true,deviceScaleFactor:2});
+const p=await m.newPage(); p.on('pageerror',e=>errs.push('JS: '+e.message));
+await p.goto('file://'+S+'/review/fable-wrapped2.html',{waitUntil:'load'}); await p.waitForTimeout(2500);
+await p.screenshot({path:O+'B2-m-home.png'});
+await p.evaluate(()=>window.scrollTo(0,760)); await p.waitForTimeout(500); await p.screenshot({path:O+'B2-m-home-2.png'});
+await p.evaluate(()=>window.scrollTo(0,1600)); await p.waitForTimeout(500); await p.screenshot({path:O+'B2-m-home-3.png'});
+await p.evaluate(()=>{location.hash='#/sfx-prosthetics/';window.scrollTo(0,0)}); await p.waitForTimeout(1200); await p.screenshot({path:O+'B2-m-sfx.png'});
+await p.evaluate(()=>{location.hash='#/about-me/';window.scrollTo(0,0)}); await p.waitForTimeout(1200); await p.screenshot({path:O+'B2-m-about.png'});
+await p.evaluate(()=>{location.hash='#/';window.scrollTo(0,0);document.getElementById('menubtn').click()}); await p.waitForTimeout(800); await p.screenshot({path:O+'B2-m-menu.png'});
+const d=await b.newContext({viewport:{width:1440,height:900}}); const p2=await d.newPage();
+await p2.goto('file://'+S+'/review/fable-wrapped2.html',{waitUntil:'load'}); await p2.waitForTimeout(2000);
+await p2.evaluate(()=>{location.hash='#/sfx-prosthetics/';window.scrollTo(0,0)}); await p2.waitForTimeout(1200); await p2.screenshot({path:O+'B2-d-sfx.png'});
+const p3=await d.newPage(); await p3.goto('file://'+S+'/review/logo.html',{waitUntil:'load'}); await p3.waitForTimeout(800); await p3.screenshot({path:O+'logo.png'});
+// C contact + desktop panel 4
+const p4=await m.newPage(); await p4.goto('file://'+S+'/immersive-wrapped.html',{waitUntil:'load'}); await p4.waitForTimeout(2000);
+await p4.evaluate(()=>{location.hash='#/contact-us/'}); await p4.waitForTimeout(800); await p4.screenshot({path:O+'C-m-contact.png'});
+console.log(errs.length?errs.join('\n'):'no errors'); await b.close();

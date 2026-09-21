@@ -1,0 +1,498 @@
+<title>Questions for Parimiti</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600&family=Archivo:wght@400;500;600&display=swap">
+
+<style>
+/* A working document, not a showpiece: answer it on a phone, copy the lot out
+   in one tap. Light and dark both defined at token level. */
+:root{
+  --paper:#F7F5F1;
+  --card:#FFFFFF;
+  --ink:#191614;
+  --ink-2:#4A443E;
+  --ash:#736C64;
+  --line:#E0DBD3;
+  --line-2:#CFC8BE;
+  --accent:#7A1F1A;      /* cruor, used only to mark what blocks launch */
+  --accent-soft:#F3E4E2;
+  --ok:#3F6B4F;
+  --ok-soft:#E4EFE7;
+  --amber:#8A6A1F;
+  --amber-soft:#F6EDD8;
+  --focus:#7A1F1A;
+  --f-head:"Newsreader",Georgia,serif;
+  --f-body:"Archivo","Helvetica Neue",Arial,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#141210; --card:#1C1917; --ink:#F0ECE6; --ink-2:#CFC8BF; --ash:#9A928A;
+    --line:#2E2925; --line-2:#3C352F;
+    --accent:#E0857D; --accent-soft:#33211F;
+    --ok:#8FC7A2; --ok-soft:#1E2A22;
+    --amber:#D9B45E; --amber-soft:#2B2517;
+    --focus:#E0857D;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#141210; --card:#1C1917; --ink:#F0ECE6; --ink-2:#CFC8BF; --ash:#9A928A;
+  --line:#2E2925; --line-2:#3C352F;
+  --accent:#E0857D; --accent-soft:#33211F;
+  --ok:#8FC7A2; --ok-soft:#1E2A22;
+  --amber:#D9B45E; --amber-soft:#2B2517;
+  --focus:#E0857D;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;background:var(--paper);color:var(--ink);
+  font-family:var(--f-body);font-size:16px;line-height:1.6;
+  -webkit-text-size-adjust:100%;
+}
+.wrap{max-width:780px;margin-inline:auto;padding-inline:20px;padding-block:0 120px}
+
+h1{font-family:var(--f-head);font-weight:600;font-size:clamp(30px,7vw,44px);
+  line-height:1.05;margin:0 0 12px;letter-spacing:-.015em;text-wrap:balance}
+h2{font-family:var(--f-head);font-weight:600;font-size:clamp(21px,4.4vw,27px);
+  margin:0;line-height:1.15;letter-spacing:-.01em}
+p{margin:0 0 14px;color:var(--ink-2);max-width:66ch}
+.lede{font-size:17px;color:var(--ink-2)}
+a{color:var(--accent)}
+
+header{padding-block:38px 8px}
+.kicker{font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--ash);margin:0 0 14px}
+
+/* progress */
+.bar{
+  position:sticky;top:0;z-index:20;background:var(--paper);
+  padding-block:12px;border-bottom:1px solid var(--line);
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+}
+.track{flex:1 1 150px;height:5px;background:var(--line);border-radius:99px;overflow:hidden;min-width:120px}
+.track i{display:block;height:100%;width:0;background:var(--ok);transition:width .3s}
+.tally{font-size:13px;color:var(--ash);font-variant-numeric:tabular-nums;white-space:nowrap}
+.copybtn{
+  background:var(--ink);color:var(--paper);border:0;border-radius:6px;
+  padding:11px 16px;font:inherit;font-size:13px;font-weight:600;cursor:pointer;
+  min-height:44px;
+}
+.copybtn:hover{opacity:.88}
+.copybtn:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+
+section{margin-top:34px}
+.sechead{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+.secnum{font-family:var(--f-head);font-size:15px;color:var(--ash);font-variant-numeric:tabular-nums}
+.secnote{color:var(--ash);font-size:14px;margin:0 0 18px;max-width:64ch}
+
+.q{background:var(--card);border:1px solid var(--line);border-radius:9px;
+  padding:18px;margin-bottom:12px}
+.q.blocks{border-left:3px solid var(--accent)}
+.qtop{display:flex;align-items:flex-start;gap:10px;justify-content:space-between;margin-bottom:4px}
+.qtext{font-weight:500;color:var(--ink);margin:0}
+.why{color:var(--ash);font-size:13.5px;margin:6px 0 12px;max-width:62ch}
+.tag{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+  padding:4px 8px;border-radius:99px;white-space:nowrap;flex:none}
+.tag.b{background:var(--accent-soft);color:var(--accent)}
+.tag.i{background:var(--amber-soft);color:var(--amber)}
+.tag.n{background:var(--ok-soft);color:var(--ok)}
+
+textarea,input[type=text]{
+  width:100%;font:inherit;font-size:15px;color:var(--ink);
+  background:var(--paper);border:1px solid var(--line-2);border-radius:6px;
+  padding:11px 12px;resize:vertical;min-height:46px;
+}
+textarea{min-height:76px;line-height:1.5}
+textarea:focus,input:focus{outline:2px solid var(--focus);outline-offset:1px;border-color:transparent}
+.hint{font-size:12.5px;color:var(--ash);margin-top:6px}
+
+/* credits table */
+.credits{margin-top:8px;border:1px solid var(--line);border-radius:9px;overflow:hidden;background:var(--card)}
+.crow{display:grid;grid-template-columns:1fr;gap:8px;padding:14px;border-bottom:1px solid var(--line)}
+.crow:last-child{border-bottom:0}
+.crow .t{font-weight:500;font-size:15px}
+.crow .m{font-size:12.5px;color:var(--ash);letter-spacing:.02em}
+.crow input{font-size:14px;min-height:44px}
+.yearmark{background:var(--paper);padding:9px 14px;font-family:var(--f-head);
+  font-size:15px;font-weight:600;border-bottom:1px solid var(--line);position:sticky;top:0}
+@media (min-width:660px){
+  .crow{grid-template-columns:1.25fr 1fr;align-items:center;gap:14px}
+  .crow .meta{min-width:0}
+}
+
+.flag{color:var(--accent);font-weight:500}
+
+footer{margin-top:44px;padding-top:22px;border-top:1px solid var(--line);color:var(--ash);font-size:13.5px}
+
+.toast{
+  position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(14px);
+  background:var(--ink);color:var(--paper);padding:13px 20px;border-radius:8px;
+  font-size:14px;opacity:0;pointer-events:none;transition:opacity .22s,transform .22s;z-index:60;
+  max-width:calc(100% - 40px);text-align:center;
+}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+
+@media (prefers-reduced-motion:reduce){*{transition-duration:.001ms!important}}
+</style>
+
+<div class="wrap">
+  <header>
+    <p class="kicker">Beauty &amp; Cruor · Website rebuild</p>
+    <h1>Questions for Parimiti</h1>
+    <p class="lede">Answers we need to finish the new site. Type straight into the boxes — your
+      answers save in this browser as you go. When you're done (or want to stop partway),
+      tap <strong>Copy all answers</strong> at the top and paste them into WhatsApp or email.</p>
+    <p class="lede">Anything marked <span class="flag">Blocks launch</span> we genuinely can't
+      finish without. The rest can follow later.</p>
+  </header>
+
+  <div class="bar">
+    <div class="track"><i id="prog"></i></div>
+    <span class="tally" id="tally">0 of 0 answered</span>
+    <button class="copybtn" id="copy" type="button">Copy all answers</button>
+  </div>
+
+  <section>
+    <div class="sechead"><span class="secnum">01</span><h2>Your credits</h2></div>
+    <p class="secnote">This is the most important section. Directors and producers read credits
+      before anything else, and right now the list has no roles on it — which is the first thing
+      they look for.</p>
+
+    <div class="q blocks">
+      <div class="qtop"><p class="qtext">What is the real title of the 2022 Village Roadshow job listed as "Mad max"?</p><span class="tag b">Blocks launch</span></div>
+      <p class="why">Listed as "Mad max · Mad max films · Village roadshows · 2022 · Australia".
+        We think this may be <em>Furiosa: A Mad Max Saga</em>, which shot in NSW around then — but
+        we will not publish a guess against a Warner Bros. title. Please give the exact title as
+        it appears on your call sheet or IMDb.</p>
+      <input type="text" data-q="Real title of the 2022 Village Roadshow credit" placeholder="Exact title">
+    </div>
+
+    <div class="q blocks">
+      <div class="qtop"><p class="qtext">Your role on each production</p><span class="tag b">Blocks launch</span></div>
+      <p class="why">A producer reads the role before the title. Use the wording from your call
+        sheet or IMDb — e.g. "Prosthetic Makeup Artist", "Key Makeup Artist", "Prosthetics
+        Supervisor", "Hair &amp; Makeup". Leave blank any you're unsure of; blank is better than wrong.</p>
+      <div class="credits" id="credits"></div>
+      <p class="hint">Sorted newest first. 27 productions.</p>
+    </div>
+
+    <div class="q blocks">
+      <div class="qtop"><p class="qtext">Which 6–8 productions should lead the site?</p><span class="tag b">Blocks launch</span></div>
+      <p class="why">Sorted by date, the first things a film producer currently sees are baby-product
+        commercials — Beco, Asian Paints, Himalaya, Sebamed, Johnson's. Strong work, wrong first
+        impression for a features audience. Which titles do you want front and centre?</p>
+      <textarea data-q="Lead credits (6-8)" placeholder="List them in the order you'd want them seen"></textarea>
+    </div>
+
+    <div class="q blocks">
+      <div class="qtop"><p class="qtext">Johnson's Baby — which production company, and which year?</p><span class="tag b">Blocks launch</span></div>
+      <p class="why">Your credits list says <strong>Mothership Production, 2025</strong>. Your own
+        Instagram post credits <strong>DDB Mudra and Directors Cut</strong> and is dated 2026. One
+        of them is wrong and we don't know which.</p>
+      <input type="text" data-q="Johnson's Baby — production company and year" placeholder="Company, year">
+    </div>
+
+    <div class="q">
+      <div class="qtop"><p class="qtext">Are the five 2026 credits released, or still under wraps?</p><span class="tag i">Important</span></div>
+      <p class="why">Beco, Asian Paints, Himalaya Baby Care, Baby Sebamed and Johnson's are dated
+        2026. If any are unreleased or under NDA we should hold them back rather than announce them for you.</p>
+      <textarea data-q="2026 credits — released or embargoed?" placeholder="Any that shouldn't be public yet?"></textarea>
+    </div>
+
+    <div class="q">
+      <div class="qtop"><p class="qtext">Three credits have no director or company: Thief, Ola Cabs, Sugar box. And "Lucky" shows "In Progress" where the director should be.</p><span class="tag i">Important</span></div>
+      <p class="why">We can either fill these in or leave them off. Is "Lucky" still in progress?</p>
+      <textarea data-q="Thief / Ola Cabs / Sugar box / Lucky — missing details" placeholder="Details, or say 'drop these'"></textarea>
+    </div>
+  </section>
+
+  <section>
+    <div class="sechead"><span class="secnum">02</span><h2>Getting booked</h2></div>
+    <p class="secnote">We looked at around 30 comparable artist and studio sites. Almost none of
+      them publish this information — which is exactly why putting it on yours would stand out. It's
+      what a line producer needs before they can put you on a shortlist.</p>
+
+    <div class="q blocks">
+      <div class="qtop"><p class="qtext">Which email address is correct?</p><span class="tag b">Blocks launch</span></div>
+      <p class="why">The current site shows <strong>info@beautyandcruor.com</strong> in one place and
+        <strong>info@beautycruor.com</strong> in another. If the wrong one is live, enquiries may have
+        been bouncing. Worth checking today, separately from the rebuild.</p>
+      <input type="text" data-q="Correct email address" placeholder="The address that actually works">
+    </div>
+
+    <div class="q blocks">
+      <div class="qtop"><p class="qtext">A phone number for the site?</p><span class="tag b">Blocks launch</span></div>
+      <p class="why">Nobody on a production books through a web form. They call. If you'd rather not
+        publish a mobile, a WhatsApp business number works.</p>
+      <input type="text" data-q="Phone / WhatsApp for the site" placeholder="Number, or 'form only'">
+    </div>
+
+    <div class="q">
+      <div class="qtop"><p class="qtext">How many people can you bring, and in which city?</p><span class="tag i">Important</span></div>
+      <p class="why">We know you work solo and can assemble a team. A producer costing a
+        multi-appliance or crowd day needs a number. How many in Sydney, how many in Mumbai, and how
+        much notice do you need?</p>
+      <textarea data-q="Crew capability" placeholder="e.g. solo, or +2 assistants in Mumbai with two weeks' notice"></textarea>
+    </div>
+
+    <div class="q">
+      <div class="qtop"><p class="qtext">Turnaround: how many days from lifecast to first application?</p><span class="tag i">Important</span></div>
+      <p class="why">This is the question that decides whether you make the shortlist for a shoot
+        six weeks out. A range is fine.</p>
+      <input type="text" data-q="Turnaround, lifecast to first application" placeholder="e.g. 10–14 days for a facial appliance">
+    </div>
+
+    <div class="q">
+      <div class="qtop"><p class="qtext">Current availability</p><span class="tag i">Important</span></div>
+      <p class="why">None of your competitors publish this. A single line — "Available from March,
+        Mumbai" — is genuinely rare. We'd make it easy for you to change, and a stale one is worse
+        than none, so only if you'll keep it current.</p>
+      <input type="text" data-q="Availability line" placeholder="e.g. Available from March 2027 · Mumbai">
+    </div>
+
+    <div class="q">
+      <div class="qtop"><p class="qtext">Insurance and compliance</p><span class="tag i">Important</span></div>
+      <p class="why">Do you carry public liability insurance? A Working With Children Check? ABN and
+        GST in Australia, GST in India? The WWCC matters — you have five baby-product commercials on
+        your list, and it's a real hiring criterion for that work.</p>
+      <textarea data-q="Insurance, WWCC, ABN/GST" placeholder="Whichever of these you hold"></textarea>
+    </div>
+  </section>
+
+  <section>
+    <div class="sechead"><span class="secnum">03</span><h2>What you actually offer</h2></div>
+    <p class="secnote">We're ordering the site prosthetics first, then makeup, then hair. A few
+      things in your Instagram bio don't appear on the site at all.</p>
+
+    <div class="q blocks">
+      <div class="qtop"><p class="qtext">Do you still make and sell prosthetic appliances?</p><span class="tag b">Blocks launch</span></div>
+      <p class="why">We know the Rahul Creations collaboration has ended. Are you still making
+        appliances to sell independently, only for your own jobs, or not at all? This decides whether
+        the site needs a shop section.</p>
+      <textarea data-q="Appliance manufacturing/sales now" placeholder="Still selling? To whom — artists, students, productions?"></textarea>
+    </div>
+
+    <div class="q">
+      <div class="qtop"><p class="qtext">You teach. Should the site say so?</p><span class="tag i">Important</span></div>
+      <p class="why">"Educator" is the first line of your Instagram bio and appears nowhere on your
+        website. Do you want teaching enquiries — workshops, classes, mentoring — and if so, who for?</p>
+      <textarea data-q="Teaching" placeholder="What you teach, where, and whether you want enquiries"></textarea>
+    </div>
+
+    <div class="q">
+      <div class="qtop"><p class="qtext">Hair styling and nail art — in or out?</p><span class="tag n">Nice to have</span></div>
+      <p class="why">Both are in your Instagram bio; neither is on the site. Keeping them may bring
+        work, or may dilute the prosthetics positioning for a film audience. Your call.</p>
+      <textarea data-q="Hair styling and nail art — include?" placeholder="Include, or leave off?"></textarea>
+    </div>
+
+    <div class="q">
+      <div class="qtop"><p class="qtext">What in-house capability should we list?</p><span class="tag i">Important</span></div>
+      <p class="why">Lifecasting, clay sculpting, mould-making, running silicone / gelatine / foam
+        latex, 3D-printed cores, application, hair, makeup — which of these do you do yourself, and
+        is there anything we've missed?</p>
+      <textarea data-q="In-house capability list" placeholder="Tick off what you do; add anything missing"></textarea>
+    </div>
+  </section>
+
+  <section>
+    <div class="sechead"><span class="secnum">04</span><h2>Images, film and rights</h2></div>
+    <p class="secnote">We recovered 290 original images from the old site. Some are clearly
+      behind-the-scenes or personal rather than portfolio.</p>
+
+    <div class="q blocks">
+      <div class="qtop"><p class="qtext">Is there anything in the old site's images that must NOT be published?</p><span class="tag b">Blocks launch</span></div>
+      <p class="why">There are phone snapshots, behind-the-scenes shots and photos of other people
+        mixed in with the portfolio work. We'd rather you tell us than guess.</p>
+      <textarea data-q="Images that must not be published" placeholder="Anything private, unreleased, or not yours to publish"></textarea>
+    </div>
+
+    <div class="q blocks">
+      <div class="qtop"><p class="qtext">Do you have model and photographer releases?</p><span class="tag b">Blocks launch</span></div>
+      <p class="why">Showing a before/after of a named actor's real face next to the character is a
+        rights question, not a formality. Same for photographers' images. Which shoots are you clear
+        to publish?</p>
+      <textarea data-q="Model / photographer releases" placeholder="Which shoots you have releases for"></textarea>
+    </div>
+
+    <div class="q blocks">
+      <div class="qtop"><p class="qtext">Real titles and dates for the work we show</p><span class="tag b">Blocks launch</span></div>
+      <p class="why">We've been captioning images from what we can see — "Burn appliance",
+        "Creature sculpt". Those are our words, not yours. Each piece needs its real name, the
+        production it was for if any, and the year.</p>
+      <textarea data-q="Real titles/dates for the work" placeholder="Happy to go through these with you one by one"></textarea>
+    </div>
+
+    <div class="q">
+      <div class="qtop"><p class="qtext">Do you have a showreel?</p><span class="tag i">Important</span></div>
+      <p class="why">A reel above the fold is what almost every serious effects site leads with. We
+        couldn't find a cut one — but your Instagram has around ten minutes of usable footage,
+        including "The Track" parts 1 and 2 (122k and 79k plays) and "The Saturation Point", which you
+        co-directed. We can cut those into one reel if you don't have something better.</p>
+      <textarea data-q="Showreel" placeholder="Existing reel? Or shall we cut one from your Instagram?"></textarea>
+    </div>
+
+    <div class="q">
+      <div class="qtop"><p class="qtext">Should the graphic work carry a warning, or sit behind a login?</p><span class="tag n">Nice to have</span></div>
+      <p class="why">You use trigger warnings on your own Instagram posts. Some effects studios keep
+        their strongest material behind an industry login, which doubles as an exclusivity signal.
+        Or we do nothing and let the work speak.</p>
+      <textarea data-q="Content warnings / gated gallery" placeholder="Warning, industry login, or neither?"></textarea>
+    </div>
+  </section>
+
+  <section>
+    <div class="sechead"><span class="secnum">05</span><h2>Reputation</h2></div>
+
+    <div class="q">
+      <div class="qtop"><p class="qtext">Can you get two or three quotes from directors or producers?</p><span class="tag i">Important</span></div>
+      <p class="why">We checked around 30 comparable sites and <strong>not one</strong> had a single
+        testimonial. It's standard in nearly every other professional service. Two or three attributed
+        quotes would set you apart from every direct competitor — cheaply. Even one is worth having.</p>
+      <textarea data-q="Testimonials — who could you ask?" placeholder="Names you could approach, or quotes you already have"></textarea>
+    </div>
+
+    <div class="q">
+      <div class="qtop"><p class="qtext">Is your IMDb profile up to date?</p><span class="tag i">Important</span></div>
+      <p class="why">Producers treat IMDb as the record. If the site lists credits your IMDb doesn't,
+        that gap gets noticed. We'll link to it prominently either way.</p>
+      <textarea data-q="IMDb accuracy" placeholder="Anything missing from IMDb that's on your list?"></textarea>
+    </div>
+  </section>
+
+  <section>
+    <div class="sechead"><span class="secnum">06</span><h2>Name and logo</h2></div>
+
+    <div class="q blocks">
+      <div class="qtop"><p class="qtext">Parimiti or Parimitii?</p><span class="tag b">Blocks launch</span></div>
+      <p class="why">Your Instagram display name reads "Parimitii" with two i's; the credit inside
+        your own post reads "Parimiti". We need the correct spelling before it goes on a masthead.</p>
+      <input type="text" data-q="Correct spelling of your name" placeholder="How it should be spelled">
+    </div>
+
+    <div class="q">
+      <div class="qtop"><p class="qtext">How attached are you to the current logo?</p><span class="tag i">Important</span></div>
+      <p class="why">We've redrawn it as clean vector so it's sharp at any size — that part is done.
+        Honest view: the script-and-leaf mark reads closer to a wellness or beauty salon than to
+        prosthetics and trauma work, and it sits awkwardly next to your strongest images. Options are
+        keep it as is, keep it but drop the green, or set your name in type and retire the mark.</p>
+      <textarea data-q="Logo — keep, adjust, or replace?" placeholder="It's your brand — your call"></textarea>
+    </div>
+  </section>
+
+  <section>
+    <div class="sechead"><span class="secnum">07</span><h2>Anything else</h2></div>
+    <div class="q">
+      <div class="qtop"><p class="qtext">What do you want this site to do for you?</p><span class="tag i">Important</span></div>
+      <p class="why">We've assumed the job is getting booked by directors and producers. If you're
+        also chasing teaching, appliance sales, or a different kind of work, that changes what goes first.</p>
+      <textarea data-q="What the site should do for you" placeholder="In your own words"></textarea>
+    </div>
+    <div class="q">
+      <div class="qtop"><p class="qtext">Anything we haven't asked?</p><span class="tag n">Nice to have</span></div>
+      <textarea data-q="Anything else" placeholder="Anything at all"></textarea>
+    </div>
+  </section>
+
+  <footer>
+    Your answers are saved only in this browser, on this device — nobody else can see them until
+    you copy and send them. Tap <strong>Copy all answers</strong> whenever you like; you can come
+    back and add more later.
+  </footer>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script id="creditdata" type="application/json">__CREDITS__</script>
+<script>
+(function(){
+  var CREDITS = JSON.parse(document.getElementById('creditdata').textContent);
+  var KEY = 'bac-questions-v1';
+
+  /* credits table — one role field per production */
+  var box = document.getElementById('credits');
+  var year = null;
+  CREDITS.forEach(function(c, i){
+    if (c.year !== year){
+      year = c.year;
+      var y = document.createElement('div');
+      y.className = 'yearmark';
+      y.textContent = year;
+      box.appendChild(y);
+    }
+    var meta = [c.director && c.director.toLowerCase() !== 'in progress' ? 'Dir. ' + c.director : null,
+                c.production || null, c.location].filter(Boolean).join(' · ');
+    var row = document.createElement('div');
+    row.className = 'crow';
+    var left = document.createElement('div');
+    left.className = 'meta';
+    left.innerHTML = '<div class="t"></div><div class="m"></div>';
+    left.querySelector('.t').textContent = c.title;
+    left.querySelector('.m').textContent = meta || '—';
+    var inp = document.createElement('input');
+    inp.type = 'text';
+    inp.placeholder = 'Your role';
+    inp.setAttribute('data-q', 'ROLE — ' + c.title + ' (' + c.year + ')');
+    inp.setAttribute('aria-label', 'Your role on ' + c.title);
+    row.appendChild(left); row.appendChild(inp);
+    box.appendChild(row);
+  });
+
+  var fields = [].slice.call(document.querySelectorAll('[data-q]'));
+
+  /* restore any draft, then keep it saved as they type */
+  var saved = {};
+  try { saved = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch(e){}
+  fields.forEach(function(f){
+    var k = f.getAttribute('data-q');
+    if (saved[k]) f.value = saved[k];
+    f.addEventListener('input', function(){ persist(); tally(); });
+  });
+
+  function persist(){
+    var o = {};
+    fields.forEach(function(f){ if (f.value.trim()) o[f.getAttribute('data-q')] = f.value.trim(); });
+    try { localStorage.setItem(KEY, JSON.stringify(o)); } catch(e){}
+  }
+  function tally(){
+    var n = fields.filter(function(f){ return f.value.trim(); }).length;
+    document.getElementById('tally').textContent = n + ' of ' + fields.length + ' answered';
+    document.getElementById('prog').style.width = (n / fields.length * 100) + '%';
+  }
+  tally();
+
+  function toast(msg){
+    var t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('on');
+    clearTimeout(t._h); t._h = setTimeout(function(){ t.classList.remove('on'); }, 2600);
+  }
+
+  document.getElementById('copy').addEventListener('click', function(){
+    var lines = ['ANSWERS — Beauty & Cruor website', new Date().toLocaleDateString(), ''];
+    var roles = [];
+    fields.forEach(function(f){
+      var k = f.getAttribute('data-q'), v = f.value.trim();
+      if (!v) return;
+      if (k.indexOf('ROLE — ') === 0) roles.push('  ' + k.slice(7) + ': ' + v);
+      else lines.push('Q: ' + k, 'A: ' + v, '');
+    });
+    if (roles.length) lines.push('ROLES ON PRODUCTIONS', roles.join('\n'), '');
+    var out = lines.join('\n').trim();
+    if (out.split('\n').length < 4) { toast('Nothing filled in yet'); return; }
+
+    function fallback(){
+      var ta = document.createElement('textarea');
+      ta.value = out; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); toast('Copied — now paste it into your message'); }
+      catch(e){ toast('Press and hold to copy the text that just appeared'); }
+      document.body.removeChild(ta);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(out)
+        .then(function(){ toast('Copied — now paste it into your message'); })
+        .catch(fallback);
+    } else fallback();
+  });
+})();
+</script>

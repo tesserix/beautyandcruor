@@ -1,0 +1,797 @@
+<title>Beauty &amp; Cruor Direction</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,600;1,6..96,400&family=Archivo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<style>
+/* ---------------------------------------------------------------------------
+   Beauty & Cruor — design direction
+   Single visual world, deliberately: a darkroom. The work is saturated (blood,
+   gel lighting, body paint), so the interface stays warm-monochrome and never
+   competes with it. Every colour is painted explicitly; nothing inherits.
+   Accent comes from her materials — alginate seafoam — with oxidised blood-red
+   reserved for the "Cruor" half of the name.
+--------------------------------------------------------------------------- */
+:root {
+  --ink:        #0E0C0B;
+  --ink-2:      #17130F;
+  --ink-3:      #201A15;
+  --hair:       #2C2420;
+  --chalk:      #EFE9E1;
+  --ash:        #948A80;
+  --ash-dim:    #6B635C;
+  --alginate:   #6FA893;
+  --cruor:      #A62F27;
+
+  --f-display: "Bodoni Moda", "Didot", Georgia, serif;
+  --f-body:    "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --f-mono:    "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  --step--1: clamp(0.72rem, 0.7rem + 0.1vw, 0.78rem);
+  --step-0:  clamp(0.9rem, 0.87rem + 0.15vw, 1rem);
+  --step-1:  clamp(1.1rem, 1rem + 0.4vw, 1.35rem);
+  --step-2:  clamp(1.5rem, 1.25rem + 1vw, 2.1rem);
+  --step-3:  clamp(2.1rem, 1.6rem + 2.2vw, 3.4rem);
+  --step-4:  clamp(2.8rem, 1.8rem + 4.4vw, 5.5rem);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--ink);
+  color: var(--chalk);
+  font-family: var(--f-body);
+  font-size: var(--step-0);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap { max-width: 1180px; margin-inline: auto; padding-inline: 20px; }
+
+.eyebrow {
+  font-family: var(--f-mono);
+  font-size: var(--step--1);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--alginate);
+  margin: 0;
+}
+.rule { height: 1px; background: var(--hair); border: 0; margin: 0; }
+
+/* ---------- page header ---------- */
+.masthead { padding-block: 40px 28px; }
+.masthead h1 {
+  font-family: var(--f-display);
+  font-weight: 400;
+  font-size: var(--step-4);
+  line-height: 0.95;
+  margin: 14px 0 0;
+  text-wrap: balance;
+}
+.masthead h1 em { font-style: italic; color: var(--cruor); }
+.masthead .lede {
+  max-width: 62ch; color: var(--ash);
+  font-size: var(--step-1); margin: 18px 0 0; line-height: 1.5;
+}
+.metaline {
+  display: flex; flex-wrap: wrap; gap: 8px 22px;
+  font-family: var(--f-mono); font-size: var(--step--1);
+  color: var(--ash-dim); margin-top: 26px;
+}
+.metaline b { color: var(--chalk); font-weight: 500; }
+
+/* ---------- spec strip: palette + type ---------- */
+.spec {
+  display: grid; gap: 28px; padding-block: 34px;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 820px) { .spec { grid-template-columns: 1.15fr 1fr; gap: 48px; } }
+
+/* auto-fill (not auto-fit) so a wrapped last swatch keeps one track's width
+   instead of stretching across the row */
+.swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 10px; margin-top: 16px; }
+.sw { min-width: 0; }
+.sw i {
+  display: block; height: 54px; border-radius: 2px;
+  border: 1px solid var(--hair);
+}
+.sw span {
+  display: block; font-family: var(--f-mono); font-size: 0.66rem;
+  color: var(--ash-dim); margin-top: 7px; letter-spacing: 0.04em;
+}
+.sw b { display: block; color: var(--ash); font-weight: 500; }
+
+.typespec { margin-top: 16px; display: grid; gap: 16px; }
+.typerow { display: grid; grid-template-columns: 78px 1fr; gap: 14px; align-items: baseline; }
+.typerow > span {
+  font-family: var(--f-mono); font-size: 0.66rem; color: var(--ash-dim);
+  letter-spacing: 0.08em; text-transform: uppercase;
+}
+.t-display { font-family: var(--f-display); font-size: 1.9rem; line-height: 1.1; }
+.t-body    { font-family: var(--f-body); font-size: 0.95rem; color: var(--ash); }
+.t-mono    { font-family: var(--f-mono); font-size: 0.78rem; color: var(--ash); letter-spacing: 0.04em; }
+
+/* ---------- prototype stage ---------- */
+.stagewrap { padding-block: 10px 48px; }
+
+.controls {
+  display: flex; flex-wrap: wrap; gap: 10px 18px;
+  align-items: center; justify-content: space-between;
+  padding-block: 18px; position: sticky; top: 0; z-index: 30;
+  background: linear-gradient(var(--ink) 72%, rgba(14,12,11,0));
+}
+.segset { display: flex; gap: 2px; background: var(--ink-3); padding: 3px; border-radius: 2px; }
+.segset button {
+  font-family: var(--f-mono); font-size: 0.7rem; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--ash);
+  background: transparent; border: 0; padding: 8px 13px; cursor: pointer;
+  border-radius: 1px;
+}
+.segset button[aria-pressed="true"] { background: var(--chalk); color: var(--ink); }
+.segset button:focus-visible { outline: 2px solid var(--alginate); outline-offset: 2px; }
+
+.stage {
+  display: grid; place-items: start center;
+  background:
+    repeating-linear-gradient(45deg, #121010 0 9px, #0E0C0B 9px 18px);
+  border: 1px solid var(--hair);
+  border-radius: 3px;
+  padding: 26px 16px;
+  overflow: hidden;
+}
+/* The outer box carries the SCALED dimensions so the grid centres a correctly
+   sized element; the inner scaler stays at natural size and scales from its
+   top-left. Scaling about the centre made the 1280 frame overflow the stage. */
+.scalerbox { position: relative; }
+.scaler { transform-origin: top left; }
+.device {
+  background: var(--ink);
+  border: 1px solid var(--hair);
+  box-shadow: 0 30px 70px rgba(0,0,0,0.6);
+  overflow: hidden;
+  position: relative;
+}
+.stage[data-mode="mobile"] .device { width: 390px; height: 800px; border-radius: 26px; }
+.stage[data-mode="desk"]   .device { width: 1280px; height: 840px; border-radius: 4px; }
+
+.viewport {
+  container-type: inline-size;
+  width: 100%; height: 100%;
+  overflow-y: auto; overflow-x: hidden;
+  scrollbar-width: thin; scrollbar-color: var(--hair) transparent;
+  position: relative;
+}
+
+/* =========================================================================
+   THE PROTOTYPE ITSELF
+   Everything below is container-query driven, so the same markup reflows when
+   the frame changes width. That's the point: it proves the responsive design
+   rather than showing two static comps.
+   ========================================================================= */
+.p { background: var(--ink); color: var(--chalk); min-height: 100%; }
+.p img { display: block; width: 100%; height: 100%; object-fit: cover; }
+
+.p-nav {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 18px; position: sticky; top: 0; z-index: 12;
+  background: rgba(14,12,11,0.86);
+  backdrop-filter: blur(9px);
+  border-bottom: 1px solid var(--hair);
+}
+.p-mark {
+  font-family: var(--f-display); font-size: 1.12rem; letter-spacing: 0.01em;
+  display: flex; align-items: center; min-width: 0;
+}
+.p-mark em { font-style: italic; color: var(--cruor); }
+/* must out-specify `.p img { width:100%; height:100% }` above */
+.p img.p-marklogo { width: auto; height: 26px; object-fit: contain; display: block; }
+.p-mark[data-mark="type"] .p-marklogo { display: none; }
+.p-mark:not([data-mark="type"]) .p-marktype { display: none; }
+.p-navlinks { display: none; gap: 20px; }
+.p-navlinks a {
+  font-family: var(--f-mono); font-size: 0.68rem; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--ash); text-decoration: none;
+}
+.p-navlinks a:hover { color: var(--chalk); }
+.p-burger {
+  font-family: var(--f-mono); font-size: 0.66rem; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--chalk);
+  background: none; border: 1px solid var(--hair); border-radius: 2px;
+  padding: 7px 11px; cursor: pointer;
+}
+
+/* hero ------------------------------------------------------------------ */
+.p-hero { position: relative; }
+.p-track {
+  display: flex; overflow-x: auto; scroll-snap-type: x mandatory;
+  scrollbar-width: none; -ms-overflow-style: none;
+}
+.p-track::-webkit-scrollbar { display: none; }
+.p-slide {
+  flex: 0 0 100%; margin: 0; scroll-snap-align: start;
+  aspect-ratio: 3 / 4; position: relative; background: var(--ink-2);
+}
+.p-slide::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(14,12,11,0.5) 0%, rgba(14,12,11,0) 32%, rgba(14,12,11,0.1) 55%, rgba(14,12,11,0.92) 100%);
+}
+.p-herocopy {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 3;
+  padding: 0 18px 22px;
+}
+.p-herocopy h1 {
+  font-family: var(--f-display); font-weight: 400;
+  font-size: clamp(2.6rem, 11cqw, 3.4rem); line-height: 0.92;
+  margin: 8px 0 6px; letter-spacing: -0.01em;
+}
+.p-herocopy .p-sub { font-family: var(--f-mono); font-size: 0.7rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ash); margin: 0; }
+.p-herocopy .p-eyebrow { font-family: var(--f-mono); font-size: 0.64rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--alginate); margin: 0; }
+.p-dots { position: absolute; right: 18px; bottom: 26px; z-index: 4; display: flex; gap: 6px; }
+.p-dots i { width: 5px; height: 5px; border-radius: 50%; background: rgba(239,233,225,0.32); transition: background .25s; }
+.p-dots i.on { background: var(--chalk); }
+.p-swipehint {
+  position: absolute; top: 14px; right: 16px; z-index: 4;
+  font-family: var(--f-mono); font-size: 0.6rem; letter-spacing: 0.14em;
+  text-transform: uppercase; color: rgba(239,233,225,0.66);
+  background: rgba(14,12,11,0.5); border-radius: 2px; padding: 5px 8px;
+}
+
+/* category strips ------------------------------------------------------- */
+.p-cats { display: grid; gap: 2px; }
+.p-cat { margin: 0; position: relative; aspect-ratio: 16 / 11; overflow: hidden; }
+.p-cat::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(14,12,11,0.05) 40%, rgba(14,12,11,0.88) 100%);
+}
+.p-cat figcaption {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 2;
+  padding: 0 18px 16px;
+  display: flex; align-items: flex-end; justify-content: space-between; gap: 10px;
+}
+.p-cat h2 { font-family: var(--f-display); font-weight: 400; font-size: 1.5rem; margin: 0; line-height: 1.05; }
+.p-cat span { font-family: var(--f-mono); font-size: 0.62rem; letter-spacing: 0.1em; color: var(--ash); white-space: nowrap; }
+
+.p-sechead { padding: 34px 18px 14px; }
+.p-sechead h2 { font-family: var(--f-display); font-weight: 400; font-size: 1.8rem; margin: 6px 0 0; }
+.p-sechead p { color: var(--ash); margin: 8px 0 0; font-size: 0.86rem; max-width: 52ch; }
+.p-lab { font-family: var(--f-mono); font-size: 0.62rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--alginate); margin: 0; }
+
+/* work grid ------------------------------------------------------------- */
+.p-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 2px; }
+.p-grid figure { margin: 0; aspect-ratio: 3 / 4; position: relative; background: var(--ink-2); overflow: hidden; }
+.p-grid figure::after {
+  content: attr(data-cap);
+  position: absolute; left: 0; right: 0; bottom: 0;
+  font-family: var(--f-mono); font-size: 0.58rem; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--chalk);
+  padding: 22px 10px 8px;
+  background: linear-gradient(transparent, rgba(14,12,11,0.9));
+}
+
+/* instagram ------------------------------------------------------------- */
+.p-ig { padding: 30px 18px 22px; border-top: 1px solid var(--hair); margin-top: 32px; }
+.p-igrow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; margin-top: 14px; }
+.p-igrow figure { margin: 0; aspect-ratio: 1; background: var(--ink-2); overflow: hidden; }
+.p-iglink {
+  display: inline-flex; align-items: center; gap: 8px; margin-top: 16px;
+  font-family: var(--f-mono); font-size: 0.68rem; letter-spacing: 0.08em;
+  color: var(--chalk); text-decoration: none; border-bottom: 1px solid var(--alginate);
+  padding-bottom: 3px;
+}
+
+/* about ----------------------------------------------------------------- */
+.p-about { padding: 0 0 20px; }
+.p-portrait { aspect-ratio: 4 / 5; background: var(--ink-2); }
+.p-aboutbody { padding: 24px 18px 0; }
+.p-aboutbody h1 { font-family: var(--f-display); font-weight: 400; font-size: 2.2rem; line-height: 1; margin: 8px 0 14px; }
+.p-aboutbody p { color: var(--ash); margin: 0 0 14px; max-width: 60ch; }
+.p-facts { display: grid; gap: 1px; background: var(--hair); border-block: 1px solid var(--hair); margin-top: 22px; }
+.p-fact { background: var(--ink); padding: 14px 18px; display: flex; justify-content: space-between; gap: 14px; }
+.p-fact dt { font-family: var(--f-mono); font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ash-dim); margin: 0; }
+.p-fact dd { margin: 0; font-size: 0.86rem; text-align: right; }
+
+/* contact --------------------------------------------------------------- */
+.p-contact { padding: 26px 18px 30px; }
+.p-contact h1 { font-family: var(--f-display); font-weight: 400; font-size: 2.2rem; margin: 8px 0 6px; line-height: 1; }
+.p-form { display: grid; gap: 12px; margin-top: 20px; }
+.p-field { display: grid; gap: 6px; }
+.p-field label { font-family: var(--f-mono); font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ash); }
+.p-field input, .p-field textarea, .p-field select {
+  background: var(--ink-2); border: 1px solid var(--hair); color: var(--chalk);
+  border-radius: 2px; padding: 11px 12px; font: inherit; font-size: 0.88rem; width: 100%;
+}
+.p-field input:focus, .p-field textarea:focus, .p-field select:focus {
+  outline: 2px solid var(--alginate); outline-offset: 1px; border-color: transparent;
+}
+.p-submit {
+  background: var(--chalk); color: var(--ink); border: 0; border-radius: 2px;
+  font-family: var(--f-mono); font-size: 0.72rem; letter-spacing: 0.14em;
+  text-transform: uppercase; padding: 14px; cursor: pointer; margin-top: 4px;
+}
+.p-locs { display: grid; gap: 2px; margin-top: 26px; }
+.p-loc { background: var(--ink-2); padding: 16px 16px; border-left: 2px solid var(--alginate); }
+.p-loc h3 { font-family: var(--f-display); font-weight: 400; font-size: 1.25rem; margin: 0 0 4px; }
+.p-loc p { margin: 0; color: var(--ash); font-size: 0.82rem; }
+
+/* sticky thumb CTA ------------------------------------------------------ */
+.p-ctabar {
+  position: sticky; bottom: 0; z-index: 14;
+  display: grid; grid-template-columns: 1fr auto; gap: 2px;
+  border-top: 1px solid var(--hair);
+  background: rgba(14,12,11,0.94); backdrop-filter: blur(9px);
+  padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+}
+.p-ctabar a {
+  text-decoration: none; text-align: center;
+  font-family: var(--f-mono); font-size: 0.7rem; letter-spacing: 0.14em;
+  text-transform: uppercase; border-radius: 2px; padding: 13px 16px;
+}
+.p-ctabar .primary { background: var(--cruor); color: var(--chalk); }
+.p-ctabar .ghost { border: 1px solid var(--hair); color: var(--chalk); padding-inline: 18px; }
+
+.p-foot { padding: 26px 18px 18px; border-top: 1px solid var(--hair); color: var(--ash-dim); font-family: var(--f-mono); font-size: 0.62rem; letter-spacing: 0.06em; }
+
+/* ---- desktop reflow, driven by the frame width, not the browser ------- */
+@container (min-width: 900px) {
+  .p-nav { padding: 20px 44px; }
+  .p-navlinks { display: flex; }
+  .p-burger { display: none; }
+  .p-mark { font-size: 1.35rem; }
+  .p img.p-marklogo { height: 34px; }
+
+  .p-slide { aspect-ratio: 21 / 9; }
+  .p-herocopy { padding: 0 44px 40px; max-width: 760px; }
+  .p-herocopy h1 { font-size: 4.6rem; }
+  .p-swipehint { display: none; }
+  .p-dots { right: 44px; bottom: 44px; }
+
+  .p-cats { grid-template-columns: repeat(4, 1fr); }
+  .p-cat { aspect-ratio: 3 / 4.4; }
+  .p-cat figcaption { padding: 0 20px 20px; flex-direction: column; align-items: flex-start; gap: 4px; }
+  .p-cat h2 { font-size: 1.45rem; }
+
+  .p-sechead { padding: 56px 44px 20px; }
+  .p-sechead h2 { font-size: 2.6rem; }
+  .p-grid { grid-template-columns: repeat(4, 1fr); }
+  .p-ig { padding: 46px 44px 32px; }
+  .p-igrow { grid-template-columns: repeat(6, 1fr); }
+
+  .p-about { display: grid; grid-template-columns: 0.85fr 1fr; gap: 44px; padding: 0 44px 40px; align-items: start; }
+  .p-portrait { aspect-ratio: 4 / 5; margin-top: 44px; }
+  .p-aboutbody { padding: 44px 0 0; }
+  .p-aboutbody h1 { font-size: 3.4rem; }
+
+  .p-contact { padding: 44px 44px 40px; display: grid; grid-template-columns: 1fr 0.8fr; gap: 48px; align-items: start; }
+  .p-contact h1 { font-size: 3.4rem; }
+  .p-contacthead { grid-column: 1 / -1; }
+  .p-locs { margin-top: 0; }
+
+  .p-ctabar { display: none; }
+  .p-foot { padding: 30px 44px; display: flex; justify-content: space-between; }
+}
+
+/* ---------- notes below the stage ---------- */
+.notes { padding-block: 10px 60px; display: grid; gap: 30px; }
+@media (min-width: 880px) { .notes { grid-template-columns: repeat(2, 1fr); gap: 30px 48px; } }
+.note h3 {
+  font-family: var(--f-display); font-weight: 400; font-size: var(--step-2);
+  margin: 10px 0 10px; line-height: 1.1;
+}
+.note p { color: var(--ash); margin: 0 0 10px; max-width: 58ch; }
+.note ul { margin: 10px 0 0; padding-left: 0; list-style: none; display: grid; gap: 9px; }
+.note li { color: var(--ash); padding-left: 18px; position: relative; }
+.note li::before {
+  content: ""; position: absolute; left: 0; top: 0.62em;
+  width: 7px; height: 1px; background: var(--alginate);
+}
+.note li b { color: var(--chalk); font-weight: 500; }
+
+.decisions { border: 1px solid var(--hair); border-radius: 3px; padding: 26px 22px; background: var(--ink-2); }
+.decisions ol { margin: 14px 0 0; padding-left: 0; list-style: none; counter-reset: d; display: grid; gap: 16px; }
+.decisions li { counter-increment: d; padding-left: 38px; position: relative; color: var(--ash); }
+.decisions li::before {
+  content: counter(d, decimal-leading-zero);
+  position: absolute; left: 0; top: 0;
+  font-family: var(--f-mono); font-size: 0.7rem; color: var(--cruor);
+}
+.decisions li b { color: var(--chalk); font-weight: 500; display: block; }
+
+.foot { border-top: 1px solid var(--hair); padding-block: 22px 60px; color: var(--ash-dim); font-family: var(--f-mono); font-size: var(--step--1); }
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; scroll-behavior: auto !important; }
+}
+</style>
+
+<div class="wrap">
+  <header class="masthead">
+    <p class="eyebrow">Design direction · v1 · for sign-off</p>
+    <h1>Beauty <em>&amp;</em> Cruor</h1>
+    <p class="lede">
+      A mobile-first rebuild of Parimiti's portfolio. The current site spends its
+      entire animation budget on desktop and renders one animated element at phone
+      width — while still shipping the whole stack to phones. This direction inverts
+      that: the photograph is the interface, and everything else gets out of its way.
+    </p>
+    <div class="metaline">
+      <span><b>290</b> originals recovered</span>
+      <span><b>71%</b> portrait</span>
+      <span><b>8</b> pages preserved</span>
+      <span>JS budget <b>&lt;150KB</b> gz</span>
+      <span>Old homepage <b>75 JS · 57 CSS</b></span>
+    </div>
+  </header>
+
+  <hr class="rule">
+
+  <section class="spec">
+    <div>
+      <p class="eyebrow">Palette</p>
+      <p style="color:var(--ash); margin:10px 0 0; max-width:52ch;">
+        Her work is already saturated — blood, gel lighting, body paint, teal wigs. So the
+        interface goes warm-monochrome and stays there. The accent is drawn from the
+        materials she actually works in: alginate. <em style="color:var(--chalk); font-style:normal;">Cruor</em>
+        is Latin for clotted blood, so the red is the brand, not decoration — and it's
+        rationed to one element per screen.
+      </p>
+      <div class="swatches">
+        <div class="sw"><i style="background:#0E0C0B"></i><span><b>Ink</b>#0E0C0B</span></div>
+        <div class="sw"><i style="background:#17130F"></i><span><b>Raised</b>#17130F</span></div>
+        <div class="sw"><i style="background:#EFE9E1"></i><span><b>Chalk</b>#EFE9E1</span></div>
+        <div class="sw"><i style="background:#948A80"></i><span><b>Ash</b>#948A80</span></div>
+        <div class="sw"><i style="background:#6FA893"></i><span><b>Alginate</b>#6FA893</span></div>
+        <div class="sw"><i style="background:#A62F27"></i><span><b>Cruor</b>#A62F27</span></div>
+      </div>
+    </div>
+    <div>
+      <p class="eyebrow">Typography</p>
+      <p style="color:var(--ash); margin:10px 0 0; max-width:48ch;">
+        A high-contrast didone against a technical mono. That tension is the practice
+        itself — fashion editorial on one side, workshop on the other.
+      </p>
+      <div class="typespec">
+        <div class="typerow"><span>Display</span><div class="t-display">Bodoni Moda</div></div>
+        <div class="typerow"><span>Body</span><div class="t-body">Archivo — 16px / 1.6. Set for long-form reading on the About and journal pages.</div></div>
+        <div class="typerow"><span>Data</span><div class="t-mono">IBM PLEX MONO · CREDITS, MATERIALS, CAPTIONS</div></div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <section class="stagewrap">
+    <div class="controls">
+      <div class="segset" role="group" aria-label="Page">
+        <button type="button" id="pg-home" data-page="home" aria-pressed="true">Home</button>
+        <button type="button" id="pg-sfx" data-page="sfx" aria-pressed="false">SFX</button>
+        <button type="button" id="pg-about" data-page="about" aria-pressed="false">About</button>
+        <button type="button" id="pg-contact" data-page="contact" aria-pressed="false">Contact</button>
+      </div>
+      <div class="segset" role="group" aria-label="Brand mark">
+        <button type="button" id="mk-chalk" data-mark="chalk" aria-pressed="true">Mark: Chalk</button>
+        <button type="button" id="mk-green" data-mark="green" aria-pressed="false">Green</button>
+        <button type="button" id="mk-type" data-mark="type" aria-pressed="false">Type</button>
+      </div>
+      <div class="segset" role="group" aria-label="Viewport">
+        <button type="button" id="vw-mobile" data-mode="mobile" aria-pressed="true">390 Mobile</button>
+        <button type="button" id="vw-desk" data-mode="desk" aria-pressed="false">1280 Desktop</button>
+      </div>
+    </div>
+
+    <div class="stage" id="stage" data-mode="mobile">
+      <div class="scalerbox" id="scalerbox">
+      <div class="scaler" id="scaler">
+        <div class="device">
+          <div class="viewport" id="viewport">
+            <div class="p">
+
+              <header class="p-nav">
+                <span class="p-mark" id="pmark" data-mark="chalk">
+                  <img class="p-marklogo" id="pmarklogo" alt="Beauty &amp; Cruor">
+                  <span class="p-marktype">Beauty <em>&amp;</em> Cruor</span>
+                </span>
+                <nav class="p-navlinks">
+                  <a href="#">SFX &amp; Prosthetics</a>
+                  <a href="#">Casting</a>
+                  <a href="#">Editorial</a>
+                  <a href="#">Film &amp; TV</a>
+                  <a href="#">About</a>
+                  <a href="#">Contact</a>
+                </nav>
+                <button class="p-burger" type="button">Menu</button>
+              </header>
+
+              <!-- HOME ------------------------------------------------ -->
+              <div data-screen="home">
+                <section class="p-hero">
+                  <div class="p-track" id="herotrack"></div>
+                  <span class="p-swipehint">Swipe →</span>
+                  <div class="p-dots" id="herodots"></div>
+                  <div class="p-herocopy">
+                    <p class="p-eyebrow">Hair · Makeup · SFX Prosthetics</p>
+                    <h1>Parimiti</h1>
+                    <p class="p-sub">Sydney &amp; Mumbai</p>
+                  </div>
+                </section>
+
+                <nav class="p-cats" id="cats"></nav>
+
+                <div class="p-sechead">
+                  <p class="p-lab">Selected work</p>
+                  <h2>Prosthetics &amp; character</h2>
+                  <p>Silicone and foam-latex appliances, burns, trauma and ageing — built from lifecast to final application.</p>
+                </div>
+                <div class="p-grid" id="homegrid"></div>
+
+                <section class="p-ig">
+                  <p class="p-lab">Instagram</p>
+                  <div class="p-igrow" id="igrow"></div>
+                  <a class="p-iglink" href="#">@beautyandcruor →</a>
+                </section>
+
+                <div class="p-foot"><span>© 2026 Parimiti · Beauty &amp; Cruor</span><span>Sydney · Mumbai</span></div>
+              </div>
+
+              <!-- SFX ------------------------------------------------- -->
+              <div data-screen="sfx" hidden>
+                <div class="p-sechead">
+                  <p class="p-lab">01 — Discipline</p>
+                  <h2>SFX &amp; Prosthetics</h2>
+                  <p>Trauma, burns, creature builds and age work for film, television and stage. Appliances sculpted, moulded and run in-house.</p>
+                </div>
+                <div class="p-grid" id="sfxgrid"></div>
+                <div class="p-sechead">
+                  <p class="p-lab">02 — Discipline</p>
+                  <h2>Casting &amp; Sculpting</h2>
+                  <p>Lifecasting, clay and relief work, mould-making and 3D-printed appliance cores.</p>
+                </div>
+                <div class="p-grid" id="castgrid"></div>
+                <div class="p-foot"><span>© 2026 Parimiti</span><span>Sydney · Mumbai</span></div>
+              </div>
+
+              <!-- ABOUT ----------------------------------------------- -->
+              <div data-screen="about" hidden>
+                <div class="p-about">
+                  <div class="p-portrait" id="portrait"></div>
+                  <div class="p-aboutbody">
+                    <p class="p-lab">About</p>
+                    <h1>Parimiti</h1>
+                    <p>A hair, makeup and special-effects artist working between Sydney and Mumbai, across
+                      feature film, television, editorial and live performance.</p>
+                    <p>The work runs the full pipeline — lifecast, sculpt, mould, run and apply — which means
+                      a character can be designed and delivered without handing it between studios. It's the
+                      same pair of hands from clay to camera.</p>
+                    <dl class="p-facts">
+                      <div class="p-fact"><dt>Based</dt><dd>Sydney, AU · Mumbai, IN</dd></div>
+                      <div class="p-fact"><dt>Disciplines</dt><dd>SFX prosthetics · Casting &amp; sculpting<br>Editorial · Film &amp; television</dd></div>
+                      <div class="p-fact"><dt>Recognition</dt><dd>AACTA Awards, Gold Coast</dd></div>
+                      <div class="p-fact"><dt>Enquiries</dt><dd>Commissions &amp; production bookings</dd></div>
+                    </dl>
+                  </div>
+                </div>
+                <div class="p-foot"><span>© 2026 Parimiti</span><span>Sydney · Mumbai</span></div>
+              </div>
+
+              <!-- CONTACT --------------------------------------------- -->
+              <div data-screen="contact" hidden>
+                <div class="p-contact">
+                  <div class="p-contacthead">
+                    <p class="p-lab">Contact</p>
+                    <h1>Start a project</h1>
+                    <p style="color:var(--ash); margin:8px 0 0; max-width:52ch;">Production bookings, prosthetic commissions and editorial work.</p>
+                  </div>
+                  <form class="p-form" onsubmit="return false;">
+                    <div class="p-field"><label for="c-name">Name</label><input id="c-name" type="text" value="Priya Raghavan"></div>
+                    <div class="p-field"><label for="c-email">Email</label><input id="c-email" type="email" value="priya@northlightfilms.in"></div>
+                    <div class="p-field"><label for="c-type">Enquiry</label>
+                      <select id="c-type"><option>Prosthetics — feature film</option><option>Editorial shoot</option><option>Television series</option><option>Other</option></select>
+                    </div>
+                    <div class="p-field"><label for="c-msg">Details</label><textarea id="c-msg" rows="4">Six-week shoot in Mumbai from March. Need ageing appliances for two leads plus trauma work — can you take a look at the breakdown?</textarea></div>
+                    <button class="p-submit" type="submit">Send enquiry</button>
+                    <p style="font-family:var(--f-mono); font-size:0.6rem; color:var(--ash-dim); margin:2px 0 0; letter-spacing:0.05em;">Posts to Resend · no server</p>
+                  </form>
+                  <div class="p-locs">
+                    <div class="p-loc"><h3>Sydney</h3><p>New South Wales, Australia<br>Studio &amp; workshop</p></div>
+                    <div class="p-loc"><h3>Mumbai</h3><p>Maharashtra, India<br>Film &amp; television</p></div>
+                  </div>
+                </div>
+                <div class="p-foot"><span>© 2026 Parimiti</span><span>Sydney · Mumbai</span></div>
+              </div>
+
+              <div class="p-ctabar">
+                <a class="primary" href="#">Enquire</a>
+                <a class="ghost" href="#">Instagram</a>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="notes">
+    <div class="note">
+      <p class="eyebrow">What drives the layout</p>
+      <h3>The photograph is the interface</h3>
+      <ul>
+        <li><b>Full-bleed, no gutters.</b> Container padding steals width that the work needs. Images run edge to edge; only text gets a margin.</li>
+        <li><b>Vertical-first crops.</b> 71% of her library is portrait, dominant ratios 3:4 and 2:3. The grid is built for that shape rather than fighting it.</li>
+        <li><b>Swipe, never hover.</b> Every hover reveal on the current site is dead weight on a phone. The hero and galleries are scroll-snap carousels that work by thumb.</li>
+        <li><b>The CTA never leaves.</b> Enquiries are the point of the site, so the bar is pinned in the thumb arc on mobile and folds into the nav on desktop.</li>
+      </ul>
+    </div>
+    <div class="note">
+      <p class="eyebrow">Motion</p>
+      <h3>Spent on images, not decoration</h3>
+      <ul>
+        <li><b>No scroll reveals.</b> The old build ran Waypoints and jQuery.appear to fade in blocks. Content is visible at rest; nothing waits on an observer.</li>
+        <li><b>Transitions between works</b> — a crossfade and a slow scale on the image itself — carry the whole motion budget.</li>
+        <li><b>Native scroll-snap</b> for carousels, so the gesture is the OS's, not a library's. Embla only if we need finer control.</li>
+        <li><b>prefers-reduced-motion</b> honoured throughout; the page is fully usable with all motion off.</li>
+      </ul>
+    </div>
+  </section>
+
+  <div class="decisions">
+    <p class="eyebrow">Needs a decision before build</p>
+    <ol>
+      <li><b>Alt text for 290 images</b>Every image in the library has an empty alt attribute. Lighthouse 100 on accessibility is unreachable without them, and they can't be migrated — someone has to write them. I can draft from the imagery for Parimiti to correct.</li>
+      <li><b>Which work is public</b>A lot of the library is behind-the-scenes and phone snapshots. The prototype uses roughly 26 images I selected as portfolio-grade; Parimiti should confirm the real edit.</li>
+      <li><b>78 images below the retina floor</b>They're under 1200px wide, so they can't go full-bleed on a phone without softening. Either they sit in a smaller treatment or they're re-exported from originals if she still has them.</li>
+      <li><b>The logo needs work to survive here</b>The supplied mark is dark-grey script with a lime flourish, drawn for light backgrounds — on this ground it all but disappears, so the two variants in the control above are recoloured. It's also raster-only at 711×218, with no vector, and the botanical script reads closer to wellness than to prosthetics and trauma work. Options: use it recoloured, have it traced to SVG and redrawn, or set the name in type. Switch between all three above.</li>
+      <li><b>The name</b>Prototype leads with "Parimiti" and treats Beauty &amp; Cruor as the studio mark. Confirm which is the masthead.</li>
+      <li><b>Nine videos in the library</b>Including a 24MB 3840×2160 .mov. If any belong on the site they need a separate encode pipeline — worth knowing now.</li>
+    </ol>
+  </div>
+
+  <div class="foot">
+    Reference captured from beautyandcruor.com · 290 originals · 41 URLs · Sept 2026<br>
+    Prototype is live and responsive — switch the viewport control to see the same markup reflow.
+  </div>
+</div>
+
+<script id="imgdata" type="application/json">__IMAGES__</script>
+<script>
+(function () {
+  var IMG = JSON.parse(document.getElementById('imgdata').textContent);
+  var el = function (id) { return document.getElementById(id); };
+
+  function pic(entry, cap) {
+    var f = document.createElement('figure');
+    if (cap) f.setAttribute('data-cap', cap);
+    var i = document.createElement('img');
+    i.src = entry.uri;
+    i.alt = cap || '';
+    i.loading = 'lazy';
+    f.appendChild(i);
+    return f;
+  }
+
+  /* hero carousel — native scroll-snap, dots synced from scroll position */
+  var track = el('herotrack'), dots = el('herodots');
+  IMG.hero.forEach(function (h, n) {
+    var fig = document.createElement('figure');
+    fig.className = 'p-slide';
+    var im = document.createElement('img');
+    im.src = h.uri;
+    im.alt = 'Character and prosthetic work, frame ' + (n + 1);
+    fig.appendChild(im);
+    track.appendChild(fig);
+    var d = document.createElement('i');
+    if (n === 0) d.className = 'on';
+    dots.appendChild(d);
+  });
+  track.addEventListener('scroll', function () {
+    var n = Math.round(track.scrollLeft / track.clientWidth);
+    [].forEach.call(dots.children, function (d, i) { d.className = i === n ? 'on' : ''; });
+  }, { passive: true });
+
+  /* category strips */
+  var CATS = [
+    ['SFX &amp; Prosthetics', '24 works', IMG.sfx[0]],
+    ['Casting &amp; Sculpting', '18 works', IMG.casting[0]],
+    ['Editorial &amp; Fashion', '31 works', IMG.editorial[0]],
+    ['Film &amp; Television', '22 works', IMG.film[0]]
+  ];
+  CATS.forEach(function (c) {
+    var f = document.createElement('figure');
+    f.className = 'p-cat';
+    var i = document.createElement('img');
+    i.src = c[2].uri; i.alt = ''; i.loading = 'lazy';
+    var cap = document.createElement('figcaption');
+    cap.innerHTML = '<h2>' + c[0] + '</h2><span>' + c[1] + '</span>';
+    f.appendChild(i); f.appendChild(cap);
+    el('cats').appendChild(f);
+  });
+
+  var CAPS = {
+    sfx: ['Burn appliance', 'Trauma build', 'Creature sculpt', 'Age prosthetic', 'Full character', 'Back lacerations'],
+    casting: ['Lion relief', 'Hand casts', 'Lifecast bust', 'Creature sculpt'],
+    editorial: ['Body art series', 'Gel portrait', 'Colour study', 'Beauty editorial', 'Underwater', 'Millinery'],
+    film: ['Age makeup', 'Period ensemble', 'Character design']
+  };
+  function fill(node, set, caps) {
+    IMG[set].forEach(function (e, i) { node.appendChild(pic(e, caps[i] || '')); });
+  }
+  fill(el('homegrid'), 'sfx', CAPS.sfx);
+  fill(el('sfxgrid'), 'sfx', CAPS.sfx);
+  fill(el('castgrid'), 'casting', CAPS.casting);
+
+  IMG.editorial.concat(IMG.beauty).slice(0, 6).forEach(function (e) {
+    el('igrow').appendChild(pic(e, ''));
+  });
+
+  var pi = document.createElement('img');
+  pi.src = IMG.artist[0].uri;
+  pi.alt = 'Parimiti in the studio';
+  el('portrait').appendChild(pi);
+
+  /* brand mark — the supplied logo is dark grey script for light grounds, so
+     these are recoloured variants; "type" is the set-in-Bodoni fallback */
+  var pmark = el('pmark'), pmarklogo = el('pmarklogo');
+  pmarklogo.src = IMG.logo.chalk;
+  [].forEach.call(document.querySelectorAll('[data-mark]'), function (btn) {
+    if (btn.tagName !== 'BUTTON') return;
+    btn.addEventListener('click', function () {
+      var m = btn.getAttribute('data-mark');
+      if (m !== 'type') pmarklogo.src = IMG.logo[m];
+      pmark.setAttribute('data-mark', m);
+      [].forEach.call(btn.closest('.segset').querySelectorAll('button'), function (b) {
+        b.setAttribute('aria-pressed', b === btn ? 'true' : 'false');
+      });
+    });
+  });
+
+  /* page + viewport controls */
+  var viewport = el('viewport'), stage = el('stage'), scaler = el('scaler');
+
+  function setPressed(group, attr, val) {
+    [].forEach.call(document.querySelectorAll('[' + attr + ']'), function (b) {
+      if (b.closest('.segset') !== group) return;
+      b.setAttribute('aria-pressed', b.getAttribute(attr) === val ? 'true' : 'false');
+    });
+  }
+
+  [].forEach.call(document.querySelectorAll('[data-page]'), function (btn) {
+    btn.addEventListener('click', function () {
+      var want = btn.getAttribute('data-page');
+      [].forEach.call(viewport.querySelectorAll('[data-screen]'), function (s) {
+        s.hidden = s.getAttribute('data-screen') !== want;
+      });
+      setPressed(btn.closest('.segset'), 'data-page', want);
+      viewport.scrollTop = 0;
+    });
+  });
+
+  [].forEach.call(document.querySelectorAll('[data-mode]'), function (btn) {
+    if (!btn.closest('.segset')) return;
+    btn.addEventListener('click', function () {
+      var m = btn.getAttribute('data-mode');
+      stage.setAttribute('data-mode', m);
+      setPressed(btn.closest('.segset'), 'data-mode', m);
+      rescale();
+    });
+  });
+
+  /* desktop frame is 1280 wide; scale it down to whatever room the page has */
+  var scalerbox = el('scalerbox');
+  function rescale() {
+    var desk = stage.getAttribute('data-mode') === 'desk';
+    var w = desk ? 1280 : 390;
+    var h = desk ? 840 : 800;
+    var cs = getComputedStyle(stage);
+    var avail = stage.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    var s = Math.min(1, avail / w);
+    scaler.style.width = w + 'px';
+    scaler.style.height = h + 'px';
+    scaler.style.transform = 'scale(' + s + ')';
+    scalerbox.style.width = (w * s) + 'px';
+    scalerbox.style.height = (h * s) + 'px';
+  }
+  window.addEventListener('resize', rescale);
+  rescale();
+})();
+</script>

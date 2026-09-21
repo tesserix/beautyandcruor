@@ -1,0 +1,979 @@
+<title>Beauty & Cruor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gloock&family=Archivo:wght@400;500&family=Archivo+Narrow:wght@400;500;600&display=swap">
+<style>
+:root{
+  --plaster:#E6E3DF;
+  --bone:#F2F0EC;
+  --ink:#151013;
+  --cruor:#6A0E19;
+  --arterial:#B3111D;
+  --ash:#7C7672;
+  --hair:#C9C4BE;
+  --display:"Gloock","Bodoni MT","Didot",Georgia,serif;
+  --body:"Archivo","Helvetica Neue",Helvetica,Arial,sans-serif;
+  --narrow:"Archivo Narrow","Arial Narrow","Helvetica Neue",Arial,sans-serif;
+  --gut:20px;
+  --bar:60px;
+  --ease:cubic-bezier(.2,.7,.2,1);
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{
+  margin:0;background:var(--plaster);color:var(--ink);
+  font-family:var(--body);font-size:16px;line-height:1.5;
+  padding-bottom:calc(var(--bar) + env(safe-area-inset-bottom,0px) + 8px);
+  -webkit-font-smoothing:antialiased;
+}
+img{max-width:100%;display:block}
+a{color:inherit}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+:focus-visible{outline:2px solid var(--arterial);outline-offset:3px}
+.gut{padding-inline:var(--gut)}
+.vh{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+h1,h2,h3{font-family:var(--display);font-weight:400;margin:0;line-height:1;text-wrap:balance;letter-spacing:-.01em}
+p{margin:0}
+.credit{font-family:var(--narrow);font-weight:500;font-size:12px;letter-spacing:.14em;text-transform:uppercase;line-height:1.3}
+.credit.dim{color:var(--ash)}
+.amp{color:var(--cruor)}
+.rule{border:0;border-top:1px solid var(--hair);margin:0}
+.pair{display:inline-flex;border:1px solid var(--ink);margin-top:16px}
+.pair a{text-decoration:none;padding:10px 14px;display:inline-flex;gap:8px;align-items:baseline;white-space:nowrap}
+.pair a + a{border-left:1px solid var(--ink)}
+.pair a b{font-weight:600}
+.pair a span{color:var(--ash)}
+.pair.inv{border-color:var(--plaster)}
+.pair.inv a + a{border-left-color:var(--plaster)}
+.pair.inv a span{color:#b9b2ad}
+
+/* ---------- masthead ---------- */
+.mast{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;padding-block:18px 14px}
+.mast .wm{font-family:var(--display);font-size:26px;line-height:1;text-decoration:none;letter-spacing:-.01em;white-space:nowrap}
+.mast .line{margin-top:6px}
+.mast nav{display:none}
+.mast nav a{text-decoration:none;padding:6px 0;border-bottom:1px solid transparent}
+.mast nav a[aria-current="page"]{border-bottom-color:var(--ink)}
+
+/* ---------- bottom bar ---------- */
+.bar{
+  position:fixed;left:0;right:0;bottom:0;z-index:40;
+  height:calc(var(--bar) + env(safe-area-inset-bottom,0px));
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  background:var(--ink);color:var(--plaster);
+  display:grid;grid-template-columns:auto 1fr auto;align-items:stretch;
+}
+.bar > *{display:flex;align-items:center;justify-content:center;text-decoration:none;padding-inline:20px;height:var(--bar)}
+.bar .enq{background:var(--arterial);color:#fff;gap:10px;font-family:var(--narrow);font-weight:600;font-size:15px;letter-spacing:.16em;text-transform:uppercase}
+.bar .enq .arr{font-family:var(--display);font-size:22px;line-height:1;transform:translateY(-1px)}
+.bar .menu{font-family:var(--narrow);font-weight:600;font-size:13px;letter-spacing:.16em;text-transform:uppercase;gap:8px;min-width:88px}
+.bar .ig svg{width:22px;height:22px;display:block}
+.bar .menu .ico{position:relative;width:16px;height:10px}
+.bar .menu .ico:before,.bar .menu .ico:after{content:"";position:absolute;left:0;right:0;height:2px;background:currentColor;transition:transform .25s var(--ease)}
+.bar .menu .ico:before{top:0}.bar .menu .ico:after{bottom:0}
+.bar .menu[aria-expanded="true"] .ico:before{transform:translateY(4px) rotate(45deg)}
+.bar .menu[aria-expanded="true"] .ico:after{transform:translateY(-4px) rotate(-45deg)}
+
+/* ---------- menu overlay ---------- */
+.overlay{position:fixed;inset:0;bottom:calc(var(--bar) + env(safe-area-inset-bottom,0px));z-index:35;background:var(--plaster);overflow:auto;
+  display:flex;flex-direction:column;justify-content:flex-end;padding:24px var(--gut) 20px}
+.overlay ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.overlay ol a{font-family:var(--display);font-size:clamp(34px,10vw,44px);line-height:1.08;text-decoration:none;display:flex;align-items:baseline;gap:12px;padding:4px 0;border-bottom:1px solid var(--hair)}
+.overlay ol a[aria-current="page"]{color:var(--cruor)}
+.overlay ol a .credit{min-width:40px;color:var(--ash)}
+.overlay .foot{display:flex;justify-content:space-between;gap:16px;margin-top:22px;flex-wrap:wrap}
+.overlay .foot a{text-decoration:none}
+
+/* ---------- main / views ---------- */
+main{min-height:60vh}
+.view{animation:fade .28s var(--ease) both}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+
+/* plate = full-bleed portrait */
+.plate{position:relative;width:100%;aspect-ratio:3/4;overflow:hidden;background:#cfcac4}
+.plate img{width:100%;height:100%;object-fit:cover;object-position:center 28%}
+
+/* ---------- reel ---------- */
+.reel{position:relative}
+.track{
+  display:flex;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;
+  scrollbar-width:none;gap:0;
+}
+.track::-webkit-scrollbar{display:none}
+.slide{flex:0 0 100%;width:100%;scroll-snap-align:start;scroll-snap-stop:always;margin:0}
+.slide .plate img{transform:scale(1.045);transition:transform .8s var(--ease)}
+.slide.on .plate img{transform:scale(1)}
+.slide figcaption{padding:12px var(--gut) 0;display:grid;grid-template-columns:1fr auto;gap:4px 16px;align-items:baseline}
+.slide figcaption .t{font-family:var(--display);font-size:22px;line-height:1.05}
+.slide figcaption .m{grid-column:1/-1;color:var(--ash);font-size:14px;line-height:1.4;max-width:60ch}
+.reel-ui{display:flex;align-items:center;gap:14px;padding-top:14px}
+.reel-ui .count{font-variant-numeric:tabular-nums;min-width:56px}
+.dashes{display:flex;gap:4px;flex:1}
+.dashes button{height:14px;flex:1;position:relative;max-width:48px}
+.dashes button:after{content:"";position:absolute;left:0;right:0;top:6px;height:2px;background:var(--hair);transition:background .3s}
+.dashes button.on:after{background:var(--ink)}
+.arrows{display:none;gap:6px}
+.arrows button{width:40px;height:40px;border:1px solid var(--ink);border-radius:50%;font-family:var(--display);font-size:20px;line-height:1;display:grid;place-items:center}
+.arrows button:disabled{opacity:.25;cursor:default}
+.strip{display:flex;gap:4px;padding:14px var(--gut) 0;overflow-x:auto;scrollbar-width:none}
+.strip::-webkit-scrollbar{display:none}
+.strip button{flex:0 0 auto;width:48px;aspect-ratio:3/4;overflow:hidden;opacity:.45;transition:opacity .25s;border:0}
+.strip button.on{opacity:1;outline:2px solid var(--ink);outline-offset:1px}
+.strip img{width:100%;height:100%;object-fit:cover}
+
+/* ---------- home ---------- */
+.hero{padding-top:6px}
+.statement{padding-block:34px 10px}
+.statement h1{font-size:clamp(28px,7.6vw,40px);line-height:1.12}
+.statement p{margin-top:16px;max-width:60ch;color:var(--ash)}
+.chapter{display:block;text-decoration:none;color:inherit;padding-top:44px;position:relative}
+.chapter .head{position:relative;z-index:2;margin-bottom:calc(-.42em);pointer-events:none}
+.chapter h2{font-size:clamp(44px,13vw,74px);line-height:.96;color:#fff;mix-blend-mode:difference;padding-inline:var(--gut);letter-spacing:-.015em}
+.chapter .plate{z-index:1}
+.chapter .sub{display:grid;grid-template-columns:1fr auto;gap:8px 16px;padding:12px var(--gut) 0;align-items:baseline}
+.chapter .sub .go{font-family:var(--display);font-size:18px;white-space:nowrap}
+.chapter .sub p{grid-column:1/-1;color:var(--ash);font-size:14px;max-width:56ch}
+.cut{padding-block:52px 12px}
+.cut h2{font-size:30px;margin-bottom:6px}
+.cut .lede{color:var(--ash);font-size:14px;max-width:56ch;margin-bottom:18px}
+.cut ol{list-style:none;margin:0;padding:0;border-top:1px solid var(--hair)}
+.cut li{display:grid;grid-template-columns:1fr auto;gap:2px 16px;padding:10px 0;border-bottom:1px solid var(--hair);align-items:baseline}
+.cut li .t{grid-column:1;grid-row:1;font-family:var(--display);font-size:20px;line-height:1.1}
+.cut li .m{grid-column:1;grid-row:2;color:var(--ash)}
+.cut li .y{grid-column:2;grid-row:1/3;font-variant-numeric:tabular-nums;align-self:start;padding-top:5px}
+.morelink{display:inline-flex;align-items:baseline;gap:10px;text-decoration:none;font-family:var(--display);font-size:20px;margin-top:16px;border-bottom:1px solid var(--ink);padding-bottom:2px}
+.morelink .arr{font-size:22px}
+.teaser{display:grid;grid-template-columns:96px 1fr;gap:18px;align-items:center;padding-block:44px 0}
+.teaser .plate{aspect-ratio:3/4}
+.teaser h2{font-size:26px;margin-bottom:8px}
+.teaser p{color:var(--ash);font-size:14px}
+.journal{padding-block:44px 0}
+.journal h2{font-size:30px;margin-bottom:12px}
+.posts{list-style:none;margin:0;padding:0;border-top:1px solid var(--hair)}
+.posts li a{display:grid;grid-template-columns:1fr auto;gap:4px 16px;padding:14px 0;border-bottom:1px solid var(--hair);text-decoration:none;align-items:baseline}
+.posts li .t{font-family:var(--display);font-size:22px;line-height:1.1}
+.posts li .s{grid-column:1/-1;color:var(--ash);font-size:14px;max-width:60ch}
+
+/* ---------- discipline page ---------- */
+.dhead{padding-block:22px 18px}
+.dhead h1{font-size:clamp(44px,12.4vw,74px);line-height:.95;letter-spacing:-.015em;margin-top:8px}
+.dhead p{margin-top:16px;max-width:58ch;color:var(--ash)}
+.next{padding-block:48px 0}
+.next a{display:block;text-decoration:none;border-top:1px solid var(--ink);padding-top:14px}
+.next a .t{font-family:var(--display);font-size:clamp(30px,9vw,44px);line-height:1;display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.ask{margin-top:44px;padding:22px var(--gut);background:var(--ink);color:var(--plaster)}
+.ask h2{font-size:26px;margin-bottom:8px}
+.ask p{color:#b9b2ad;font-size:14px;max-width:52ch}
+.ask a{display:inline-block;margin-top:14px;text-decoration:none;font-family:var(--narrow);font-weight:600;letter-spacing:.16em;text-transform:uppercase;font-size:13px;border:1px solid var(--plaster);padding:10px 16px}
+
+/* ---------- about ---------- */
+.about h1{font-size:clamp(46px,13vw,72px);line-height:.95;margin-top:18px}
+.about .bio{margin-top:18px;display:flex;flex-direction:column;gap:14px;max-width:60ch}
+.about .bio p:first-child{font-family:var(--display);font-size:22px;line-height:1.25}
+.svc{margin-top:36px}
+.svc h2{font-size:26px;margin-bottom:10px}
+.svc ul{list-style:none;margin:0;padding:0;border-top:1px solid var(--hair)}
+.svc li{display:grid;grid-template-columns:1fr;gap:2px;padding:10px 0;border-bottom:1px solid var(--hair)}
+.svc li b{font-weight:500}
+.svc li span{color:var(--ash);font-size:14px}
+.cities{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:36px}
+.cities h3{font-size:30px}
+.cities p{color:var(--ash);font-size:14px;margin-top:6px}
+
+/* credits */
+.credits{padding-top:52px}
+.credits h2{font-size:clamp(34px,10vw,48px);line-height:1}
+.credits .lede{color:var(--ash);font-size:14px;max-width:58ch;margin-top:10px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:18px}
+.chips button{font-family:var(--narrow);font-weight:600;font-size:12px;letter-spacing:.14em;text-transform:uppercase;border:1px solid var(--ink);padding:8px 12px;display:inline-flex;gap:8px;align-items:baseline}
+.chips button b{font-weight:500;color:var(--ash);font-variant-numeric:tabular-nums}
+.chips button[aria-pressed="true"]{background:var(--ink);color:var(--plaster)}
+.chips button[aria-pressed="true"] b{color:#b9b2ad}
+.ylist{margin-top:22px}
+.ygrp{display:grid;grid-template-columns:1fr;border-top:1px solid var(--ink);padding-top:10px;margin-top:18px}
+.ygrp:first-child{margin-top:0}
+.ygrp .y{font-family:var(--display);font-size:34px;line-height:1;font-variant-numeric:tabular-nums}
+.ygrp .y small{display:block;font-family:var(--narrow);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--ash);margin-top:6px}
+.ygrp ol{list-style:none;margin:8px 0 0;padding:0}
+.ygrp li{display:grid;grid-template-columns:1fr auto;gap:2px 14px;padding:11px 0;border-bottom:1px solid var(--hair);align-items:start}
+.ygrp li:last-child{border-bottom:0}
+.ygrp li .t{grid-column:1;grid-row:1;font-family:var(--display);font-size:21px;line-height:1.08}
+.ygrp li .m{grid-column:1;grid-row:2;color:var(--ash);margin-top:2px}
+.ygrp li .m .d{color:var(--ink)}
+.ygrp li .loc{grid-column:2;grid-row:1/3;align-self:start;padding-top:4px;color:var(--ash);font-variant-numeric:tabular-nums}
+.ygrp li .loc i{font-style:normal;display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:7px;vertical-align:1px;border:1px solid var(--ink)}
+.ygrp li[data-loc="India"] .loc i{background:var(--ink)}
+.ygrp li[data-loc="Australia"] .loc i{background:transparent}
+.ygrp li[data-loc="UAE"] .loc i{background:linear-gradient(90deg,var(--ink) 50%,transparent 50%)}
+.ygrp li.hide{display:none}
+.ygrp.empty{display:none}
+.legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;color:var(--ash)}
+.legend i{font-style:normal;display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:7px;vertical-align:1px;border:1px solid var(--ink)}
+
+/* ---------- blogs ---------- */
+.blog h1{font-size:clamp(46px,13vw,72px);line-height:.95;margin-top:18px}
+.blog .lede{color:var(--ash);margin-top:14px;max-width:58ch}
+.post{max-width:66ch}
+.post h1{font-size:clamp(32px,9vw,52px);line-height:1.05;margin-top:12px}
+.post .stand{font-family:var(--display);font-size:20px;line-height:1.3;margin-top:18px}
+.post .body{margin-top:22px;display:flex;flex-direction:column;gap:14px}
+.post .body h2{font-size:24px;margin-top:10px}
+.post .body ul{margin:0;padding-left:18px;color:var(--ash)}
+.post .back{display:inline-block;margin-top:28px;text-decoration:none;border-bottom:1px solid var(--ink)}
+
+/* ---------- contact ---------- */
+.contact h1{font-size:clamp(46px,13vw,72px);line-height:.95;margin-top:18px}
+.contact .lede{margin-top:14px;max-width:56ch;color:var(--ash)}
+.direct{list-style:none;margin:26px 0 0;padding:0;border-top:1px solid var(--ink)}
+.direct li{border-bottom:1px solid var(--hair)}
+.direct a,.direct span{display:grid;grid-template-columns:1fr auto;gap:12px;padding:14px 0;text-decoration:none;align-items:baseline}
+.direct .v{font-family:var(--display);font-size:22px;line-height:1.1;word-break:break-word}
+.form{margin-top:36px;display:grid;gap:18px}
+.form h2{font-size:26px}
+.field{display:grid;gap:6px}
+.field label{font-family:var(--narrow);font-weight:600;font-size:12px;letter-spacing:.14em;text-transform:uppercase}
+.field input,.field select,.field textarea{font:inherit;color:var(--ink);background:var(--bone);border:0;border-bottom:1px solid var(--ink);padding:12px 12px;border-radius:0;width:100%;min-height:48px}
+.field textarea{min-height:120px;resize:vertical}
+.field select{appearance:none;-webkit-appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--ink) 50%),linear-gradient(135deg,var(--ink) 50%,transparent 50%);background-position:calc(100% - 20px) 50%,calc(100% - 14px) 50%;background-size:6px 6px;background-repeat:no-repeat}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form .send{background:var(--ink);color:var(--plaster);font-family:var(--narrow);font-weight:600;letter-spacing:.16em;text-transform:uppercase;font-size:14px;padding:16px 20px;min-height:52px;display:flex;justify-content:space-between;align-items:center;width:100%}
+.form .send .arr{font-family:var(--display);font-size:22px}
+.form .note{color:var(--ash);font-size:13px}
+.form .ok{background:var(--bone);border-left:3px solid var(--cruor);padding:12px 14px;font-size:14px}
+
+/* ---------- footer ---------- */
+footer{margin-top:64px;border-top:1px solid var(--ink);padding-block:24px 10px}
+footer .fgrid{display:grid;gap:22px}
+footer .wm{font-family:var(--display);font-size:30px;line-height:1;text-decoration:none}
+footer ul{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+footer ul a{text-decoration:none}
+footer .cols{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+footer .small{color:var(--ash);font-size:13px;margin-top:22px}
+details.notes{margin-top:22px;border-top:1px solid var(--hair);padding-top:14px}
+details.notes summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+details.notes summary::-webkit-details-marker{display:none}
+details.notes summary .t{font-family:var(--display);font-size:22px}
+details.notes summary .credit:after{content:"Open"}
+details.notes[open] summary .credit:after{content:"Close"}
+.notes-body{margin-top:16px;display:grid;gap:18px;max-width:66ch;font-size:14px}
+.notes-body h3{font-size:20px;margin-bottom:4px}
+.notes-body p{color:#3f3a38}
+.notes-body .marks{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}
+.notes-body .marks figure{margin:0;background:var(--ink);padding:14px;display:grid;gap:8px}
+.notes-body .marks figure img{width:100%;height:auto}
+.notes-body .marks figcaption{color:#b9b2ad;font-size:12px}
+.notes-body .marks .type{background:var(--bone);border:1px solid var(--hair);color:var(--ink)}
+.notes-body .marks .type .wm{font-family:var(--display);font-size:28px;line-height:1;padding:8px 0}
+.notes-body .marks .type figcaption{color:var(--ash)}
+.notes-body .swatches{display:flex;gap:0;margin-top:8px;border:1px solid var(--hair)}
+.notes-body .swatches i{flex:1;height:34px;display:block}
+.notes-body ul{margin:0;padding-left:18px;color:#3f3a38}
+
+/* ---------- desktop ---------- */
+@media (min-width:880px){
+  :root{--gut:40px}
+  body{padding-bottom:0}
+  .mast{align-items:center;padding-block:24px 18px}
+  .mast .wm{font-size:30px}
+  .mast .line{display:none}
+  .mast nav{display:flex;gap:22px}
+  .bar{left:auto;right:24px;bottom:24px;height:auto;border-radius:999px;overflow:hidden;box-shadow:0 12px 30px rgba(21,16,19,.25);grid-template-columns:auto auto}
+  .bar .menu{display:none}
+  .bar > *{height:52px}
+  .overlay{display:none}
+  .hero .track{scroll-snap-type:none;gap:2px}
+  .hero .slide{flex-basis:calc(25% - 1.5px);width:auto}
+  .hero .slide figcaption{grid-template-columns:1fr;padding-inline:0 12px}
+  .hero .slide figcaption .t{font-size:18px}
+  .hero .slide figcaption .m{font-size:13px}
+  .hero .reel-ui{display:none}
+  .statement{padding-block:64px 24px;max-width:1100px}
+  .statement h1{font-size:clamp(40px,4.2vw,60px);line-height:1.1}
+  .statement p{font-size:18px}
+  .chapter{display:grid;grid-template-columns:1fr 1fr;align-items:start;padding-top:56px}
+  .chapter:nth-of-type(even){direction:rtl}
+  .chapter:nth-of-type(even) > *{direction:ltr}
+  .chapter .head{grid-column:1;margin:0;position:sticky;top:24px;padding-top:12px}
+  .chapter h2{color:var(--ink);mix-blend-mode:normal;font-size:clamp(56px,6.6vw,110px);line-height:.92}
+  .chapter .plate{grid-column:2;grid-row:1/3;aspect-ratio:4/5;max-height:88vh}
+  .chapter .sub{grid-column:1;padding-top:22px;position:sticky;top:calc(24px + 2.2em + 60px)}
+  .chapter .sub p{font-size:16px}
+  .cut{padding-block:80px 0;display:grid;grid-template-columns:1fr 1.4fr;gap:40px;align-items:start}
+  .cut h2{font-size:48px}
+  .cut ol{grid-column:2;grid-row:1/4}
+  .teaser{grid-template-columns:200px 1fr;gap:40px;padding-top:80px;max-width:900px}
+  .teaser h2{font-size:40px}
+  .teaser p{font-size:16px}
+  .journal{display:grid;grid-template-columns:1fr 1.4fr;gap:40px;padding-top:80px}
+  .journal h2{font-size:48px}
+  .journal .posts li a{grid-template-columns:1fr auto}
+  /* discipline */
+  .dhead{padding-block:32px 28px;display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:end}
+  .dhead h1{font-size:clamp(72px,8vw,140px);line-height:.9}
+  .dhead p{font-size:18px;max-width:48ch}
+  .reel.wide .track{scroll-padding-left:var(--gut);gap:2px}
+  .reel.wide .slide{flex-basis:36vw;width:36vw;scroll-snap-stop:normal}
+  .reel.wide .slide:first-child{margin-left:var(--gut)}
+  .reel.wide .slide:last-child{margin-right:var(--gut)}
+  .reel.wide .slide .plate img{transform:scale(1)}
+  .reel.wide .slide.on .plate img{transform:scale(1)}
+  .reel.wide .slide figcaption{padding-inline:0 16px;grid-template-columns:1fr auto}
+  .arrows{display:flex}
+  .strip{display:none}
+  .next{padding-top:72px;max-width:900px}
+  .ask{margin-top:64px;padding:40px var(--gut);display:grid;grid-template-columns:1fr auto;align-items:center;gap:40px}
+  .ask h2{font-size:36px}
+  .ask a{margin-top:0}
+  /* about */
+  .about{display:grid;grid-template-columns:5fr 7fr;gap:0}
+  .about .plate{grid-row:1/2;aspect-ratio:3/4;max-height:88vh;position:sticky;top:0}
+  .about .col{padding-inline:var(--gut);padding-top:24px}
+  .about h1{font-size:clamp(64px,7vw,120px)}
+  .about .bio p:first-child{font-size:26px}
+  .svc li{grid-template-columns:240px 1fr;gap:16px}
+  .credits{padding-top:96px}
+  .credits h2{font-size:clamp(48px,5vw,80px)}
+  .credits .top{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:end}
+  .ygrp{grid-template-columns:200px 1fr;gap:0 40px;margin-top:0;padding-top:16px;border-top:1px solid var(--ink)}
+  .ygrp .y{font-size:56px;position:sticky;top:16px}
+  .ygrp ol{margin-top:0}
+  .ygrp li{grid-template-columns:1fr 1fr auto;column-gap:24px;padding:14px 0}
+  .ygrp li .t{font-size:24px}
+  .ygrp li .m{grid-column:2;grid-row:1;margin-top:5px}
+  .ygrp li .loc{grid-row:1;grid-column:3;padding-top:7px}
+  /* blog */
+  .blog{max-width:900px}
+  .post h1{font-size:clamp(48px,5vw,80px)}
+  /* contact */
+  .contact{display:grid;grid-template-columns:1fr 1fr;gap:64px}
+  .contact .left{grid-column:1}
+  .contact .form{grid-column:2;grid-row:1/4;margin-top:24px;max-width:560px}
+  .contact h1{font-size:clamp(64px,7vw,120px)}
+  /* footer */
+  footer{margin-top:120px}
+  footer .fgrid{grid-template-columns:1fr 1fr 1fr;align-items:start}
+  footer .wm{font-size:40px}
+}
+/* Plates bleed to the edge by design, but the caption under the first plate
+   was landing flush against the viewport with no gutter. Pad the text only,
+   so the image keeps its full bleed. */
+@media (min-width:880px){
+  .hero .slide:first-child figcaption,
+  .reel.wide .slide:first-child figcaption{padding-left:var(--gut)}
+}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .view{animation:none}
+  .slide .plate img,.slide.on .plate img{transform:none;transition:none}
+  .track{scroll-behavior:auto}
+  .bar .menu .ico:before,.bar .menu .ico:after,.strip button,.dashes button:after{transition:none}
+}
+</style>
+
+<header class="mast gut">
+  <div>
+    <a class="wm" href="#/" data-nav>Beauty <span class="amp">&amp;</span> Cruor</a>
+    <p class="credit dim line">Parimiti · Hair, make-up &amp; SFX prosthetics · Sydney / Mumbai</p>
+  </div>
+  <nav class="credit" aria-label="Primary" id="topnav"></nav>
+</header>
+
+<main id="app" aria-live="polite"></main>
+
+<footer class="gut" id="foot"></footer>
+
+<div class="overlay gut" id="menu" hidden>
+  <p class="credit dim">Index</p>
+  <ol id="menulist"></ol>
+  <div class="foot credit">
+    <a href="https://www.instagram.com/_parimiti_sfx_and_prosthetics_/" target="_blank" rel="noopener">Instagram ↗</a>
+    <a href="https://www.imdb.com/name/nm12573944/" target="_blank" rel="noopener">IMDb ↗</a>
+    <a href="mailto:info@beautyandcruor.com">info@beautyandcruor.com</a>
+  </div>
+</div>
+
+<div class="bar" id="bar">
+  <button class="menu" id="menubtn" aria-expanded="false" aria-controls="menu"><span class="ico" aria-hidden="true"></span>Menu</button>
+  <a class="enq" href="#/contact-us/" data-nav>Enquire <span class="arr" aria-hidden="true">→</span></a>
+  <a class="ig" href="https://www.instagram.com/_parimiti_sfx_and_prosthetics_/" target="_blank" rel="noopener" aria-label="Instagram: _parimiti_sfx_and_prosthetics_">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.4" cy="6.6" r="1" fill="currentColor" stroke="none"/></svg>
+  </a>
+</div>
+
+<script type="application/json" id="imgdata">__IMAGES__</script>
+<script>
+(function(){
+"use strict";
+const IMG = JSON.parse(document.getElementById('imgdata').textContent);
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const src = (set, n) => (set === 'logo') ? IMG.logo[n] : IMG[set][n].uri;
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const amp = s => esc(s).replace('&amp;','<span class="amp">&amp;</span>');
+
+/* ---------------- content ---------------- */
+const NAV = [
+  ['/about-me/','About Me'],
+  ['/sfx-prosthetics/','SFX & Prosthetics'],
+  ['/film-television/','Film & Television'],
+  ['/casting-sculpting/','Casting & Sculpting'],
+  ['/editorial-fashion/','Editorial & Fashion'],
+  ['/blogs/','Blogs'],
+  ['/contact-us/','Contact Us'],
+];
+
+const HERO = [
+  {s:'hero',n:0,t:'Berserker',m:'Blood work, wound appliances and matted fur under a hard red key.',w:'Studio, Mumbai · 2025'},
+  {s:'hero',n:1,t:'Axeman',m:'Full-torso blood and dirt over layered silicone wounds.',w:'Studio, Mumbai · 2025'},
+  {s:'hero',n:2,t:'Blue deity',m:'Full-body paint, sculpted horns, prosthetic ears, gilded headdress.',w:'Studio, Mumbai · 2025'},
+  {s:'hero',n:3,t:'Shieldmaiden',m:'Character make-up: blood, grime and fur, built to read in firelight.',w:'Studio, Mumbai · 2025'},
+];
+
+const DISC = {
+  'sfx-prosthetics':{
+    title:'SFX & Prosthetics', short:'SFX',
+    intro:'Burns, trauma, creatures and age. Every appliance is designed, sculpted, moulded and applied in-house — silicone, gelatin, foam latex and 3D-printed cores — then finished under the light it will be shot in.',
+    chap:'Burn appliances, trauma, creature builds, old-age and severed pieces.',
+    cover:{s:'sfx',n:4},
+    items:[
+      {s:'sfx',n:0,t:'Blast burn',m:'Silicone burn appliance with blistering, char and wet blood.',w:'Mumbai · 2022'},
+      {s:'sfx',n:1,t:'Facial trauma',m:'Gelatin and silicone build-up, layered fresh and dried blood.',w:'Sydney · 2023'},
+      {s:'sfx',n:2,t:'Creature head',m:'Sculpted in oil clay over a lifecast core, ready for moulding.',w:'Sydney · 2024'},
+      {s:'sfx',n:3,t:'Old-age appliance',m:'Silicone prosthetic, hand-painted, brows punched hair by hair.',w:'Sydney · 2024'},
+      {s:'sfx',n:4,t:'Detainee',m:'Full prosthetic head, sclera lenses, body paint, printed costume.',w:'Studio, Mumbai · 2025'},
+      {s:'sfx',n:5,t:'Flogging',m:'Back lacerations in layered gelatin, applied for continuity across a day.',w:'Sydney · 2024'},
+    ]},
+  'film-television':{
+    title:'Film & Television', short:'Film',
+    intro:'Character and age make-up for Indian television, feature film and commercials. Continuity-safe, camera-tested and built for sixteen-hour days — the credits list runs from Mumbai serials to Village Roadshow.',
+    chap:'Character and age make-up for screen, in Mumbai and Sydney.',
+    cover:{s:'film',n:0},
+    items:[
+      {s:'film',n:0,t:'Old age',m:'Stipple ageing, silicone appliances and hand-laid hair for television.',w:'Mumbai · 2024'},
+      {s:'film',n:1,t:'Period ensemble',m:'Character hair and make-up for a period cast, matched across the ensemble.',w:'Mumbai · 2019'},
+      {s:'film',n:2,t:'Witch',m:'Character make-up: prosthetic nose and chin, aged skin, dentures.',w:'Mumbai · 2019'},
+      {s:'beauty',n:1,t:'Bridal',m:'Bridal hair and make-up with fresh florals, shot for a commercial.',w:'Sydney · 2022'},
+    ]},
+  'casting-sculpting':{
+    title:'Casting & Sculpting', short:'Casting',
+    intro:'The foundation under every prosthetic. Alginate and plaster lifecasting, clay sculpture, mould-making, resin and silicone casting — and, increasingly, appliance cores printed from a scan.',
+    chap:'Lifecasts, moulds, clay reliefs and cast pieces.',
+    cover:{s:'casting',n:2},
+    items:[
+      {s:'casting',n:0,t:'Lion relief',m:'Sculpted in clay, moulded and cast in resin with a cold-cast bronze finish.',w:'Sydney · 2023'},
+      {s:'casting',n:1,t:'Tricolour hands',m:'Alginate lifecast of both hands, cast in pigmented resin.',w:'Mumbai · 2022'},
+      {s:'casting',n:2,t:'Lifecast',m:'Alginate and plaster bandage over face and neck — the first step of every appliance.',w:'Sydney · 2023'},
+      {s:'casting',n:3,t:'Creature sculpt',m:'Clay sculpt with sculpted dentition, keyed for a two-part mould.',w:'Sydney · 2024'},
+    ]},
+  'editorial-fashion':{
+    title:'Editorial & Fashion', short:'Editorial',
+    intro:'Hair and make-up for fashion, beauty and body-art editorials. Gel-lit portraits, underwater work, millinery, and a henna-inspired body-art series shot on moody blue-red grounds.',
+    chap:'Body art, gel-lit portraits, underwater and millinery editorials.',
+    cover:{s:'editorial',n:0},
+    items:[
+      {s:'editorial',n:0,t:'Body-art series I',m:'Henna-inspired body art, chain headpiece; blue and red gels.',w:'Sydney · 2023'},
+      {s:'editorial',n:1,t:'Red study',m:'Gel-lit portrait, braided hair, single red key.',w:'Sydney · 2023'},
+      {s:'editorial',n:2,t:'Colour study',m:'Gel-lit portrait in magenta, groomed beard and braids.',w:'Sydney · 2023'},
+      {s:'editorial',n:3,t:'Beauty editorial',m:'Teal wig, graphic liner, gel-lit beauty.',w:'Sydney · 2023'},
+      {s:'editorial',n:4,t:'Mermaid',m:'Underwater shoot: waterproof make-up and a shell headpiece.',w:'Sydney · 2022'},
+      {s:'editorial',n:5,t:'Millinery',m:'Hair and make-up for a millinery editorial.',w:'Sydney · 2022'},
+      {s:'beauty',n:0,t:'Clean beauty',m:'Skin-first beauty, soft glam.',w:'Sydney · 2022'},
+    ]},
+};
+const DISC_ORDER = ['sfx-prosthetics','film-television','casting-sculpting','editorial-fashion'];
+
+/* credits: source rows normalised. type is inferred from the title; spellings cased. */
+const CREDITS = [
+  {t:'Beco',type:'Commercial',d:'Anirudh More',p:'Dryfit Production',y:'2026',l:'India'},
+  {t:'Asian Paints',type:'Commercial',d:'Shayak Roy',p:'BLTN',y:'2026',l:'India'},
+  {t:'Himalaya Baby Care',type:'Commercial',d:'Dhara',p:'Mothership Production',y:'2026',l:'India'},
+  {t:'Baby Sebamed',type:'Commercial',d:'Indrasish Mukherjee',p:'Leo Burnett',y:'2026',l:'India'},
+  {t:'Johnson’s Baby',type:'Commercial',d:'Gaurav Gupta',p:'Mothership Production',y:'2025',l:'India'},
+  {t:'Rakht Brahmand',type:'Series',d:'Rahi Anil Barve',p:'D2R Films',y:'2025',l:'India'},
+  {t:'The Bengal Files',type:'Feature',d:'Vivek Agnihotri',p:'I Am Buddha',y:'2025',l:'India'},
+  {t:'Personal Trainer',type:'Web series',d:'Amit Khanna',p:'A Square',y:'2024',l:'India'},
+  {t:'3 Monkeys',type:'Poster',d:'Abbas–Mustan',p:'AV Pictures',y:'2024',l:'India'},
+  {t:'Issac’s Dream',type:'Film',d:'ACM',co:true,p:'',y:'2023',l:'Australia'},
+  {t:'The Homestead',type:'Film',d:'Stephanie Todd',p:'',y:'2023',l:'Australia'},
+  {t:'Hieruerark',type:'Film',d:'Baro Lee',p:'',y:'2023',l:'Australia'},
+  {t:'Mad Max',type:'Feature',d:'Mad Max Films',co:true,p:'Village Roadshow',y:'2022',l:'Australia'},
+  {t:'Lucky',type:'Film',d:'',p:'',y:'2022',l:'Australia',flag:'in progress'},
+  {t:'Thief',type:'Film',d:'',p:'',y:'2022',l:'Australia'},
+  {t:'Thinking Straight',type:'Film',d:'Alex',p:'',y:'2022',l:'Australia'},
+  {t:'PUBG Originals: Dosti ka Naya Maidaan',type:'Series',d:'Raghav Subbu & Ruchir Arun',p:'Content Factory',y:'2019–2020',l:'India'},
+  {t:'Yaariyan Dildariyan',type:'Punjabi feature',d:'Dave Sidhu',p:'Captain Cook Films',y:'2019',l:'Australia'},
+  {t:'Savdhaan India',type:'Television',d:'Bombay Show Studio',co:true,p:'',y:'2018',l:'India'},
+  {t:'Ola Cabs',type:'Commercial',d:'',p:'',y:'2021',l:'India'},
+  {t:'7th Sense',type:'Film',d:'Karan Darra',p:'Gaurang Doshi Productions',y:'2021',l:'UAE'},
+  {t:'HSBC',type:'Commercial',d:'Venky',p:'Content Factory',y:'2020',l:'India'},
+  {t:'Danaher',type:'Corporate film',d:'Swapnil Kore',p:'Clematis Communications',y:'2020',l:'India'},
+  {t:'TMF Multi Asset',type:'Commercial',d:'Content Factory',co:true,p:'',y:'2020',l:'India'},
+  {t:'Panasonic A/C',type:'Commercial',d:'Tejender Sharma',p:'Gibbous Films',y:'2020',l:'India'},
+  {t:'SugarBox',type:'Commercial',d:'',p:'',y:'2020',l:'India'},
+  {t:'Ek Brahm Sarvagun Sampanna',type:'Television',d:'Sunny Side Up',co:true,p:'',y:'2019',l:'India'},
+];
+const SELECTED = ['The Bengal Files','Rakht Brahmand','Mad Max','PUBG Originals: Dosti ka Naya Maidaan','Johnson’s Baby','HSBC'];
+
+const POSTS = [
+  {slug:'bridging-the-gap-sfx-and-makeup-prosthetics-in-the-indian-film-industry',
+   t:'Bridging the Gap: SFX and Makeup Prosthetics in the Indian Film Industry', date:'April 2023',
+   s:'Why Indian cinema still treats prosthetics as a last resort, what the Western pipeline does differently, and where the two industries are finally meeting.',
+   sections:['Special effects and make-up in Indian cinema','Differences in SFX and make-up prosthetics between Indian and Western films','Increasing investment in special effects and prosthetics in Indian movies','Techniques and technology in SFX and make-up prosthetics','Educational and training opportunities in India','Collaborations with multinational productions']},
+  {slug:'3d-printing-the-revolutionary-technology-shaping-art-film-and-medicine',
+   t:'3D Printing: The Revolutionary Technology Shaping Art, Film and Medicine', date:'April 2023',
+   s:'A 3D model is produced from digital data and printed one layer at a time — and it has quietly changed how appliance cores, moulds and props get made.',
+   sections:['From digital data to a tangible object','Printing appliance cores from a face scan','Moulds, props and creature parts','What medicine is borrowing from the film pipeline']},
+];
+
+/* ---------------- components ---------------- */
+const IG = 'https://www.instagram.com/_parimiti_sfx_and_prosthetics_/';
+const IMDB = 'https://www.imdb.com/name/nm12573944/';
+function pair(cls=''){ return `<p class="pair credit ${cls}"><a href="${IMDB}" target="_blank" rel="noopener"><b>IMDb</b><span>↗</span></a><a href="${IG}" target="_blank" rel="noopener"><b>Instagram</b><span>↗</span></a></p>`; }
+function plate(s,n,alt){ return `<div class="plate"><img data-i="${s}:${n}" alt="${esc(alt||'')}" decoding="async"></div>`; }
+
+function reel(items, opts={}){
+  const id = opts.id || 'reel';
+  const slides = items.map((it,i)=>`
+    <figure class="slide${i===0?' on':''}" data-i="${i}">
+      ${plate(it.s,it.n,it.t+' — '+it.m)}
+      <figcaption>
+        <span class="t">${esc(it.t)}</span>
+        <span class="credit dim">${esc(it.w)}</span>
+        <span class="m">${esc(it.m)}</span>
+      </figcaption>
+    </figure>`).join('');
+  const dashes = items.map((it,i)=>`<button type="button" class="${i===0?'on':''}" aria-label="Go to ${i+1} of ${items.length}"></button>`).join('');
+  const thumbs = items.map((it,i)=>`<button type="button" class="${i===0?'on':''}" aria-label="${esc(it.t)}"><img data-i="${it.s}:${it.n}" alt="" loading="lazy"></button>`).join('');
+  return `
+  <section class="reel ${opts.cls||''}" id="${id}" aria-roledescription="carousel" aria-label="${esc(opts.label||'Gallery')}">
+    <div class="track">${slides}</div>
+    <div class="reel-ui gut">
+      <span class="credit count" aria-live="polite">01 / ${String(items.length).padStart(2,'0')}</span>
+      <div class="dashes">${dashes}</div>
+      <div class="arrows"><button type="button" data-dir="-1" aria-label="Previous">‹</button><button type="button" data-dir="1" aria-label="Next">›</button></div>
+    </div>
+    ${opts.strip ? `<div class="strip">${thumbs}</div>` : ''}
+  </section>`;
+}
+
+function chapter(key,i){
+  const d = DISC[key];
+  return `
+  <a class="chapter" href="#/${key}/" data-nav>
+    <div class="head"><h2>${amp(d.title)}</h2></div>
+    ${plate(d.cover.s,d.cover.n,d.title)}
+    <div class="sub">
+      <span class="credit dim">${String(d.items.length).padStart(2,'0')} pieces</span>
+      <span class="go">Open <span aria-hidden="true">→</span></span>
+      <p>${esc(d.chap)}</p>
+    </div>
+  </a>`;
+}
+
+function ask(text){
+  return `<section class="ask"><div><h2>Working on something like this?</h2><p>${esc(text)}</p></div><a href="#/contact-us/" data-nav>Enquire →</a></section>`;
+}
+
+function creditMeta(c){
+  const bits = [esc(c.type)];
+  if (c.d) bits.push(c.co ? `<span class="d">${esc(c.d)}</span>` : `Dir. <span class="d">${esc(c.d)}</span>`);
+  if (c.p) bits.push(esc(c.p));
+  if (c.flag) bits.push(`<em>${esc(c.flag)}</em>`);
+  return bits.join(' · ');
+}
+
+function creditsList(){
+  const sorted = CREDITS.slice().sort((a,b)=>{
+    const ya = parseInt(a.y.slice(-4),10), yb = parseInt(b.y.slice(-4),10);
+    return yb - ya || a.t.localeCompare(b.t);
+  });
+  const groups = new Map();
+  for (const c of sorted){ const k = c.y.slice(-4); if(!groups.has(k)) groups.set(k,[]); groups.get(k).push(c); }
+  const counts = {India:0,Australia:0,UAE:0}; CREDITS.forEach(c=>counts[c.l]++);
+  let html = `
+  <section class="credits gut" id="credits">
+    <div class="top">
+      <div>
+        <h2>Credits</h2>
+        <p class="lede">${CREDITS.length} productions, 2018–2026, across two industries: Mumbai's feature, series and commercial work, and Australian film. Sorted newest first. The IMDb profile carries the industry record.</p>
+        ${pair()}
+      </div>
+      <div>
+        <div class="chips" role="group" aria-label="Filter by country">
+          <button type="button" data-loc="all" aria-pressed="true">All <b>${CREDITS.length}</b></button>
+          <button type="button" data-loc="India" aria-pressed="false">India <b>${counts.India}</b></button>
+          <button type="button" data-loc="Australia" aria-pressed="false">Australia <b>${counts.Australia}</b></button>
+          <button type="button" data-loc="UAE" aria-pressed="false">UAE <b>${counts.UAE}</b></button>
+        </div>
+        <p class="legend credit"><span><i style="background:var(--ink)"></i>India</span><span><i></i>Australia</span><span><i style="background:linear-gradient(90deg,var(--ink) 50%,transparent 50%)"></i>UAE</span></p>
+      </div>
+    </div>
+    <div class="ylist">`;
+  for (const [y, rows] of groups){
+    html += `<div class="ygrp" data-year="${y}"><div class="y">${y}<small>${rows.length} ${rows.length===1?'credit':'credits'}</small></div><ol>`;
+    for (const c of rows){
+      html += `<li data-loc="${c.l}"><span class="t">${esc(c.t)}</span><span class="credit loc"><i></i>${esc(c.l)}${c.y.length>4?' · '+esc(c.y):''}</span><span class="m credit">${creditMeta(c)}</span></li>`;
+    }
+    html += `</ol></div>`;
+  }
+  html += `</div></section>`;
+  return html;
+}
+
+/* ---------------- views ---------------- */
+function homeView(){
+  const sel = SELECTED.map(t=>CREDITS.find(c=>c.t===t)).filter(Boolean);
+  return `
+  <div class="view home">
+    <section class="hero">
+      ${reel(HERO,{id:'hero',label:'Recent character work',cls:'hero'})}
+    </section>
+    <section class="statement gut">
+      <h1>Hair, make-up and prosthetics for people who need to look like someone else by call time.</h1>
+      <p>Beauty &amp; Cruor is the studio of Parimiti — SFX artist, sculptor and make-up designer working between Sydney and Mumbai, for film, television, editorial and the occasional creature.</p>
+    </section>
+    ${DISC_ORDER.map(chapter).join('')}
+    <section class="cut gut" aria-labelledby="selh">
+      <h2 id="selh">Selected credits</h2>
+      <p class="lede">A short cut of the 27-production list on the About page — feature, series and national commercials across India and Australia.</p>
+      <ol>${sel.map(c=>`<li><span class="t">${esc(c.t)}</span><span class="credit y">${esc(c.y)}</span><span class="m credit">${creditMeta(c)}</span></li>`).join('')}</ol>
+      <a class="morelink" href="#/about-me/#credits" data-nav>All 27 credits <span class="arr" aria-hidden="true">→</span></a>
+    </section>
+    <a class="teaser gut" href="#/about-me/" data-nav style="text-decoration:none">
+      ${plate('artist',0,'Parimiti')}
+      <div><h2>About Parimiti</h2><p>Trained across hair, make-up and prosthetics; sculpts and casts her own appliances; splits the year between a Sydney studio and Mumbai sets.</p></div>
+    </a>
+    <section class="journal gut">
+      <h2>Journal</h2>
+      <ul class="posts">${POSTS.map(p=>`<li><a href="#/blogs/${p.slug}/" data-nav><span class="t">${esc(p.t)}</span><span class="credit dim">${esc(p.date)}</span><span class="s">${esc(p.s)}</span></a></li>`).join('')}</ul>
+    </section>
+  </div>`;
+}
+
+function discView(key){
+  const d = DISC[key];
+  const idx = DISC_ORDER.indexOf(key);
+  const nextKey = DISC_ORDER[(idx+1)%DISC_ORDER.length];
+  return `
+  <div class="view disc">
+    <header class="dhead gut">
+      <div>
+        <p class="credit dim">${String(d.items.length).padStart(2,'0')} pieces · Sydney / Mumbai</p>
+        <h1>${amp(d.title)}</h1>
+      </div>
+      <p>${esc(d.intro)}</p>
+    </header>
+    ${reel(d.items,{id:'reel-'+key,label:d.title,cls:'wide',strip:true})}
+    <section class="next gut">
+      <p class="credit dim">Next</p>
+      <a href="#/${nextKey}/" data-nav><span class="t"><span>${amp(DISC[nextKey].title)}</span><span aria-hidden="true">→</span></span></a>
+    </section>
+    ${ask('Send dates, city and a line about the brief. Prosthetic builds need lead time for lifecasting and sculpting; make-up days can usually be booked closer in.')}
+  </div>`;
+}
+
+function aboutView(){
+  return `
+  <div class="view">
+    <section class="about">
+      ${plate('artist',0,'Parimiti in her Sydney studio')}
+      <div class="col">
+        <p class="credit dim">About Me</p>
+        <h1>Parimiti</h1>
+        ${pair()}
+        <div class="bio">
+          <p>Hair, make-up and SFX prosthetics artist. Sydney studio, Mumbai sets, and whichever airport is in between.</p>
+          <p>I came up through beauty and bridal work in Mumbai, moved into character make-up for television, and followed it into prosthetics — because the looks I wanted to make could not be done with paint alone. Now most of what I build starts as a lifecast in my own studio: sculpted in clay, moulded, cast in silicone or gelatin, and applied and painted on the day.</p>
+          <p>Since 2018 that has meant serials and features in Mumbai, national commercials for Johnson's, Asian Paints, Panasonic and HSBC, independent film in Sydney, and a season with Village Roadshow on Mad Max. I work in both industries and keep a kit in each.</p>
+        </div>
+        <section class="svc">
+          <h2>What I do</h2>
+          <ul>
+            <li><b>SFX &amp; prosthetics</b><span>Design, sculpt, mould, apply and paint — burns, wounds, ageing, creatures, severed pieces.</span></li>
+            <li><b>Lifecasting &amp; casting</b><span>Alginate and plaster lifecasts; resin, silicone and cold-cast bronze; 3D-printed cores.</span></li>
+            <li><b>Character &amp; age make-up</b><span>For screen, matched for continuity and long days.</span></li>
+            <li><b>Editorial &amp; fashion</b><span>Hair and make-up for shoots, campaigns, runway and body-art editorials.</span></li>
+            <li><b>Bridal &amp; occasion</b><span>Sydney and Mumbai, on location.</span></li>
+          </ul>
+        </section>
+        <section class="cities">
+          <div><h3>Sydney</h3><p>Studio, lifecasting and prosthetic builds. Independent film and editorial.</p></div>
+          <div><h3>Mumbai</h3><p>Television, feature and commercial sets. Character and age make-up.</p></div>
+        </section>
+      </div>
+    </section>
+    ${creditsList()}
+    ${ask('Producers: the full credits list is here so you can check it against your own, and the IMDb profile is one tap away. Ask for references on any production.')}
+  </div>`;
+}
+
+function blogsView(){
+  return `
+  <div class="view blog gut">
+    <p class="credit dim">Blogs</p>
+    <h1>Journal</h1>
+    <p class="lede">Notes from the studio on where prosthetics work is heading — two pieces so far, both from April 2023. New posts will sit here in the same list; there is no separate archive.</p>
+    <ul class="posts" style="margin-top:22px">${POSTS.map(p=>`<li><a href="#/blogs/${p.slug}/" data-nav><span class="t">${esc(p.t)}</span><span class="credit dim">${esc(p.date)}</span><span class="s">${esc(p.s)}</span></a></li>`).join('')}</ul>
+  </div>`;
+}
+
+function postView(slug){
+  const p = POSTS.find(x=>x.slug===slug);
+  if(!p) return blogsView();
+  return `
+  <div class="view post gut">
+    <p class="credit dim">Blogs · ${esc(p.date)}</p>
+    <h1>${esc(p.t)}</h1>
+    <p class="stand">${esc(p.s)}</p>
+    <div class="body">
+      <h2>In this piece</h2>
+      <ul>${p.sections.map(s=>`<li>${esc(s)}</li>`).join('')}</ul>
+      <p class="credit dim">The full text carries over from the existing post unchanged; only the setting is new — a 66-character measure, the same type as the rest of the site, and no sidebar.</p>
+    </div>
+    <a class="back" href="#/blogs/" data-nav>← All posts</a>
+  </div>`;
+}
+
+function contactView(){
+  return `
+  <div class="view contact gut">
+    <div class="left">
+      <p class="credit dim">Contact Us</p>
+      <h1>Enquire</h1>
+      <p class="lede">Film, television, editorial, casting and private commissions — in Sydney, in Mumbai, or wherever the job is. Send dates and a city and I will come back with availability.</p>
+    </div>
+    <ul class="direct">
+      <li><a href="mailto:info@beautyandcruor.com"><span class="v">info@beautyandcruor.com</span><span class="credit dim">Email</span></a></li>
+      <li><a href="https://www.instagram.com/_parimiti_sfx_and_prosthetics_/" target="_blank" rel="noopener"><span class="v">@_parimiti_sfx_and_prosthetics_</span><span class="credit dim">Instagram ↗</span></a></li>
+      <li><a href="${IMDB}" target="_blank" rel="noopener"><span class="v">IMDb — nm12573944</span><span class="credit dim">Profile ↗</span></a></li>
+      <li><span><span class="v">Sydney / Mumbai</span><span class="credit dim">Based</span></span></li>
+    </ul>
+    <form class="form" id="enqform" novalidate>
+      <h2>Or send the brief</h2>
+      <div class="field"><label for="f-name">Name</label><input id="f-name" name="name" autocomplete="name" required></div>
+      <div class="field"><label for="f-email">Email</label><input id="f-email" name="email" type="email" autocomplete="email" required></div>
+      <div class="field"><label for="f-kind">What is it for</label>
+        <select id="f-kind" name="kind">
+          <option>SFX / prosthetics</option><option>Film or television — character / age make-up</option><option>Editorial / fashion</option><option>Lifecast / casting / sculpture</option><option>Bridal / occasion</option><option>Something else</option>
+        </select></div>
+      <div class="two">
+        <div class="field"><label for="f-city">City</label>
+          <select id="f-city" name="city"><option>Sydney</option><option>Mumbai</option><option>Elsewhere</option></select></div>
+        <div class="field"><label for="f-dates">Dates</label><input id="f-dates" name="dates" placeholder="e.g. 12–14 Nov"></div>
+      </div>
+      <div class="field"><label for="f-msg">The brief</label><textarea id="f-msg" name="msg" placeholder="Characters, number of faces, how it will be shot, budget if you have one."></textarea></div>
+      <button class="send" type="submit">Send enquiry <span class="arr" aria-hidden="true">→</span></button>
+      <p class="note">This opens a pre-filled email in your mail app — nothing is stored on the page.</p>
+      <p class="ok" id="formok" hidden></p>
+    </form>
+  </div>`;
+}
+
+function footerHTML(){
+  return `
+  <div class="fgrid">
+    <div>
+      <a class="wm" href="#/" data-nav>Beauty <span class="amp">&amp;</span> Cruor</a>
+      <p class="credit dim" style="margin-top:8px">Cruor, n. — Latin: clotted blood.</p>
+    </div>
+    <ul class="credit">${NAV.map(([h,t])=>`<li><a href="#${h}" data-nav>${amp(t)}</a></li>`).join('')}</ul>
+    <ul class="credit">
+      <li><a href="${IMDB}" target="_blank" rel="noopener">IMDb ↗</a></li>
+      <li><a href="${IG}" target="_blank" rel="noopener">Instagram ↗</a></li>
+      <li><a href="mailto:info@beautyandcruor.com">info@beautyandcruor.com</a></li>
+      <li>Sydney / Mumbai</li>
+    </ul>
+  </div>
+  <p class="small">© Parimiti · Beauty &amp; Cruor</p>
+  <details class="notes">
+    <summary><span class="t">Notes on this direction</span><span class="credit dim"></span></summary>
+    <div class="notes-body">
+      <div>
+        <h3>The mark</h3>
+        <p>The existing logo is a grey script with a lime-green leaf, drawn for light grounds and supplied only as a 711×218 raster. The leaf reads as wellness — it fights a page of burns and lifecasts — and the raster will not hold at the sizes a masthead and a favicon need. This direction retires the leaf and sets the name in Gloock; the ampersand, in cruor red, is the mark. It is the hinge the name is built on, and it works at 12px as well as 120px.</p>
+        <div class="marks">
+          <figure><img data-i="logo:chalk" alt="Existing mark recoloured chalk-on-dark"><figcaption>Existing mark, recoloured for dark grounds. Not used.</figcaption></figure>
+          <figure class="type"><span class="wm">Beauty <span class="amp">&amp;</span> Cruor</span><figcaption>Proposed: type wordmark, ampersand as mark.</figcaption></figure>
+        </div>
+      </div>
+      <div>
+        <h3>Plaster, not black</h3>
+        <p>The last proposal was dark-on-dark and the images sank into it. The work is dark and saturated; on a plaster ground — the colour of a lifecast — every plate reads as a plate. The only colour the interface owns is cruor red, spent on the ampersand and the Enquire button. Everything else is the photographs.</p>
+        <div class="swatches" aria-hidden="true"><i style="background:#E6E3DF"></i><i style="background:#F2F0EC"></i><i style="background:#C9C4BE"></i><i style="background:#7C7672"></i><i style="background:#6A0E19"></i><i style="background:#B3111D"></i><i style="background:#151013"></i></div>
+      </div>
+      <div>
+        <h3>Structure</h3>
+        <ul>
+          <li>Seven top-level pages, matching the live site: About Me, the four disciplines, Blogs, Contact Us. URLs unchanged — /sfx-prosthetics/, /film-television/, /casting-sculpting/, /editorial-fashion/, /about-me/, /blogs/, /contact-us/. This prototype mirrors them after the hash.</li>
+          <li>No separate Work index is introduced. The home page is the index: four chapters, each leading to its discipline, and the menu lists the four flat, as today.</li>
+          <li>Each discipline is the same component — a swipe reel of full-bleed plates with a credit caption and a counter — fed by its own set. Adding a piece is adding a row.</li>
+          <li>IMDb and Instagram are treated as one pair — industry proof on the left, reach on the right — and the pair repeats in the same form beside Parimiti's name, beside the credits, on Contact, in the menu and in the footer. For the build: the JSON-LD <code>Person</code> for Parimiti should list both URLs as <code>sameAs</code>.</li>
+        <li>Credits stay on About because that is where a producer looks for them, and a six-line cut sits on the home page so nobody has to. The list is sorted newest first and grouped by year; the source table was unordered.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Phones first</h3>
+        <p>Reels are native scroll-snap, so swiping costs no script. Motion is spent in two places only: the plate settling as it lands, and the hero advancing until you touch it. There are no scroll reveals. Enquire, Instagram and the menu live in a fixed bar at the bottom, in reach of a thumb. With reduced motion on, nothing moves on its own.</p>
+      </div>
+      <div>
+        <h3>To confirm before build</h3>
+        <ul>
+          <li>Email: the live site lists both info@beautyandcruor.com and info@beautycruor.com. This page uses the first.</li>
+          <li>Credits: "In Progress" appeared in the director column for Lucky and is shown as a status, not a name. Thief, Ola Cabs and SugarBox have no director in the source. The type column (Feature, Series, Commercial…) is inferred from titles and should be checked; spellings of Village Roadshow, Leo Burnett and Savdhaan India were corrected.</li>
+          <li>Captions on the plates are written from the pictures and need Parimiti's own titles, credits and years.</li>
+        </ul>
+      </div>
+    </div>
+  </details>`;
+}
+
+/* ---------------- router ---------------- */
+const app = document.getElementById('app');
+const foot = document.getElementById('foot');
+const topnav = document.getElementById('topnav');
+const menulist = document.getElementById('menulist');
+const menu = document.getElementById('menu');
+const menubtn = document.getElementById('menubtn');
+let cleanup = [];
+
+topnav.innerHTML = NAV.map(([h,t])=>`<a href="#${h}" data-nav data-path="${h}">${amp(t)}</a>`).join('');
+menulist.innerHTML = [['/','Home'],...NAV].map(([h,t],i)=>`<li><a href="#${h}" data-nav data-path="${h}"><span class="credit">${String(i).padStart(2,'0')}</span>${amp(t)}</a></li>`).join('');
+foot.innerHTML = footerHTML();
+hydrate(foot);
+
+function currentPath(){
+  let h = location.hash.replace(/^#/,'');
+  let anchor = '';
+  const m = h.match(/^(.*?\/)#(.*)$/); if(m){ h = m[1]; anchor = m[2]; }
+  if(!h || h === '/') return {path:'/',anchor};
+  if(!h.startsWith('/')) h = '/'+h;
+  if(!h.endsWith('/')) h += '/';
+  return {path:h,anchor};
+}
+
+function render(){
+  cleanup.forEach(f=>f()); cleanup = [];
+  const {path,anchor} = currentPath();
+  let html, key = path;
+  const disc = path.match(/^\/(sfx-prosthetics|film-television|casting-sculpting|editorial-fashion)\/$/);
+  const post = path.match(/^\/blogs\/([a-z0-9-]+)\/$/);
+  if(path === '/') html = homeView();
+  else if(disc) html = discView(disc[1]);
+  else if(path === '/about-me/') html = aboutView();
+  else if(path === '/blogs/') html = blogsView();
+  else if(post){ html = postView(post[1]); key = '/blogs/'; }
+  else if(path === '/contact-us/') html = contactView();
+  else { html = homeView(); key = '/'; }
+  app.innerHTML = html;
+  hydrate(app);
+  document.querySelectorAll('[data-path]').forEach(a=>{ if(a.dataset.path===key) a.setAttribute('aria-current','page'); else a.removeAttribute('aria-current'); });
+  document.title = (key==='/' ? 'Beauty & Cruor' : ((NAV.find(n=>n[0]===key)||['','Beauty & Cruor'])[1] + ' — Beauty & Cruor'));
+  closeMenu();
+  app.querySelectorAll('.reel').forEach(initReel);
+  initCredits(); initForm();
+  if(anchor){ const el = document.getElementById(anchor); if(el) el.scrollIntoView({behavior:REDUCED?'auto':'smooth',block:'start'}); }
+  else window.scrollTo({top:0,behavior:'auto'});
+}
+
+function hydrate(root){
+  root.querySelectorAll('img[data-i]').forEach(img=>{
+    const [s,n] = img.dataset.i.split(':');
+    img.src = src(s, s==='logo' ? n : Number(n));
+    img.removeAttribute('data-i');
+  });
+}
+
+/* ---------------- reel behaviour ---------------- */
+function initReel(el){
+  const track = el.querySelector('.track');
+  const slides = [...track.querySelectorAll('.slide')];
+  const dashes = [...el.querySelectorAll('.dashes button')];
+  const thumbs = [...el.querySelectorAll('.strip button')];
+  const count = el.querySelector('.count');
+  const arrows = [...el.querySelectorAll('.arrows button')];
+  const n = slides.length;
+  let cur = 0, timer = null;
+
+  const goto = (i, smooth=true) => {
+    i = Math.max(0, Math.min(n-1, i));
+    const s = slides[i];
+    track.scrollTo({left: s.offsetLeft - (parseFloat(getComputedStyle(track).scrollPaddingLeft)||0), behavior:(smooth && !REDUCED)?'smooth':'auto'});
+  };
+  const setActive = i => {
+    if(i===cur && slides[i].classList.contains('on')) return;
+    cur = i;
+    slides.forEach((s,k)=>s.classList.toggle('on',k===i));
+    dashes.forEach((d,k)=>d.classList.toggle('on',k===i));
+    thumbs.forEach((t,k)=>{ t.classList.toggle('on',k===i); if(k===i) t.scrollIntoView({block:'nearest',inline:'nearest',behavior:'auto'}); });
+    if(count) count.textContent = String(i+1).padStart(2,'0')+' / '+String(n).padStart(2,'0');
+    arrows.forEach(b=>{ const d=+b.dataset.dir; b.disabled = (d<0 && i===0) || (d>0 && i===n-1); });
+  };
+  const io = new IntersectionObserver(entries=>{
+    let best=null;
+    entries.forEach(e=>{ if(e.isIntersecting && (!best || e.intersectionRatio>best.intersectionRatio)) best=e; });
+    if(best && best.intersectionRatio>=0.55) setActive(+best.target.dataset.i);
+  },{root:track,threshold:[0.55,0.75,1]});
+  slides.forEach(s=>io.observe(s));
+
+  dashes.forEach((d,i)=>d.addEventListener('click',()=>{stop();goto(i);}));
+  thumbs.forEach((t,i)=>t.addEventListener('click',()=>{stop();goto(i);}));
+  arrows.forEach(b=>b.addEventListener('click',()=>{stop();goto(cur + (+b.dataset.dir));}));
+  track.addEventListener('keydown',e=>{ if(e.key==='ArrowRight'){stop();goto(cur+1);} if(e.key==='ArrowLeft'){stop();goto(cur-1);} });
+  track.tabIndex = 0;
+
+  /* hero auto-advance: only on phones, only until touched, only while visible */
+  const stop = () => { if(timer){ clearInterval(timer); timer=null; } };
+  if(el.classList.contains('hero') && !REDUCED && !matchMedia('(min-width:880px)').matches){
+    const start = () => { stop(); timer = setInterval(()=>goto((cur+1)%n), 4200); };
+    ['pointerdown','touchstart','wheel'].forEach(ev=>track.addEventListener(ev, stop, {passive:true}));
+    const vis = new IntersectionObserver(es=>es.forEach(e=>{ if(e.isIntersecting){ if(!timer && !track.dataset.touched) start(); } else stop(); }),{threshold:.4});
+    track.addEventListener('pointerdown',()=>{track.dataset.touched='1';},{passive:true});
+    vis.observe(track);
+    cleanup.push(()=>{stop();vis.disconnect();});
+  }
+  cleanup.push(()=>io.disconnect());
+  setActive(0);
+}
+
+/* ---------------- credits filter ---------------- */
+function initCredits(){
+  const root = document.getElementById('credits'); if(!root) return;
+  const chips = [...root.querySelectorAll('.chips button')];
+  chips.forEach(ch=>ch.addEventListener('click',()=>{
+    const loc = ch.dataset.loc;
+    chips.forEach(c=>c.setAttribute('aria-pressed', c===ch ? 'true':'false'));
+    root.querySelectorAll('.ygrp').forEach(g=>{
+      let shown=0;
+      g.querySelectorAll('li').forEach(li=>{ const h = loc!=='all' && li.dataset.loc!==loc; li.classList.toggle('hide',h); if(!h) shown++; });
+      g.classList.toggle('empty',shown===0);
+      const small = g.querySelector('.y small'); if(small) small.textContent = shown+' '+(shown===1?'credit':'credits');
+    });
+  }));
+}
+
+/* ---------------- contact form ---------------- */
+function initForm(){
+  const f = document.getElementById('enqform'); if(!f) return;
+  f.addEventListener('submit',e=>{
+    e.preventDefault();
+    const v = id => (document.getElementById(id).value||'').trim();
+    const ok = document.getElementById('formok');
+    if(!v('f-name') || !v('f-email')){ ok.hidden=false; ok.textContent='Add your name and an email address so I can reply.'; document.getElementById(v('f-name')?'f-email':'f-name').focus(); return; }
+    const subject = `Enquiry — ${v('f-kind')} — ${v('f-city')}${v('f-dates')?' — '+v('f-dates'):''}`;
+    const body = `Name: ${v('f-name')}\nEmail: ${v('f-email')}\nFor: ${v('f-kind')}\nCity: ${v('f-city')}\nDates: ${v('f-dates')||'—'}\n\n${v('f-msg')}`;
+    location.href = 'mailto:info@beautyandcruor.com?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body);
+    ok.hidden=false; ok.textContent='Opening your mail app with the enquiry filled in. If nothing opens, email info@beautyandcruor.com directly.';
+  });
+}
+
+/* ---------------- menu ---------------- */
+function openMenu(){ menu.hidden=false; menubtn.setAttribute('aria-expanded','true'); document.body.style.overflow='hidden'; }
+function closeMenu(){ menu.hidden=true; menubtn.setAttribute('aria-expanded','false'); document.body.style.overflow=''; }
+menubtn.addEventListener('click',()=> menu.hidden ? openMenu() : closeMenu());
+document.addEventListener('keydown',e=>{ if(e.key==='Escape' && !menu.hidden) closeMenu(); });
+matchMedia('(min-width:880px)').addEventListener('change',e=>{ if(e.matches) closeMenu(); });
+
+window.addEventListener('hashchange', render);
+render();
+})();
+</script>

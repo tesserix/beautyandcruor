@@ -1,0 +1,286 @@
+<title>Parimiti Instagram Plan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600&family=Archivo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<style>
+:root{
+  --paper:#F7F5F1; --card:#FFFFFF; --ink:#191614; --ink-2:#4A443E; --ash:#736C64;
+  --line:#E0DBD3; --line-2:#CFC8BE;
+  --accent:#7A1F1A; --accent-soft:#F3E4E2;
+  --ok:#3F6B4F; --ok-soft:#E4EFE7;
+  --amber:#8A6A1F; --amber-soft:#F6EDD8;
+  --bar:#C9C2B8;
+  --f-head:"Newsreader",Georgia,serif;
+  --f-body:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#141210; --card:#1C1917; --ink:#F0ECE6; --ink-2:#CFC8BF; --ash:#9A928A;
+    --line:#2E2925; --line-2:#3C352F;
+    --accent:#E0857D; --accent-soft:#33211F;
+    --ok:#8FC7A2; --ok-soft:#1E2A22;
+    --amber:#D9B45E; --amber-soft:#2B2517;
+    --bar:#443E37;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#141210; --card:#1C1917; --ink:#F0ECE6; --ink-2:#CFC8BF; --ash:#9A928A;
+  --line:#2E2925; --line-2:#3C352F;
+  --accent:#E0857D; --accent-soft:#33211F;
+  --ok:#8FC7A2; --ok-soft:#1E2A22;
+  --amber:#D9B45E; --amber-soft:#2B2517;
+  --bar:#443E37;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);
+  font-family:var(--f-body);font-size:16px;line-height:1.6;-webkit-text-size-adjust:100%}
+.wrap{max-width:820px;margin-inline:auto;padding-inline:20px;padding-block:0 90px}
+h1{font-family:var(--f-head);font-weight:600;font-size:clamp(30px,7vw,44px);line-height:1.05;
+  margin:0 0 12px;letter-spacing:-.015em;text-wrap:balance}
+h2{font-family:var(--f-head);font-weight:600;font-size:clamp(22px,4.6vw,29px);margin:0;line-height:1.15}
+h3{font-size:16px;font-weight:600;margin:0 0 6px}
+p{margin:0 0 14px;color:var(--ink-2);max-width:68ch}
+.kicker{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ash);margin:0 0 14px}
+header{padding-block:38px 6px}
+section{margin-top:40px}
+.sechead{display:flex;align-items:baseline;gap:12px;margin-bottom:8px}
+.secnum{font-family:var(--f-mono);font-size:13px;color:var(--ash)}
+.note{color:var(--ash);font-size:14.5px;max-width:66ch;margin:0 0 20px}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:9px;padding:18px;margin-bottom:12px}
+.card.pick{border-left:3px solid var(--ok)}
+.tag{font-family:var(--f-mono);font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;
+  padding:4px 8px;border-radius:99px;white-space:nowrap}
+.tag.ok{background:var(--ok-soft);color:var(--ok)}
+.tag.warn{background:var(--amber-soft);color:var(--amber)}
+.tag.bad{background:var(--accent-soft);color:var(--accent)}
+.cardtop{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:10px}
+
+pre{font-family:var(--f-mono);font-size:13.5px;line-height:1.65;background:var(--paper);
+  border:1px solid var(--line-2);border-radius:6px;padding:13px;margin:0 0 8px;
+  white-space:pre-wrap;overflow-wrap:anywhere;color:var(--ink)}
+.count{font-family:var(--f-mono);font-size:11.5px;color:var(--ash)}
+.copy{background:var(--ink);color:var(--paper);border:0;border-radius:6px;padding:9px 14px;
+  font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;min-height:40px}
+.copy:hover{opacity:.88}
+.copy:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+
+/* min-width so the reach bars stay readable; the wrapper scrolls on a phone */
+table{width:100%;min-width:540px;border-collapse:collapse;font-size:14.5px}
+.scroller{overflow-x:auto;border:1px solid var(--line);border-radius:9px;background:var(--card)}
+th,td{padding:11px 13px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ash);font-weight:500}
+tr:last-child td{border-bottom:0}
+td.n{font-variant-numeric:tabular-nums;text-align:right}
+.meter{display:block;height:6px;border-radius:99px;background:var(--bar);min-width:2px}
+td.bar{width:38%;min-width:120px;white-space:normal}
+
+ul{margin:10px 0 0;padding-left:0;list-style:none;display:grid;gap:9px}
+li{color:var(--ink-2);padding-left:17px;position:relative;max-width:66ch}
+li::before{content:"";position:absolute;left:0;top:.66em;width:7px;height:1px;background:var(--accent)}
+li b{color:var(--ink);font-weight:600}
+
+.reel{display:grid;gap:4px;padding:14px;border-bottom:1px solid var(--line)}
+.reel:last-child{border-bottom:0}
+.reel .t{font-weight:600;font-size:15px}
+.reel .m{font-family:var(--f-mono);font-size:11.5px;color:var(--ash)}
+.stack{background:var(--card);border:1px solid var(--line);border-radius:9px;overflow:hidden}
+
+footer{margin-top:44px;padding-top:20px;border-top:1px solid var(--line);color:var(--ash);font-size:13.5px}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(12px);
+  background:var(--ink);color:var(--paper);padding:12px 18px;border-radius:8px;font-size:14px;
+  opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:50}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+@media (prefers-reduced-motion:reduce){*{transition-duration:.001ms!important}}
+</style>
+
+<div class="wrap">
+<header>
+  <p class="kicker">Beauty &amp; Cruor · @_parimiti_sfx_and_prosthetics_</p>
+  <h1>Instagram plan</h1>
+  <p>Four things: the bio, what to pin, a showreel cut from reels that already exist, and what to
+     post going forward. The last one is based on how her own 39 reels actually performed, not on
+     general advice.</p>
+</header>
+
+<section>
+  <div class="sechead"><span class="secnum">01</span><h2>Bio and name</h2></div>
+  <p class="note">The name field is searchable; the handle is not, in the same way. Today it reads
+    <em>Parimitii</em> with two i's, and at 56 characters it truncates on most phones. The bio is
+    six job titles in a list with no credits and nothing to act on.</p>
+
+  <div class="card">
+    <div class="cardtop"><h3>Name field</h3><span class="tag bad">Change</span></div>
+    <pre id="n0">Parimitii | Makeup and SFX artist | Sydney🇦🇺and Mumbai🇮🇳</pre>
+    <p class="count">56 characters — truncates, and the spelling doesn't match her own credit.</p>
+  </div>
+
+  <div class="card pick">
+    <div class="cardtop"><h3>Name field — recommended</h3><span class="tag ok">Use this</span></div>
+    <pre id="n1">Parimiti · Prosthetics &amp; SFX</pre>
+    <div class="row"><button class="copy" data-copy="n1">Copy</button>
+      <span class="count">28 characters · fits without truncating</span></div>
+    <p style="margin-top:10px">Prosthetics leads, per the priority order. The cities move to the bio —
+      they're useful information but they shouldn't eat the name field.</p>
+  </div>
+
+  <div class="card">
+    <div class="cardtop"><h3>Bio — option A, credit-led</h3><span class="tag ok">Recommended</span></div>
+    <pre id="b1">Prosthetics &amp; SFX for film and television
+The Bengal Files · Rakht Brahmand · Johnson's
+Sydney &amp; Mumbai · Enquiries below</pre>
+    <div class="row"><button class="copy" data-copy="b1">Copy</button>
+      <span class="count">121 / 150 characters</span></div>
+    <p style="margin-top:10px">Leads with recognisable titles, which is what a producer scans for.
+      Room to swap in the Mad Max title once she confirms it — that one name is worth more than the
+      other three combined, which is exactly why we're not printing it unverified.</p>
+  </div>
+
+  <div class="card">
+    <div class="cardtop"><h3>Bio — option B, capability-led</h3><span class="tag warn">Alternative</span></div>
+    <pre id="b2">Prosthetic &amp; SFX artist · Makeup · Hair
+Lifecast, sculpt, mould, apply — all in-house
+Film &amp; TV · Sydney &amp; Mumbai · Educator</pre>
+    <div class="row"><button class="copy" data-copy="b2">Copy</button>
+      <span class="count">124 / 150 characters</span></div>
+    <p style="margin-top:10px">Better if she wants teaching and appliance enquiries too, not only
+      production bookings. "All in-house" is the line that matters — it means a character never gets
+      handed between studios.</p>
+  </div>
+
+  <ul>
+    <li><b>Category:</b> currently "Makeup Artist". Instagram offers <b>Special Effects</b> — a closer match, and it changes who gets suggested the account.</li>
+    <li><b>Link:</b> already points at beautyandcruor.com. Correct. Instagram now allows up to five links — add the IMDb profile as a second one.</li>
+    <li><b>Nail Artist</b> sits oddly next to feature-film prosthetics. Worth dropping from the bio unless it's bringing in work.</li>
+  </ul>
+</section>
+
+<section>
+  <div class="sechead"><span class="secnum">02</span><h2>What the numbers say</h2></div>
+  <p class="note">All 39 reels on the account, grouped by what they are. Median plays, because a
+    couple of outliers would otherwise drag the average.</p>
+
+  <div class="scroller">
+    <table>
+      <thead><tr><th>Type</th><th class="n">Reels</th><th class="n">Median plays</th><th class="bar">Reach</th><th class="n">Likes / 1k</th></tr></thead>
+      <tbody id="perf"></tbody>
+    </table>
+  </div>
+
+  <ul style="margin-top:18px">
+    <li><b>Narrative pieces reach 22× everything else.</b> "The Track" parts 1 and 2 and "The Saturation Point" — short horror films with a story, not clips of work — took 78,589 plays at the median against an account median of 3,504.</li>
+    <li><b>Process content is her worst performer.</b> 812 median plays. Sculpting timelapses and studio clips are what artists enjoy posting and what almost nobody watches.</li>
+    <li><b>Longer reels do much better.</b> 40 seconds and over: 11,231 median. Under 20 seconds: 1,277. That is the opposite of the usual short-form advice, and it's consistent across three years.</li>
+    <li><b>Reach has nothing to do with her following.</b> 2,778 followers; the best reel hit 122,255 plays — 44× that. Everything arrives through Explore and Reels, so posting for the existing audience is the wrong instinct.</li>
+    <li><b>Credit posts get the least reach of anything.</b> The Bengal Files post drew 419 plays. Instagram will not carry her credits — that is the website's job. Worth being clear about that division.</li>
+  </ul>
+</section>
+
+<section>
+  <div class="sechead"><span class="secnum">03</span><h2>Pin these three</h2></div>
+  <p class="note">Instagram pins three posts to the top of the grid. Right now a producer opening
+    the profile sees whatever she happened to post last. These three, in this order, cover reach,
+    craft and credibility.</p>
+  <div class="stack">
+    <div class="reel"><span class="t">1 · The Track, Part 2</span>
+      <span class="m">122,255 plays · 945 likes · 69s · Aug 2024</span>
+      <span>Her highest-reaching work by a wide margin, and it reads as film rather than as a makeup clip.</span></div>
+    <div class="reel"><span class="t">2 · The Saturation Point</span>
+      <span class="m">18,467 plays · 498 likes · 47s · Mar 2024</span>
+      <span>She has a concept-and-direction credit on it. A director seeing that reads someone who understands coverage and lighting, not only appliances.</span></div>
+    <div class="reel"><span class="t">3 · Lion prosthetics, sculpt to application</span>
+      <span class="m">4,377 plays · 138 likes · 41s · Apr 2024</span>
+      <span>Lower reach, but it is the only post showing the full pipeline on one piece. It answers "can she actually build this" in forty seconds.</span></div>
+  </div>
+  <ul>
+    <li><b>Do not pin the appliance posts.</b> That collaboration has ended, and they point at a business she is no longer part of.</li>
+  </ul>
+</section>
+
+<section>
+  <div class="sechead"><span class="secnum">04</span><h2>The showreel</h2></div>
+  <p class="note">Almost every serious effects site opens with a reel. She doesn't have one cut —
+    but there's about ten minutes of usable footage already on the account. This is a suggested
+    running order for a 60–75 second cut, to sit on the website and as a fourth pinned post.</p>
+  <div class="stack">
+    <div class="reel"><span class="t">0:00–0:08 — cold open</span><span class="m">from The Track pt 2</span>
+      <span>Straight into the strongest finished character. No logo, no titles yet.</span></div>
+    <div class="reel"><span class="t">0:08–0:15 — the turn</span><span class="m">lion build</span>
+      <span>Clay sculpt cutting to the same piece applied. The one moment that proves the pipeline.</span></div>
+    <div class="reel"><span class="t">0:15–0:35 — range</span><span class="m">Saturation Point, burns, age, creature</span>
+      <span>Four or five characters, roughly four seconds each. Range is the argument here, not any single piece.</span></div>
+    <div class="reel"><span class="t">0:35–0:50 — on set</span><span class="m">Johnson's Baby, Bengal Files</span>
+      <span>Real productions with real crews. Shifts her from artist to someone who works on scale.</span></div>
+    <div class="reel"><span class="t">0:50–1:05 — close</span><span class="m">card</span>
+      <span>Name, the three strongest titles, Sydney and Mumbai, and the website. Held long enough to read.</span></div>
+  </div>
+  <ul>
+    <li><b>No music with a vocal.</b> It dates the reel and fights the images.</li>
+    <li><b>Cut a 16:9 version too.</b> The vertical one suits Instagram; producers watch on laptops.</li>
+    <li><b>Before/after belongs inside the reel</b>, as a wipe or split screen — that is the industry convention, and it's why the website doesn't need a clever slider.</li>
+    <li><b>Check releases first.</b> Footage showing a named actor's real face next to the character is a rights question.</li>
+  </ul>
+</section>
+
+<section>
+  <div class="sechead"><span class="secnum">05</span><h2>What to post</h2></div>
+  <p class="note">The account currently talks to other makeup artists. The people who hire her are
+    directors, producers and actors. Those want different things.</p>
+  <ul>
+    <li><b>Make narrative pieces the habit, not the exception.</b> Three in three years produced her three best results by an order of magnitude. One every six to eight weeks would change the account. They don't need a budget — The Track is two people and a camera.</li>
+    <li><b>Stop posting raw process.</b> Fold it into a narrative piece instead: the sculpt earns its place as the first four seconds of a transformation, not as its own post.</li>
+    <li><b>Write a real first line.</b> Most captions are hashtag strings. The Johnson's post — full crew credited by name and role — is the best-written thing on the account, and it's the format a producer recognises. Do that every time.</li>
+    <li><b>Tag the production and crew.</b> It's how her work travels to people who hire, and how she shows she knows call-sheet etiquette.</li>
+    <li><b>Keep the trigger warnings.</b> She already does it and it's the right instinct — it signals someone who thinks about where work is shown.</li>
+    <li><b>Length: aim 40–70 seconds.</b> Her own numbers support it, consistently.</li>
+    <li><b>Let go of follower count.</b> At 2,778 followers she reached 122k people. The metric that matters is whether a producer who lands on the profile makes contact — so the grid's job is to survive ten seconds of scrutiny and hand them to the website.</li>
+  </ul>
+</section>
+
+<footer>
+  Performance figures from all 39 reels on the account, September 2026. Categories are our
+  grouping, not Instagram's. The Mad Max title is deliberately left out of the bio until Parimiti
+  confirms it.
+</footer>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+  var PERF=[
+    ["Narrative",3,78589,8.1],["Showcase",1,9080,23.7],["Appliance (ended)",9,7300,10.8],
+    ["Celebrity",1,7025,47.4],["Craft clip",6,6471,14.2],["Credit post",2,1442,34.0],
+    ["Personal",8,1194,50.7],["Process",7,812,36.5],["Educational",2,730,68.0]
+  ];
+  var max=Math.max.apply(null,PERF.map(function(r){return r[2];}));
+  var tb=document.getElementById('perf');
+  PERF.forEach(function(r){
+    var tr=document.createElement('tr');
+    var pct=Math.max(2,Math.round(r[2]/max*100));
+    tr.innerHTML='<td>'+r[0]+'</td><td class="n">'+r[1]+'</td><td class="n">'+r[2].toLocaleString()+
+      '</td><td class="bar"><span class="meter" style="width:'+pct+'%"></span></td>'+
+      '<td class="n">'+r[3].toFixed(1)+'</td>';
+    tb.appendChild(tr);
+  });
+
+  function toast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('on');
+    clearTimeout(t._h);t._h=setTimeout(function(){t.classList.remove('on');},2200);}
+  document.addEventListener('click',function(e){
+    var b=e.target.closest('[data-copy]'); if(!b) return;
+    var txt=document.getElementById(b.getAttribute('data-copy')).innerText;
+    function fb(){var ta=document.createElement('textarea');ta.value=txt;ta.style.position='fixed';
+      ta.style.opacity='0';document.body.appendChild(ta);ta.select();
+      try{document.execCommand('copy');toast('Copied');}catch(err){toast('Select and copy manually');}
+      document.body.removeChild(ta);}
+    if(navigator.clipboard&&navigator.clipboard.writeText)
+      navigator.clipboard.writeText(txt).then(function(){toast('Copied');}).catch(fb);
+    else fb();
+  });
+})();
+</script>

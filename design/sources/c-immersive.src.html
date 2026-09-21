@@ -1,0 +1,580 @@
+<title>Beauty &amp; Cruor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600&display=swap">
+
+<style>
+/* ===========================================================================
+   Beauty & Cruor — full-bleed immersive gallery
+   No page furniture. The photograph fills the screen; the only persistent
+   interface is the mark and one Enquire control. Horizontal swipe moves
+   through a body of work, vertical scroll moves between disciplines.
+   Single visual world (a darkened gallery), so no theme switching — every
+   colour is painted explicitly.
+   =========================================================================== */
+:root{
+  --ink:#07070A;
+  --ink-2:#0E0E12;
+  --chalk:#F2EFEA;
+  --ash:#8C8780;
+  --leaf:#7AC943;       /* the mark's own green — the only inherited brand colour */
+  /* --ash is tuned for solid ink; text sitting over photographs needs more */
+  --ash-img:#D6D1CA;
+  --cruor:#B3111D;
+  --hair:#232329;
+  --f:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --gut:18px;
+  --hud:58px;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;background:var(--ink);color:var(--chalk);
+  font-family:var(--f);font-size:15px;line-height:1.55;
+  -webkit-font-smoothing:antialiased;overflow:hidden;
+}
+img{display:block;max-width:100%}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--leaf);outline-offset:3px}
+
+.lab{
+  font-size:10.5px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--ash);
+}
+.num{font-variant-numeric:tabular-nums;letter-spacing:.12em}
+
+/* ---- the mark --------------------------------------------------------- */
+.mark{display:block;height:26px;width:auto}
+.mark svg{height:100%;width:auto;display:block}
+
+/* ---- persistent HUD --------------------------------------------------- */
+.hud{
+  position:fixed;inset:0 0 auto 0;height:var(--hud);z-index:40;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 var(--gut);
+  background:linear-gradient(rgba(7,7,10,.92) 0%,rgba(7,7,10,.66) 62%,rgba(7,7,10,0) 100%);
+  pointer-events:none;
+}
+.hud > *{pointer-events:auto}
+/* the mark in the bar only appears once the opening frame is behind you */
+.hud .mark{opacity:0;transition:opacity .45s ease}
+.hud.solid .mark{opacity:1}
+.menubtn{
+  display:flex;align-items:center;gap:9px;padding:12px 4px;min-height:44px;
+  font-size:10.5px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;
+}
+.menubtn .bars{display:grid;gap:3.5px;width:17px}
+.menubtn .bars i{height:1.5px;background:var(--chalk);display:block}
+
+/* ---- enquire ---------------------------------------------------------- */
+.enquire{
+  position:fixed;right:var(--gut);bottom:calc(var(--gut) + env(safe-area-inset-bottom));
+  z-index:70;display:inline-flex;align-items:center;gap:10px;
+  background:var(--cruor);color:var(--chalk);text-decoration:none;
+  padding:14px 20px;border-radius:999px;
+  font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;
+  box-shadow:0 10px 34px rgba(0,0,0,.5);
+}
+.enquire:hover{background:#C8151F}
+
+/* ---- the deck --------------------------------------------------------- */
+.deck{
+  height:100dvh;overflow-y:auto;overflow-x:hidden;
+  scroll-snap-type:y mandatory;scroll-behavior:smooth;
+  overscroll-behavior-y:contain;scrollbar-width:none;
+}
+.deck::-webkit-scrollbar{display:none}
+.panel{height:100dvh;scroll-snap-align:start;position:relative;overflow:hidden}
+
+.reel{
+  display:flex;height:100%;overflow-x:auto;overflow-y:hidden;
+  scroll-snap-type:x mandatory;scrollbar-width:none;-ms-overflow-style:none;
+  overscroll-behavior-x:contain;
+}
+.reel::-webkit-scrollbar{display:none}
+.frame{flex:0 0 100%;height:100%;margin:0;scroll-snap-align:start;position:relative;background:var(--ink-2)}
+.frame img{width:100%;height:100%;object-fit:cover}
+
+/* one readable strip at the foot of each panel, not a caption per image */
+/* A full-height scrim crushed the lower half of every image. Instead the text
+   block carries its own backing, sized to itself: the picture keeps more of its
+   frame AND the type gets more contrast, because the work runs from near-black
+   to bright skin tones. */
+.plate{
+  position:absolute;left:0;right:0;bottom:0;z-index:3;
+  padding:56px var(--gut) calc(78px + env(safe-area-inset-bottom));
+  display:grid;gap:7px;pointer-events:none;
+  background:linear-gradient(rgba(7,7,10,0) 0%,rgba(7,7,10,.74) 30%,rgba(7,7,10,.95) 100%);
+}
+.plate h2{
+  font-size:clamp(26px,8vw,40px);font-weight:400;letter-spacing:-.015em;
+  line-height:1;margin:0;
+}
+.plate .cap{color:var(--ash-img);font-size:13px;margin:0;max-width:46ch;min-height:2.9em}
+.meter{display:flex;align-items:center;gap:12px;margin-top:3px}
+.meter .bars{display:flex;gap:4px;flex:1;max-width:190px}
+.meter .bars i{height:2px;flex:1;background:rgba(242,239,234,.45);transition:background .3s}
+.meter .bars i.on{background:var(--chalk)}
+
+/* opening panel: the mark at scale, nothing else */
+.open-plate{
+  position:absolute;left:0;right:0;bottom:0;z-index:3;
+  padding:70px var(--gut) calc(86px + env(safe-area-inset-bottom));
+  display:grid;gap:14px;pointer-events:none;
+  background:linear-gradient(rgba(7,7,10,0) 0%,rgba(7,7,10,.66) 34%,rgba(7,7,10,.92) 100%);
+}
+.open-plate .mark{height:clamp(44px,15vw,74px)}
+.open-plate p{margin:0}
+.cue{
+  display:flex;align-items:center;gap:9px;color:var(--ash);
+  font-size:10.5px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;
+}
+.cue .ln{width:26px;height:1px;background:var(--ash);display:block}
+
+/* ---- overlays (menu + the reading views) ------------------------------ */
+.sheet{
+  position:fixed;inset:0;z-index:60;background:var(--ink);
+  overflow-y:auto;overscroll-behavior:contain;
+}
+.sheet-top{
+  position:sticky;top:0;z-index:2;display:flex;align-items:center;
+  justify-content:space-between;padding:0 var(--gut);height:var(--hud);
+  background:linear-gradient(rgba(7,7,10,.95),rgba(7,7,10,.72));
+}
+.closebtn{font-size:10.5px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;
+  padding:12px 6px;min-height:44px;min-width:44px;display:inline-flex;align-items:center;justify-content:flex-end}
+
+.navlist{display:grid;padding:14px var(--gut) 0}
+.navlist a{
+  display:flex;align-items:baseline;gap:14px;text-decoration:none;
+  padding:15px 0;border-bottom:1px solid var(--hair);
+}
+.navlist a .n{font-size:10px;color:var(--ash);letter-spacing:.14em;min-width:22px}
+.navlist a .t{font-size:clamp(22px,7vw,30px);line-height:1.05}
+.navlist a:hover .t{color:var(--leaf)}
+.pair{display:flex;gap:8px;padding:22px var(--gut) 40px;flex-wrap:wrap}
+.pair a{
+  flex:1 1 140px;text-align:center;text-decoration:none;border:1px solid var(--hair);
+  padding:13px 12px;font-size:10.5px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;
+}
+.pair a:hover{border-color:var(--chalk)}
+
+.view-body{padding:8px var(--gut) 90px;max-width:760px}
+.view-body h1{font-size:clamp(30px,10vw,46px);font-weight:400;line-height:1;margin:14px 0 16px;letter-spacing:-.02em}
+.view-body p{color:var(--ash);margin:0 0 13px;max-width:56ch}
+.view-body p strong{color:var(--chalk);font-weight:500}
+.portrait{aspect-ratio:4/5;background:var(--ink-2);margin:0 0 20px}
+.portrait img{width:100%;height:100%;object-fit:cover}
+
+/* credits */
+.filters{display:flex;flex-wrap:wrap;gap:6px;margin:18px 0 6px}
+.filters button{
+  border:1px solid var(--hair);padding:13px 13px;min-height:44px;
+  font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--ash);
+}
+.filters button[aria-pressed="true"]{background:var(--chalk);color:var(--ink);border-color:var(--chalk)}
+.yr{display:flex;align-items:baseline;gap:12px;margin:26px 0 4px;padding-top:14px;border-top:1px solid var(--hair)}
+.yr h3{font-size:24px;font-weight:400;margin:0;letter-spacing:-.01em}
+.credit{padding:12px 0;border-bottom:1px solid rgba(35,35,41,.7);display:grid;gap:3px}
+.credit .t{font-size:17px;line-height:1.2}
+.credit .m{font-size:11px;letter-spacing:.06em;color:var(--ash);text-transform:uppercase}
+.credit .m b{color:var(--chalk);font-weight:500}
+.flag{color:var(--leaf)}
+
+/* contact */
+.form{display:grid;gap:11px;margin-top:18px;max-width:440px}
+.form label{display:grid;gap:6px}
+.form input,.form textarea,.form select{
+  background:var(--ink-2);border:1px solid var(--hair);color:var(--chalk);
+  padding:12px;min-height:46px;font:inherit;font-size:14px;border-radius:2px;width:100%;
+}
+.form button[type=submit]{
+  background:var(--chalk);color:var(--ink);padding:14px;border-radius:2px;
+  font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;margin-top:4px;
+}
+.locs{display:grid;gap:10px;margin-top:26px;max-width:440px}
+.loc{border-left:2px solid var(--leaf);padding:3px 0 3px 14px}
+.loc h3{margin:0;font-size:17px;font-weight:500}
+.loc p{margin:2px 0 0;font-size:13px}
+
+.postlist{display:grid;gap:0;margin-top:10px}
+.postlist a{display:grid;gap:5px;padding:18px 0;border-bottom:1px solid var(--hair);text-decoration:none}
+.postlist .t{font-size:19px;line-height:1.25}
+
+/* ---- desktop ---------------------------------------------------------- */
+@media (min-width:900px){
+  :root{--gut:38px;--hud:72px}
+  /* portrait sources would crop to a letterbox sliver in a landscape viewport,
+     so show three full-height plates instead of one — still edge to edge */
+  .frame{flex-basis:33.3333%}
+  .deck{scroll-snap-type:y proximity}
+  .plate{padding-bottom:46px;max-width:52ch}
+  .plate h2{font-size:46px}
+  .open-plate{padding-bottom:54px}
+  .mark{height:30px}
+  .navlist{max-width:620px}
+  .view-body{padding-inline:var(--gut)}
+  .enquire{bottom:var(--gut)}
+}
+@media (min-width:1500px){
+  .frame{flex-basis:25%}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .deck{scroll-behavior:auto}
+  *{transition-duration:.001ms!important;animation-duration:.001ms!important}
+}
+.vh{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;
+  overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+</style>
+
+<header class="hud" id="hud">
+  <span class="mark" id="hudmark">__LOGO__</span>
+  <button class="menubtn" id="menubtn" aria-haspopup="dialog">
+    <span class="bars" aria-hidden="true"><i></i><i></i><i></i></span> Menu
+  </button>
+</header>
+
+<a class="enquire" href="#/contact-us/" id="enquirebtn">Enquire</a>
+
+<main class="deck" id="deck"></main>
+
+<!-- menu -->
+<div class="sheet" id="menu" role="dialog" aria-modal="true" aria-label="Menu" hidden>
+  <div class="sheet-top">
+    <span class="mark">__LOGO__</span>
+    <button class="closebtn" data-close>Close</button>
+  </div>
+  <nav class="navlist" id="navlist"></nav>
+  <div class="pair">
+    <a href="https://www.imdb.com/name/nm12573944/" target="_blank" rel="noopener">IMDb ↗</a>
+    <a href="#" target="_blank" rel="noopener">Instagram ↗</a>
+  </div>
+</div>
+
+<!-- about -->
+<div class="sheet" id="about" role="dialog" aria-modal="true" aria-label="About" hidden>
+  <div class="sheet-top"><span class="lab">About</span><button class="closebtn" data-close>Close</button></div>
+  <div class="view-body">
+    <figure class="portrait" id="portrait"></figure>
+    <h1>Parimiti</h1>
+    <p><strong>Hair, make-up and SFX prosthetics.</strong> Sydney and Mumbai.</p>
+    <p>Lifecast, sculpt, mould, run, apply — the whole pipeline under one pair of hands, so a character never gets handed between studios.</p>
+    <p>Feature film, television, editorial and live performance. Trained at SLA and the Australian Academy of Cinemagraphic Make-up.</p>
+    <div class="pair" style="padding-inline:0">
+      <a href="#/credits/">27 Credits →</a>
+      <a href="https://www.imdb.com/name/nm12573944/" target="_blank" rel="noopener">IMDb ↗</a>
+    </div>
+  </div>
+</div>
+
+<!-- credits -->
+<div class="sheet" id="credits" role="dialog" aria-modal="true" aria-label="Credits" hidden>
+  <div class="sheet-top"><span class="lab">Credits</span><button class="closebtn" data-close>Close</button></div>
+  <div class="view-body">
+    <h1>Credits</h1>
+    <p>27 productions, 2018&ndash;2026, across the Indian and Australian industries.</p>
+    <div class="filters" id="filters"></div>
+    <div id="creditlist"></div>
+  </div>
+</div>
+
+<!-- blogs -->
+<div class="sheet" id="blogs" role="dialog" aria-modal="true" aria-label="Journal" hidden>
+  <div class="sheet-top"><span class="lab">Journal</span><button class="closebtn" data-close>Close</button></div>
+  <div class="view-body">
+    <h1>Journal</h1>
+    <div class="postlist">
+      <a href="#/blogs/">
+        <span class="lab num">29 April 2023</span>
+        <span class="t">3D printing: the revolutionary technology shaping art, film and medicine</span>
+      </a>
+      <a href="#/blogs/">
+        <span class="lab num">23 April 2023</span>
+        <span class="t">Bridging the gap: SFX and make-up prosthetics in the Indian film industry</span>
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- contact -->
+<div class="sheet" id="contact" role="dialog" aria-modal="true" aria-label="Contact" hidden>
+  <div class="sheet-top"><span class="lab">Contact</span><button class="closebtn" data-close>Close</button></div>
+  <div class="view-body">
+    <h1>Enquire</h1>
+    <p>Production bookings, prosthetic commissions and editorial.</p>
+    <form class="form" onsubmit="return false;">
+      <label><span class="lab">Name</span><input id="f-name" type="text" value="Priya Raghavan"></label>
+      <label><span class="lab">Email</span><input id="f-email" type="email" value="priya@northlightfilms.in"></label>
+      <label><span class="lab">Enquiry</span>
+        <select id="f-type">
+          <option>Prosthetics — feature film</option>
+          <option>Television series</option>
+          <option>Editorial shoot</option>
+          <option>Other</option>
+        </select>
+      </label>
+      <label><span class="lab">Details</span><textarea id="f-msg" rows="4">Six-week shoot in Mumbai from March — ageing appliances for two leads plus trauma work.</textarea></label>
+      <button type="submit">Send enquiry</button>
+      <span class="lab" style="letter-spacing:.06em;text-transform:none">Posts to Resend · no server</span>
+    </form>
+    <div class="locs">
+      <div class="loc"><h3>Sydney</h3><p>New South Wales · Studio &amp; workshop</p></div>
+      <div class="loc"><h3>Mumbai</h3><p>Maharashtra · Film &amp; television</p></div>
+    </div>
+  </div>
+</div>
+
+<script id="imgdata" type="application/json">__IMAGES__</script>
+<script id="creditdata" type="application/json">__CREDITS__</script>
+<script>
+(function(){
+  var IMG = JSON.parse(document.getElementById('imgdata').textContent);
+  var CREDITS = JSON.parse(document.getElementById('creditdata').textContent);
+  var $ = function(id){ return document.getElementById(id); };
+  // reuse the mark already inlined in the HUD rather than shipping it twice
+  var LOGO = $('hudmark').innerHTML;
+
+  /* ---- panels ---------------------------------------------------------- */
+  var PANELS = [
+    { route:'/',                    set:'hero',      title:null, open:true,
+      caps:['Berserker — blood, wound appliances and matted fur',
+            'Axeman — full-torso blood over layered silicone wounds',
+            'Blue deity — full-body paint, sculpted horns and prosthetic ears',
+            'Shieldmaiden — blood, grime and fur built to read in firelight',
+            'Inmate — full-body paint and prosthetic ears'] },
+    { route:'/sfx-prosthetics/',    set:'sfx',       title:'SFX &amp; Prosthetics',
+      caps:['Burn appliance','Facial trauma build','Creature sculpt, applied','Age prosthetic','Back lacerations','Skull build','Full-body trauma','Wound appliance'] },
+    { route:'/casting-sculpting/',  set:'casting',   title:'Casting &amp; Sculpting',
+      caps:['Lion relief, clay','Hand casts','Lifecast bust','Creature sculpt','Infant sculpt','3D-printed appliance core'] },
+    { route:'/editorial-fashion/',  set:'editorial', extra:'beauty', title:'Editorial &amp; Fashion',
+      caps:['Body-art series','Gel portrait','Colour study','Beauty editorial','Underwater','Millinery','Body art, detail','Series portrait',
+            'Bridal beauty','Natural beauty','Studio beauty'] },
+    { route:'/film-television/',    set:'film',      title:'Film &amp; Television',
+      caps:['Age make-up','Period ensemble','Character design','Age make-up, detail','Continuity look'] }
+  ];
+
+  var deck = $('deck');
+
+  PANELS.forEach(function(p, pi){
+    var sec = document.createElement('section');
+    sec.className = 'panel';
+    sec.setAttribute('data-route', p.route);
+    sec.id = 'panel-' + pi;
+
+    var reel = document.createElement('div');
+    reel.className = 'reel';
+    reel.setAttribute('role','group');
+    reel.tabIndex = 0;
+    reel.setAttribute('aria-roledescription','carousel');
+    reel.setAttribute('aria-label', p.title ? p.title.replace('&amp;','&') : 'Recent work');
+
+    var items = IMG[p.set].concat(p.extra ? IMG[p.extra] : []);
+    items.forEach(function(im, i){
+      var fig = document.createElement('figure');
+      fig.className = 'frame';
+      var el = document.createElement('img');
+      el.src = im.uri;
+      el.alt = (p.caps && p.caps[i]) ? p.caps[i] : 'Character and prosthetic work';
+      el.decoding = 'async';
+      fig.appendChild(el);
+      reel.appendChild(fig);
+    });
+    sec.appendChild(reel);
+
+    if (p.open) {
+      var op = document.createElement('div');
+      op.className = 'open-plate';
+      op.innerHTML =
+        '<span class="mark">' + LOGO + '</span>' +
+        '<p class="lab" style="letter-spacing:.22em">Parimiti &middot; Sydney / Mumbai</p>' +
+        '<span class="cue"><i class="ln"></i> Swipe &middot; Scroll</span>';
+      sec.appendChild(op);
+    } else {
+      var pl = document.createElement('div');
+      pl.className = 'plate';
+      pl.innerHTML =
+        '<span class="lab num">' + String(pi).padStart(2,'0') + ' &middot; Discipline</span>' +
+        '<h2>' + p.title + '</h2>' +
+        '<p class="cap"></p>' +
+        '<div class="meter"><span class="lab num counter"></span><span class="bars"></span></div>';
+      sec.appendChild(pl);
+
+      var bars = pl.querySelector('.bars');
+      items.forEach(function(_, i){
+        var b = document.createElement('i');
+        if (i === 0) b.className = 'on';
+        bars.appendChild(b);
+      });
+
+      var cap = pl.querySelector('.cap');
+      var counter = pl.querySelector('.counter');
+      var n = items.length;
+      var sync = function(){
+        // frame width varies by breakpoint (1 up on phones, 3-4 across on desktop);
+        // guard the divisor — on first paint the frame can still measure 0
+        var fw = reel.firstChild.offsetWidth || reel.clientWidth || 1;
+        var i = Math.round(reel.scrollLeft / fw);
+        if (!isFinite(i)) i = 0;
+        i = Math.max(0, Math.min(n - 1, i));
+        cap.textContent = (p.caps && p.caps[i]) ? p.caps[i] : '';
+        cap.setAttribute('aria-hidden','true');   // the image alt already says this
+        counter.textContent = String(i + 1).padStart(2,'0') + ' / ' + String(n).padStart(2,'0');
+        [].forEach.call(bars.children, function(b, bi){ b.className = bi === i ? 'on' : ''; });
+      };
+      reel.addEventListener('scroll', sync, { passive:true });
+      sync();
+      // frames measure 0 until layout settles, and their width changes at breakpoints
+      window.addEventListener('load', sync);
+      window.addEventListener('resize', sync);
+    }
+    deck.appendChild(sec);
+  });
+
+  /* ---- HUD mark fades in once the opening frame is behind you ---------- */
+  var hud = $('hud');
+  deck.addEventListener('scroll', function(){
+    hud.classList.toggle('solid', deck.scrollTop > window.innerHeight * 0.55);
+  }, { passive:true });
+
+  /* ---- menu ------------------------------------------------------------ */
+  var NAV = [
+    ['SFX &amp; Prosthetics','/sfx-prosthetics/'],
+    ['Casting &amp; Sculpting','/casting-sculpting/'],
+    ['Editorial &amp; Fashion','/editorial-fashion/'],
+    ['Film &amp; Television','/film-television/'],
+    ['About','/about-me/'],
+    ['Credits','/credits/'],
+    ['Journal','/blogs/'],
+    ['Contact','/contact-us/']
+  ];
+  var navlist = $('navlist');
+  NAV.forEach(function(item, i){
+    var a = document.createElement('a');
+    a.href = '#' + item[1];
+    a.innerHTML = '<span class="n num">' + String(i+1).padStart(2,'0') + '</span><span class="t">' + item[0] + '</span>';
+    navlist.appendChild(a);
+  });
+
+  /* ---- portrait -------------------------------------------------------- */
+  var pim = document.createElement('img');
+  pim.src = IMG.artist[0].uri;
+  pim.alt = 'Parimiti in the studio';
+  $('portrait').appendChild(pim);
+
+  /* ---- credits --------------------------------------------------------- */
+  function inferType(t){
+    var s = t.toLowerCase();
+    if (s.indexOf('commercial') > -1) return 'Commercial';
+    if (s.indexOf('web series') > -1) return 'Web series';
+    if (s.indexOf('poster') > -1) return 'Poster';
+    return 'Production';
+  }
+  var creditlist = $('creditlist'), filters = $('filters');
+  var locs = {};
+  CREDITS.forEach(function(c){ locs[c.location] = (locs[c.location]||0)+1; });
+  var filterState = 'All';
+
+  function renderCredits(){
+    creditlist.innerHTML = '';
+    var rows = CREDITS.filter(function(c){ return filterState === 'All' || c.location === filterState; });
+    // source order is not chronological; sort newest first
+    rows.sort(function(a,b){ return (parseInt(b.year,10)||0) - (parseInt(a.year,10)||0); });
+    var year = null;
+    rows.forEach(function(c){
+      if (c.year !== year) {
+        year = c.year;
+        var h = document.createElement('div');
+        h.className = 'yr';
+        h.innerHTML = '<h3>' + year + '</h3>';
+        creditlist.appendChild(h);
+      }
+      var d = document.createElement('div');
+      d.className = 'credit';
+      var bits = [inferType(c.title)];
+      // "In Progress" sits in the director column in the source — it's a status
+      if (c.director && c.director.toLowerCase() === 'in progress') bits.push('<span class="flag">In progress</span>');
+      else if (c.director) bits.push('Dir. <b>' + c.director + '</b>');
+      if (c.production) bits.push(c.production);
+      bits.push(c.location);
+      d.innerHTML = '<span class="t">' + c.title + '</span><span class="m">' + bits.join(' &middot; ') + '</span>';
+      creditlist.appendChild(d);
+    });
+  }
+  [['All', CREDITS.length]].concat(Object.keys(locs).map(function(k){ return [k, locs[k]]; }))
+    .forEach(function(f){
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = f[0] + '  ' + f[1];
+      b.setAttribute('aria-pressed', f[0] === 'All' ? 'true' : 'false');
+      b.addEventListener('click', function(){
+        filterState = f[0];
+        [].forEach.call(filters.children, function(x){ x.setAttribute('aria-pressed', x === b ? 'true':'false'); });
+        renderCredits();
+      });
+      filters.appendChild(b);
+    });
+  renderCredits();
+
+  /* ---- routing --------------------------------------------------------- */
+  var VIEWS = { '/about-me/':'about', '/credits/':'credits', '/blogs/':'blogs', '/contact-us/':'contact' };
+  var lastOpener = null;
+  function closeAll(){
+    ['menu','about','credits','blogs','contact'].forEach(function(id){ $(id).hidden = true; });
+    document.body.style.overflow = 'hidden';
+    deck.inert = false; $('hud').inert = false;
+    $('menubtn').setAttribute('aria-expanded','false');
+    $('enquirebtn').hidden = false;
+  }
+  /* Escape used to close a sheet without clearing the hash. The router only runs
+     on hashchange, so re-tapping Enquire fired nothing and the site's single
+     conversion control stayed dead for the rest of the session. */
+  function dismiss(){
+    closeAll();
+    if (VIEWS[location.hash.replace(/^#/,'')]) history.replaceState(null,'','#/');
+    if (lastOpener && document.contains(lastOpener)) lastOpener.focus();
+    lastOpener = null;
+  }
+  function openSheet(id){
+    closeAll();
+    var sh = $(id);
+    sh.hidden = false; sh.scrollTop = 0;
+    deck.inert = true; $('hud').inert = true;
+    if (id === 'contact') $('enquirebtn').hidden = true;
+    var close = sh.querySelector('[data-close]');
+    if (close) close.focus();
+  }
+  var REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)');
+  function route(){
+    var h = location.hash.replace(/^#/, '') || '/';
+    closeAll();
+    if (VIEWS[h]) { openSheet(VIEWS[h]); return; }
+    var idx = PANELS.findIndex(function(p){ return p.route === h; });
+    if (idx > -1) {
+      var el = $('panel-' + idx);
+      if (el) deck.scrollTo({ top: el.offsetTop, behavior: REDUCED.matches ? 'auto' : 'smooth' });
+    }
+  }
+  window.addEventListener('hashchange', route);
+
+  $('menubtn').addEventListener('click', function(){
+    lastOpener = $('menubtn');
+    openSheet('menu');
+    $('menubtn').setAttribute('aria-expanded','true');
+  });
+  document.addEventListener('click', function(e){
+    if (e.target.closest('[data-close]')) { dismiss(); return; }
+    /* remember what opened a sheet so focus can go back there on close */
+    var trigger = e.target.closest('a[href^="#"],button');
+    if (trigger && !trigger.hasAttribute('data-close')) lastOpener = trigger;
+    /* A click to the hash we're already on fires no hashchange, so route()
+       would never run. Replaces the old navlist-only setTimeout workaround. */
+    var a = e.target.closest('a[href^="#"]');
+    if (a && a.getAttribute('href') === location.hash) { e.preventDefault(); route(); }
+  });
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape') dismiss(); });
+
+  route();
+})();
+</script>

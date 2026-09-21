@@ -1,0 +1,20 @@
+node_modules/
+.DS_Store
+.next/
+out/
+
+# Reference capture — large, regenerable from the live site while it exists.
+# Keep manifests and parsed data (they are the durable record); ignore the bulk.
+capture/assets/uploads/
+capture/screens/
+capture/contactsheets/*.jpg
+capture/audit/*.png
+capture/*.html
+capture/meta/home.html
+
+# Generated image derivatives — rebuilt by `npm run images`
+public/img/
+src/generated/
+
+# Prototype bundles — rebuilt from design/sources by build-imm.mjs
+capture/proto-images.json
