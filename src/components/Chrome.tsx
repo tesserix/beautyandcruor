@@ -24,7 +24,7 @@ export function Chrome({ solidMark = true }: { solidMark?: boolean }) {
           aria-label={`${SITE.name} — home`}
           style={{ opacity: solidMark ? 1 : 0, transition: "opacity .45s" }}
         >
-          <Logo className="h-[26px] w-auto md:h-[30px]" />
+          <Logo className="h-[26px] md:h-[30px]" />
         </Link>
         <nav className="pointer-events-auto hidden items-center gap-6 md:flex">
           {DISCIPLINES.map((d) => (

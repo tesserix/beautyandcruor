@@ -26,7 +26,7 @@ export default function Home() {
           className="flex min-h-[78svh] flex-col justify-end"
           style={{ paddingInline: "var(--gut)", paddingBottom: "96px", paddingTop: "var(--hud)" }}
         >
-          <Logo className="h-[clamp(44px,15vw,74px)] w-auto" />
+          <Logo className="h-[clamp(44px,15vw,74px)]" />
           <h1 className="mt-4 font-display text-[clamp(30px,7vw,52px)] leading-[1.03] font-600 max-w-[16ch]">
             {SITE.tagline}
           </h1>

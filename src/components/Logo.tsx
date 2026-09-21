@@ -1,21 +1,50 @@
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
-
 /**
- * The brand mark, traced from the raster original to two paths so the script
- * and the leaf recolour independently (--logo-ink / --logo-leaf).
+ * The brand mark.
  *
- * Inlined rather than <img> so it inherits colour and needs no extra request.
- * Read at build time; this is a server component.
+ * Served as an external file rather than inlined. Inlining cost 29KB of path
+ * data twice per page — once in the markup and again serialized into the RSC
+ * payload — which was most of the homepage's HTML weight. As a file it is
+ * fetched once and cached across every page.
+ *
+ * Colour comes from a CSS mask, so the mark takes `currentColor` and works on
+ * any ground without shipping a second asset. That also makes it monochrome,
+ * which is what both design reviews recommended: the lime leaf reads as a
+ * wellness brand against burns and trauma work.
+ *
+ * Use `tone="brand"` for the two-colour original where the green is wanted.
  */
-const svg = readFileSync(join(process.cwd(), "brand/logo.min.svg"), "utf8");
+type Props = {
+  className?: string;
+  tone?: "current" | "brand";
+  title?: string;
+};
 
-export function Logo({ className }: { className?: string }) {
+export function Logo({ className, tone = "current", title = "Beauty & Cruor" }: Props) {
+  if (tone === "brand") {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img src="/brand/logo.svg" alt={title} className={className} width={1067} height={327} />
+    );
+  }
+
   return (
     <span
+      role="img"
+      aria-label={title}
       className={className}
-      style={{ display: "block", ["--logo-ink" as string]: "var(--color-chalk)" }}
-      dangerouslySetInnerHTML={{ __html: svg }}
+      style={{
+        display: "block",
+        aspectRatio: "1067 / 327",
+        backgroundColor: "currentColor",
+        WebkitMaskImage: "url(/brand/logo-mask.svg)",
+        maskImage: "url(/brand/logo-mask.svg)",
+        WebkitMaskRepeat: "no-repeat",
+        maskRepeat: "no-repeat",
+        WebkitMaskSize: "contain",
+        maskSize: "contain",
+        WebkitMaskPosition: "center",
+        maskPosition: "center",
+      }}
     />
   );
 }
