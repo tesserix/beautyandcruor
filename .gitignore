@@ -18,3 +18,7 @@ src/generated/
 
 # Prototype bundles — rebuilt from design/sources by build-imm.mjs
 capture/proto-images.json
+
+# Next.js / TS build artefacts
+tsconfig.tsbuildinfo
+next-env.d.ts

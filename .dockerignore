@@ -1,0 +1,16 @@
+node_modules
+.next
+out
+.git
+.github
+
+# Reference capture — hundreds of MB, not needed to build
+capture/
+design/
+docs/
+deliverables/
+brand/*.png
+
+*.md
+!README.md
+.DS_Store

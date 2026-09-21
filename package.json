@@ -2,13 +2,36 @@
   "name": "beautyandcruor",
   "version": "0.1.0",
   "private": true,
-  "type": "module",
   "scripts": {
+    "dev": "next dev -p 3010",
+    "build": "next build",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
     "images": "node scripts/images.mjs",
-    "images:sample": "node scripts/images.mjs --sample"
+    "images:sample": "node scripts/images.mjs --sample",
+    "content:posts": "node scripts/import-posts.mjs",
+    "serve:nginx": "docker build -t bac-web . && docker run --rm -p 8080:8080 bac-web"
   },
   "dependencies": {
-    "p-limit": "^7.3.3",
-    "sharp": "^0.35.4"
+    "embla-carousel-react": "^8.6.0",
+    "framer-motion": "^12.23.12",
+    "next": "~16.2.11",
+    "react": "19.2.1",
+    "react-dom": "19.2.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.0.10",
+    "gray-matter": "^4.0.3",
+    "next-mdx-remote": "^5.0.0",
+    "p-limit": "^7.1.1",
+    "sharp": "^0.35.4",
+    "tailwindcss": "^4",
+    "turndown": "^7.2.4",
+    "typescript": "^5"
   }
 }
