@@ -4,6 +4,8 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { Credits } from "@/components/Credits";
 import { SITE, LOCATIONS } from "@/lib/site";
 import { getCredits } from "@/lib/credits";
+import { artistPortrait } from "@/lib/galleries";
+import { Picture } from "@/components/Picture";
 
 export const metadata: Metadata = {
   title: "About",
@@ -13,10 +15,21 @@ export const metadata: Metadata = {
 };
 
 export default function About() {
+  const portrait = artistPortrait();
   return (
     <>
       <Chrome />
       <main style={{ paddingTop: "var(--hud)" }}>
+        {portrait && (
+          <Picture
+            imageKey={portrait}
+            alt={`${SITE.artist} in the studio`}
+            size="portrait"
+            priority
+            className="block w-full md:float-right md:ml-8 md:w-[38%]"
+            imgClassName="w-full h-auto"
+          />
+        )}
         <section style={{ paddingInline: "var(--gut)" }} className="pt-10">
           <p className="lab">About</p>
           <h1 className="mt-2 font-display text-[clamp(32px,9vw,56px)] leading-[1.02] font-600">

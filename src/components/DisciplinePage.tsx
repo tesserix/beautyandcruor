@@ -1,37 +1,62 @@
+import Link from "next/link";
 import { Chrome } from "./Chrome";
 import { SiteFooter } from "./SiteFooter";
-import type { Discipline } from "@/lib/site";
+import { WorkReel } from "./WorkReel";
+import { DISCIPLINES, type Discipline } from "@/lib/site";
+import { galleryFor } from "@/lib/galleries";
 
 /**
- * One component for all four disciplines, fed different content. They are the
- * same kind of page and should not drift apart.
- *
- * TODO(content): the work grid is intentionally empty until the client
- * confirms the real edit, the real titles and the alt text. Rendering invented
- * captions was flagged in review and must not ship.
+ * One component for all four disciplines. Full-bleed reel filling the
+ * viewport, then the title block, then the next discipline — so the work is
+ * the first and largest thing, and the words sit under it.
  */
 export function DisciplinePage({ discipline }: { discipline: Discipline }) {
+  const keys = galleryFor(discipline.slug);
+  const i = DISCIPLINES.findIndex((d) => d.slug === discipline.slug);
+  const next = DISCIPLINES[(i + 1) % DISCIPLINES.length];
+
   return (
     <>
       <Chrome />
-      <main style={{ paddingTop: "var(--hud)" }}>
-        <section style={{ paddingInline: "var(--gut)" }} className="pt-10 pb-6">
-          <p className="lab">Discipline</p>
-          <h1 className="mt-2 font-display text-[clamp(32px,9vw,56px)] leading-[1.02] font-600">
-            {discipline.title}
-          </h1>
-          <p className="mt-4 max-w-[52ch] text-ash">{discipline.blurb}</p>
+      <main>
+        <h1 className="vh">{discipline.title}</h1>
+
+        <section className="relative h-[100svh]" aria-label={discipline.title}>
+          {keys.length > 0 ? (
+            <WorkReel imageKeys={keys} label={discipline.title} priorityFirst />
+          ) : (
+            <div className="grid h-full place-items-center text-ash">No work selected yet</div>
+          )}
+          <div
+            className="pointer-events-none absolute inset-x-0 z-[4]"
+            style={{ bottom: "calc(120px + env(safe-area-inset-bottom))", paddingInline: "var(--gut)" }}
+          >
+            <p className="lab num">{String(i + 1).padStart(2, "0")} · Discipline</p>
+            <p
+              className="mt-1.5 font-display font-600 leading-[1.02]"
+              style={{ fontSize: "clamp(30px,8vw,52px)" }}
+            >
+              {discipline.title}
+            </p>
+          </div>
         </section>
 
-        <section
-          aria-label={`${discipline.title} work`}
-          style={{ paddingInline: "var(--gut)" }}
-          className="pb-24"
-        >
-          <p className="lab">Selected work</p>
-          <p className="mt-3 max-w-[52ch] text-ash">
-            Awaiting the confirmed edit, titles and credits.
+        <section style={{ paddingInline: "var(--gut)" }} className="py-12">
+          <p className="max-w-[52ch] text-ash">{discipline.blurb}</p>
+          <p className="lab mt-6">
+            {keys.length} works ·{" "}
+            <span className="text-ash-img">titles and credits pending confirmation</span>
           </p>
+          <Link
+            href={`/${next.slug}/`}
+            className="lab mt-10 flex items-baseline gap-3 border-t border-hair pt-6 no-underline hover:text-chalk"
+          >
+            Next
+            <span className="font-display text-[clamp(20px,5vw,28px)] normal-case tracking-normal text-chalk">
+              {next.title}
+            </span>
+            →
+          </Link>
         </section>
       </main>
       <SiteFooter />
