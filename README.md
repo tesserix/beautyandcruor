@@ -3,9 +3,15 @@
 Rebuilding the portfolio of **Parimiti**, a hair, makeup and SFX prosthetics artist working
 between Sydney and Mumbai, replacing a WordPress + Elementor build that is being decommissioned.
 
-**Status:** in build. The app is scaffolded and built to the D10 structure — credits as their
-own route, a "For Production" block, a showreel slot, the Journal demoted. Nine routes export
-statically and the build is clean.
+**Status:** deployed and publicly reachable at
+**<https://beautyandcruor.tesserix.app>** — a staging host on the GKE cluster. The production
+domain is untouched: `beautyandcruor.com` still serves the old WordPress site at Hostinger, and
+is cut over only when the rebuild is signed off (see `docs/OPEN-QUESTIONS.md`).
+
+Built to the D10 structure — credits as their own route, a "For Production" block, a showreel
+slot, the Journal demoted. 212 published images wired in, categorised from the live site's own
+discipline pages, served from GCS behind a rights gate that refuses anything she never published.
+CI builds and pushes on every merge; ArgoCD deploys the chart from `tesserix-k8s`.
 
 What is left is mostly **not ours**: roles for the 27 credits, which credits lead, the booking
 facts, alt text for 290 images. Those are in

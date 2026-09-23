@@ -71,6 +71,79 @@ Nothing here is a design decision. These are facts only she has.
 - ~~Typography pass~~ — Eczar / Archivo / IBM Plex Mono.
 - ~~Dockerfile (multi-stage → nginx) and `nginx.conf`~~ handling trailing slashes plus 410s.
 
+**The route to launch**
+
+Four phases. Her answers are the long pole, so **the questionnaire goes out now** and runs in
+parallel with everything else rather than being a phase of its own.
+
+*Phase 1 — the contact path. Launch-blocking, and partly ours.*
+
+The site exists to get her booked, and today **there is no working way to contact her.**
+`EnquiryForm` has `ENDPOINT = ""`, so submitting does nothing; the failure message says "email or
+call instead" and neither `SITE.email` nor `SITE.phone` is published. A producer who wants to
+hire her reaches a dead end on the one page that converts. Ours: stand up the endpoint — the
+options are already weighed in `EnquiryForm.tsx`, with the team's existing `notification-service`
+preferred. Hers: questions 5 and 6.
+
+*Phase 2 — what we can do without her.*
+
+- **Alt text.** Currently positional: `"SFX & Prosthetics, work 11 of 52"`. Useless to a screen
+  reader, worthless for image search, and the reason Lighthouse accessibility cannot reach 100.
+  Draft from the imagery for her to correct.
+- **SEO and AI-crawler surface** — see the section below; several gaps are ours alone.
+- **JS budget.** 185 KB gzipped against a 150 KB target. Almost none of it is application code.
+- **Favicon.** `/favicon.ico` 404s. Entangled with the logo question, since the mark is a wide
+  script signature and illegible at 32px.
+- **Page weight.** Film & TV is 364 KB raw / 59 KB gzipped HTML, mostly srcset URLs across 86
+  images plus inlined LQIPs.
+
+*Phase 3 — incorporate her answers, then polish.*
+
+Roles against all 27 credits is the single highest-leverage change (question 1). Film & TV also
+needs curating: 86 frames, mostly behind-the-scenes, chair shots and headshots rather than
+character work — and it is the first category a producer clicks.
+
+*Phase 4 — flip the production URL.*
+
+Only once the contact path works, alt text is authored, roles are in, and Film & TV is curated.
+The mechanics are staged and rehearsed — see "The cutover, already prepared" below.
+
+---
+
+## SEO and AI-crawler optimisation
+
+D9 says the audience is directors and producers. The discovery path that matters is not only
+Google: a producer asking an assistant *"who did the prosthetics on The Bengal Files"* should get
+her name. That is won with structured, machine-readable credits — which is the same work that
+wins search.
+
+**What exists:** static export (fast, fully crawlable), `sitemap.ts`, `robots.ts`, `Person` and
+two `LocalBusiness` schemas, per-page titles, descriptions and canonicals.
+
+**Gaps, in leverage order:**
+
+1. **No per-credit structured data.** The credits page carries only `Person` and `LocalBusiness`
+   — the same JSON-LD as every other page. 27 credits with roles, years, directors and production
+   companies, marked up as `CreativeWork`/`Movie`/`TVSeries` with her role, is exactly what an
+   assistant needs to answer a "who did X" question, and what earns rich results. Blocked on
+   question 1 for roles, but the scaffolding can be built now.
+2. **No `og:image`.** Every share of this site — WhatsApp, Slack, LinkedIn, a producer forwarding
+   it — renders as a bare text card. For a visual portfolio that is a straightforward loss.
+3. **Positional alt text.** Same item as Phase 2; it is both an accessibility and an image-search
+   failure.
+4. **`breadcrumbSchema` is written but never used.** No page emits it.
+5. **`llms.txt` does not exist.** An emerging convention for telling AI crawlers what a site is
+   and what matters on it. Cheap, and well suited to a site whose value is a credits list.
+6. **robots.txt says nothing about AI crawlers.** It is `Allow: /` for everything. The Cloudflare
+   zone is set to allow Search and Agent crawlers and **block Training** — robots.txt should say
+   the same thing, or the two signals disagree.
+
+**A trap while the site is on the staging host:** `robots.txt`, `sitemap.xml` and every canonical
+point at `https://beautyandcruor.com` — the old WordPress site — because `SITE.url` is the
+production domain. The staging host is fully crawlable and advertises canonicals for a different
+site. Add `noindex` for the staging host until the cutover, or accept that anything indexed points
+at WordPress.
+
 **Still ours**
 
 - **JS budget.** 185 KB gzipped against a 150 KB target. Almost none of it is application code —
@@ -82,3 +155,44 @@ Nothing here is a design decision. These are facts only she has.
 - Re-capture the 1920 homepage properly — the split-slider defeats `fullPage` screenshots.
 - Decide whether to obtain the WXR export for the Testimonials CPT. Low value given the Portfolio
   CPT turned out to be empty demo content, but it is the only route to Testimonials.
+
+---
+
+## The cutover, already prepared
+
+The DNS work is staged and verified, so the flip is a sequence rather than a project.
+
+`beautyandcruor.com` is registered at Hostinger but its DNS was never managed there — the domain
+sits on Cloudflare nameservers that Hostinger assigned, in a Cloudflare account nobody here
+controls. Hostinger's own panel says so: *"DNS is managed at another provider."*
+
+A replacement zone is built in the estate Cloudflare account (the one holding `tesserix.app`),
+status `pending` and therefore inert. All 25 records were verified byte-identical to the live
+zone, and every one is DNS-only so nothing starts proxying the WordPress site the moment the
+nameservers move. DNSSEC is off, which removes the failure mode that takes a domain down
+completely during a nameserver change.
+
+Order on the day:
+
+1. Nameservers at Hostinger → `algin.ns.cloudflare.com`, `nola.ns.cloudflare.com`.
+   The site keeps serving from Hostinger: same A record, same MX, same everything.
+2. Verify her Titan email still flows — MX, SPF, `_dmarc`, autodiscover, autoconfig are the five
+   records that matter, and they are the reason the zone was copied rather than rebuilt.
+3. Google Search Console → verify the domain (a TXT record, addable via the API once the zone is
+   live).
+4. Rename the assets bucket to `assets.beautyandcruor.com` and re-point the CNAME at
+   `c.storage.googleapis.com`. GCS matches the Host header to the bucket name, so this needs no
+   Cloudflare rules — which matters, because Host Header override is a paid feature and this zone
+   is Free. Delete the Transform Rule at the same time or it will prepend a bucket path onto a
+   bucket-named host.
+5. Chart: `domains.primary` back to `beautyandcruor.com`, add the `www` alias, `tls.enabled: true`
+   — which restores the chart's own Gateway and Certificate. Both states were rendered and checked.
+6. A record → the cluster. This is the actual site cutover and the only irreversible-feeling step.
+7. Rebuild with `ASSET_BASE_URL=https://assets.beautyandcruor.com` and redeploy. The srcset URLs
+   are frozen per build, so this is a rebuild, not a migration.
+
+Rollback at any point is putting `kellen`/`zariyah` back at Hostinger. The old zone is never
+edited, only routed away from.
+
+**Drop the staging host afterwards:** the `beautyandcruor` entry in the inline `frontendApps`
+block of `argocd/prod/infrastructure/istio-auth-policies.yaml`, and the `noindex` if it was added.
