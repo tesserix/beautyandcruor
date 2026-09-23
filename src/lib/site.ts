@@ -22,6 +22,20 @@ export const SITE = {
   phone: null as string | null,
 } as const;
 
+/**
+ * Origin of the assets bucket, for <link rel="preconnect">. Derived from the
+ * same env var the image layer uses so the two can never disagree; empty when
+ * images are served same-origin, in which case preconnecting is pointless.
+ */
+export const ASSET_ORIGIN = (() => {
+  const base = process.env.NEXT_PUBLIC_ASSET_BASE_URL ?? "";
+  try {
+    return base ? new URL(base).origin : "";
+  } catch {
+    return "";
+  }
+})();
+
 export const LOCATIONS = [
   { city: "Sydney", region: "New South Wales", country: "AU", countryName: "Australia" },
   { city: "Mumbai", region: "Maharashtra", country: "IN", countryName: "India" },

@@ -3,6 +3,7 @@ import { Chrome } from "@/components/Chrome";
 import { SiteFooter } from "@/components/SiteFooter";
 import { EnquiryForm } from "@/components/EnquiryForm";
 import { SITE, LOCATIONS } from "@/lib/site";
+import { JsonLd, breadcrumbSchema } from "@/lib/jsonld";
 
 export const metadata: Metadata = {
   title: "Contact",
@@ -15,7 +16,7 @@ export default function Contact() {
   return (
     <>
       <Chrome />
-      <main style={{ paddingTop: "var(--hud)" }}>
+      <main id="main" style={{ paddingTop: "var(--hud)" }}>
         <div className="wrap pt-10 pb-20">
         <p className="lab">Contact</p>
         <h1 className="mt-2 font-display text-[clamp(32px,9vw,56px)] leading-[1.02] font-600">
@@ -53,6 +54,14 @@ export default function Contact() {
         </div>
         </div>
       </main>
+      <JsonLd
+        schemas={[
+          breadcrumbSchema([
+            { name: "Home", path: "/" },
+            { name: "Contact", path: "/contact-us/" },
+          ]),
+        ]}
+      />
       <SiteFooter />
     </>
   );

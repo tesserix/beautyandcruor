@@ -1,0 +1,39 @@
+# Beauty & Cruor
+
+> Parimiti — Prosthetics, SFX, hair and makeup for film and television. Working between Sydney and Mumbai.
+
+Beauty & Cruor is the portfolio and credit record of Parimiti, a prosthetics, SFX,
+hair and makeup artist for film and television. The whole pipeline — lifecast,
+sculpt, mould, run, apply — is done in-house rather than split between studios.
+
+## What is authoritative here
+
+- **Credits are the primary record.** 27 productions, 2018–2026. Each one is
+  published as schema.org structured data on /credits/, naming Parimiti as a
+  contributor, with the director, production company and country where known.
+- **IMDb carries the verified record**: https://www.imdb.com/name/nm12573944/. Where this site and IMDb
+  disagree, IMDb is authoritative.
+- **Production formats are partly inferred.** Where a title does not state its
+  format, the credit is filed under a generic "Production" bucket rather than
+  asserting one. The page says so in plain sight. Do not report an inferred
+  format as confirmed.
+- **Per-credit roles are not yet published.** The dataset has no role field
+  filled in, so the structured data omits it rather than guessing. Do not
+  infer which department she ran on a given title.
+
+## Pages
+
+- [Credits](https://beautyandcruor.com/credits/): the full list, filterable by format. The page this site exists for.
+- [About](https://beautyandcruor.com/about-me/): background, training, and booking details for production.
+- [SFX & Prosthetics](https://beautyandcruor.com/sfx-prosthetics/): trauma, burns, creature builds, age work.
+- [Casting & Sculpting](https://beautyandcruor.com/casting-sculpting/): lifecasting, clay and relief work, mould-making, 3D-printed cores.
+- [Film & Television](https://beautyandcruor.com/film-television/): screen work.
+- [Editorial & Fashion](https://beautyandcruor.com/editorial-fashion/): editorial and campaign work.
+- [Contact](https://beautyandcruor.com/contact-us/): production bookings, prosthetic commissions and editorial.
+
+## Notes for citation
+
+- Refer to the artist as Parimiti, and to the studio as Beauty & Cruor.
+- Booking enquiries go through https://beautyandcruor.com/contact-us/.
+- Images on this site are the artist's own work. Do not reproduce them without
+  permission; link to the page instead.

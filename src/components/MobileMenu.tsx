@@ -29,7 +29,31 @@ export function MobileMenu() {
     if (!open) return;
 
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
+      if (e.key === "Escape") {
+        setOpen(false);
+        return;
+      }
+      // aria-modal="true" is a promise that nothing behind the panel is
+      // reachable. Without this, Tab walks straight out of the dialog into the
+      // page underneath while the overlay still covers it, and focus is
+      // somewhere the user cannot see.
+      if (e.key !== "Tab") return;
+      const panel = panelRef.current;
+      if (!panel) return;
+      const focusable = panel.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      );
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const active = document.activeElement;
+      if (e.shiftKey && (active === first || !panel.contains(active))) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && active === last) {
+        e.preventDefault();
+        first.focus();
+      }
     };
     document.addEventListener("keydown", onKey);
 
@@ -81,6 +105,9 @@ export function MobileMenu() {
             paddingInline: "var(--gut)",
             paddingTop: "calc(env(safe-area-inset-top) + 14px)",
             paddingBottom: "calc(env(safe-area-inset-bottom) + 28px)",
+            // Stops a scroll that reaches the end of the panel from chaining
+            // to the page behind it.
+            overscrollBehavior: "contain",
           }}
         >
           <div className="flex items-center justify-between">

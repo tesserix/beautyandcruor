@@ -256,3 +256,66 @@ img {
     }
   }
 }
+
+/* ===========================================================================
+   Interaction defaults
+   =========================================================================== */
+
+/* Removes the 300ms double-tap-zoom delay on every control without disabling
+   pinch zoom, and stops the grey flash Safari paints over taps — the ink
+   ground makes that read as a glitch rather than as feedback. */
+button,
+a,
+[role="button"],
+[role="option"],
+summary,
+label {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: rgba(242, 239, 234, 0.08);
+}
+
+/* Anything linked to by fragment has to clear the fixed header, or the target
+   lands underneath it. /credits/ links to /about-me/#for-production. */
+:target,
+[id] {
+  scroll-margin-top: calc(var(--hud) + 16px);
+}
+
+/* Headings set their own measure rather than leaving one word on the last
+   line. Supported everywhere that matters; degrades to normal wrapping. */
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+/* ===========================================================================
+   Skip link
+   The first thing a keyboard or screen-reader user meets. Off-screen until
+   focused, then pinned over the header.
+   =========================================================================== */
+.skip {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 60;
+  transform: translateY(-120%);
+  background: var(--color-chalk);
+  color: var(--color-ink);
+  padding: 12px 18px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: transform 0.2s ease;
+}
+
+.skip:focus-visible {
+  transform: none;
+}
