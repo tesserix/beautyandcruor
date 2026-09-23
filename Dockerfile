@@ -49,9 +49,21 @@ ENV NEXT_TELEMETRY_DISABLED=1
 # This is a BUILD-time value and can only be a build arg: `output: 'export'`
 # freezes every srcset URL into the emitted HTML, so setting it in the Helm
 # chart at runtime would change nothing about pages that were already built.
-# Empty by default, which keeps same-origin `/img/...` working for a local
-# `docker build` that still has public/img in context.
-ARG ASSET_BASE_URL=""
+#
+# It defaults to the bucket's native URL rather than to empty, because
+# public/img is in .dockerignore — a container built with an empty base would
+# emit same-origin /img/... paths and then 404 every image, which is a silent
+# failure that only shows up in a browser.
+#
+# INTERIM. The intended host is https://assets.beautyandcruor.com, which needs
+# the bucket renamed to match (GCS routes a CNAME by matching the Host header
+# to the bucket name) and that needs Google domain verification, which needs
+# the nameservers moved first. Until the site is ready to go live, serving from
+# the native URL avoids touching a client's live DNS just for asset hosting.
+#
+# Switching later is a rebuild, not a migration: change this default, rebuild,
+# redeploy. The ~2500 srcset URLs are frozen per build, so nothing else moves.
+ARG ASSET_BASE_URL="https://storage.googleapis.com/beautyandcruor-prod-assets-in"
 ENV NEXT_PUBLIC_ASSET_BASE_URL=$ASSET_BASE_URL
 
 # Fail loudly and early. A missing manifest means every <Picture> would throw

@@ -297,3 +297,45 @@ downscaled copies throughout. All 116 comparable pairs are higher resolution on
 disk (e.g. 1920x2560 captured against 3024x4032 actual). Regenerating from the
 full-resolution originals is outstanding; it rescues only 4 of the 71 images
 below the retina floor, so the layout constraint largely stands.
+
+---
+
+## D16 — Assets serve from the bucket's native URL until launch
+
+D15 specified `assets.beautyandcruor.com` fronted by Cloudflare. Two facts
+found while implementing it changed the order of work, not the destination.
+
+**Host Header override is a paid Cloudflare feature.** The plan of CNAMEing to
+`storage.googleapis.com` and rewriting the Host header needs Origin Rules with
+`host_header`, which the Free plan refuses: *"not entitled to use the
+HostHeader override"*. The Transform Rule for the path prefix works on Free;
+the Host rewrite does not.
+
+**The alternative needs no rules at all.** Naming the bucket
+`assets.beautyandcruor.com` lets GCS match the passed-through Host header to
+the bucket name, so a plain proxied CNAME to `c.storage.googleapis.com` works
+with no Origin Rule, no Transform Rule, and SSL at Full (strict) — that
+endpoint serves HTTPS with a valid `*.storage.googleapis.com` certificate.
+D15 assumed it was HTTP-only and rejected this; that assumption was wrong.
+
+**But it cannot be done yet.** A domain-named bucket requires Google domain
+verification, which requires a resolvable DNS record, which requires the
+nameservers moved to our Cloudflare zone. Moving a client's live DNS purely to
+host assets — before the new site is finished — is the wrong trade.
+
+So the Docker build defaults to the bucket's native URL. It works today with no
+DNS change, and the switch later is a rebuild rather than a migration: change
+one default, rebuild, redeploy. The srcset URLs are frozen per build, so
+nothing else moves.
+
+The default is set in the Dockerfile rather than left empty because
+`public/img` is in `.dockerignore` — a container built with an empty base emits
+same-origin `/img/...` paths and 404s every image, which only shows up in a
+browser.
+
+**Cloudflare zone state:** `beautyandcruor.com` is added to the estate account
+(the one holding `tesserix.app`), `pending`, with all 25 records verified
+identical to the live zone and every one DNS-only so nothing proxies the
+WordPress site. Nameservers for the eventual switch are `algin.ns.cloudflare.com`
+and `nola.ns.cloudflare.com`. The Transform Rule must be deleted when the
+renamed bucket lands, or it will prepend a bucket path onto a bucket-named host.
