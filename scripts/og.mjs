@@ -14,7 +14,7 @@
  *   node scripts/og.mjs
  */
 import sharp from "sharp";
-import { readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 
 const W = 1200;
@@ -26,8 +26,16 @@ const ASH = "#8C8780";
 const PORTRAIT_DIR = "public/img/artist";
 const OUT = "public/og.jpg";
 
-/** Widest webp the artist folder holds — sharpest source to downscale from. */
+/**
+ * Widest webp the artist folder holds — sharpest source to downscale from.
+ *
+ * Absent inside the container: .dockerignore excludes public/img/ because the
+ * derivatives live in GCS, and shipping them would add ~165MB to every push.
+ * So this returns null there, and the card is built without the photograph
+ * rather than failing the image build over a decorative asset.
+ */
 function portraitSource() {
+  if (!existsSync(PORTRAIT_DIR)) return null;
   const files = readdirSync(PORTRAIT_DIR).filter((f) => f.endsWith(".webp"));
   if (files.length === 0) return null;
   const widthOf = (f) => Number(f.match(/-(\d+)\./)?.[1] ?? 0);
@@ -43,9 +51,17 @@ const markChalk = mark
 
 const PANEL = 560; // where the photograph starts
 
-const layers = [];
-
 const src = portraitSource();
+
+// The committed card already has the portrait composited in. Regenerating it
+// from a context that lacks the source would quietly replace it with the
+// text-only fallback, so leave it alone instead.
+if (!src && existsSync(OUT)) {
+  console.log(`${OUT} exists and no portrait source is present — keeping it`);
+  process.exit(0);
+}
+
+const layers = [];
 if (src) {
   const photo = await sharp(src)
     .resize(W - PANEL, H, { fit: "cover", position: "attention" })
