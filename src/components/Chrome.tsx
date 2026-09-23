@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { SITE, DISCIPLINES } from "@/lib/site";
 import { Logo } from "./Logo";
@@ -6,24 +9,85 @@ import { MobileMenu } from "./MobileMenu";
 /**
  * Persistent interface. Deliberately minimal: the mark, a way in, and the one
  * control the site exists for. Enquire sits in the thumb arc on phones.
+ *
+ * A client component for one reason: the mark has to know where the page is.
+ * `solidMark={false}` is used on surfaces whose opening frame carries the mark
+ * at full size (the homepage). There the header mark stays out of the way and
+ * fades in once that frame is behind you, so the two are never on screen
+ * together — the behaviour c-immersive.src.html specified and the build then
+ * froze into a static prop, which left the homepage with no header mark at all
+ * at any scroll position.
  */
+
+/** Matches the prototype's `deck.scrollTop > innerHeight * 0.55`. */
+const REVEAL_AT = 0.55;
+
 export function Chrome({ solidMark = true }: { solidMark?: boolean }) {
+  // Starts true when the mark is unconditional, so server and first client
+  // render agree and nothing flashes during hydration.
+  const [past, setPast] = useState(solidMark);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    let frame = 0;
+    const read = () => {
+      frame = 0;
+      const y = window.scrollY;
+      setScrolled(y > 8);
+      if (!solidMark) setPast(y > window.innerHeight * REVEAL_AT);
+    };
+    // Coalesce to one read per frame: scroll fires far faster than paint.
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(read);
+    };
+
+    read();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      if (frame) cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
+  }, [solidMark]);
+
   return (
     <>
       <header
         className="fixed inset-x-0 top-0 z-40 flex items-center justify-between pointer-events-none"
+        /* At rest the header is a gradient scrim, so the opening plate runs
+           under it unbroken. Once the page moves it becomes opaque: the
+           gradient is transparent across its lower third, and over a text
+           surface — the credits list especially, now that the filter bar
+           sticks directly beneath it — that read as rows dissolving into the
+           top of the window rather than as depth. */
         style={{
           height: "var(--hud)",
           paddingInline: "var(--gut)",
-          background:
-            "linear-gradient(rgba(7,7,10,.92) 0%, rgba(7,7,10,.66) 62%, rgba(7,7,10,0) 100%)",
+          background: scrolled
+            ? "rgba(7,7,10,.94)"
+            : "linear-gradient(rgba(7,7,10,.92) 0%, rgba(7,7,10,.66) 62%, rgba(7,7,10,0) 100%)",
+          backdropFilter: scrolled ? "blur(10px)" : undefined,
+          WebkitBackdropFilter: scrolled ? "blur(10px)" : undefined,
+          borderBottom: `1px solid ${scrolled ? "var(--color-hair)" : "transparent"}`,
+          transition: "background .35s ease, border-color .35s ease",
         }}
       >
         <Link
           href="/"
           className="pointer-events-auto"
           aria-label={`${SITE.name} — home`}
-          style={{ opacity: solidMark ? 1 : 0, transition: "opacity .45s" }}
+          /* aria-hidden while invisible: the same link is still reachable in
+             the mobile menu, and an opacity-0 link is a focus trap for a
+             sighted keyboard user who cannot see where focus went. */
+          aria-hidden={past ? undefined : true}
+          tabIndex={past ? undefined : -1}
+          style={{
+            opacity: past ? 1 : 0,
+            // Rises the last few pixels into place rather than appearing flat.
+            transform: past ? "none" : "translateY(-6px)",
+            transition: "opacity .45s ease, transform .45s ease",
+          }}
         >
           <Logo className="h-[26px] md:h-[30px]" />
         </Link>

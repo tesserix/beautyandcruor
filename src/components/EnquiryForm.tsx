@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Select } from "./Select";
 
 /**
  * Enquiry form for a fully static site.
@@ -26,6 +27,16 @@ import { useState } from "react";
  */
 
 const ENDPOINT = process.env.NEXT_PUBLIC_ENQUIRY_ENDPOINT ?? "";
+
+/** TODO(client): confirm these are the enquiries she actually wants sorted by. */
+const ENQUIRY_TYPES = [
+  "Prosthetics — feature film",
+  "Television series",
+  "Commercial",
+  "Editorial shoot",
+  "Workshop or teaching",
+  "Other",
+] as const;
 
 type State = { status: "idle" | "sending" | "sent" | "error"; message?: string };
 
@@ -83,22 +94,13 @@ export function EnquiryForm() {
       <Field id="name" name="name" label="Name" autoComplete="name" required />
       <Field id="email" name="email" label="Email" type="email" autoComplete="email" required />
 
-      <label className="grid gap-1.5">
-        <span className="lab">Enquiry</span>
-        <select
-          id="enquiry"
-          name="enquiry"
-          defaultValue="Prosthetics — feature film"
-          className="min-h-[46px] w-full rounded-sm border border-hair bg-ink-2 px-3 py-3 text-[14px] text-chalk"
-        >
-          <option>Prosthetics — feature film</option>
-          <option>Television series</option>
-          <option>Commercial</option>
-          <option>Editorial shoot</option>
-          <option>Workshop or teaching</option>
-          <option>Other</option>
-        </select>
-      </label>
+      <Select
+        id="enquiry"
+        name="enquiry"
+        label="Enquiry"
+        options={ENQUIRY_TYPES}
+        defaultValue={ENQUIRY_TYPES[0]}
+      />
 
       <label className="grid gap-1.5">
         <span className="lab">Details</span>

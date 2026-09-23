@@ -33,22 +33,22 @@ export default function CreditsPage() {
     <>
       <Chrome />
       <main style={{ paddingTop: "var(--hud)" }}>
-        <section style={{ paddingInline: "var(--gut)" }} className="pt-10">
+        <section className="wrap pt-10">
           <p className="lab">Selected work</p>
           <h1 className="mt-2 font-display text-[clamp(32px,9vw,56px)] leading-[1.02] font-600">
             Credits
           </h1>
 
-          <ul className="mt-9 grid gap-0">
+          <ul className="rise-stagger mt-9 grid gap-0">
             {lead.map((c) => (
               <li
                 key={`${c.title}-${c.year}`}
-                className="border-b border-hair py-5 first:border-t"
+                className="border-b border-hair py-5 first:border-t md:grid md:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] md:items-baseline md:gap-8"
               >
                 <span className="font-display text-[clamp(21px,5.5vw,30px)] leading-tight font-600">
                   {c.title}
                 </span>
-                <span className="lab mt-1.5 block" style={{ letterSpacing: "0.06em" }}>
+                <span className="lab mt-1.5 block md:mt-0" style={{ letterSpacing: "0.06em" }}>
                   {[
                     c.year,
                     c.inProgress ? "In progress" : c.director && `Dir. ${c.director}`,
@@ -85,13 +85,12 @@ export default function CreditsPage() {
         {/* Said out loud rather than quietly asserted. Formats are read off the
             titles (see inferType), and two brand entries are genuinely
             ambiguous — docs/OPEN-QUESTIONS.md. */}
-        <p
-          style={{ paddingInline: "var(--gut)" }}
-          className="max-w-[58ch] pb-16 text-[13.5px] text-ash"
-        >
-          Production formats and roles are being confirmed with the production
-          companies. IMDb carries the verified record.
-        </p>
+        <div className="wrap pb-16">
+          <p className="max-w-[58ch] text-[13.5px] text-ash">
+            Production formats and roles are being confirmed with the production
+            companies. IMDb carries the verified record.
+          </p>
+        </div>
       </main>
       <SiteFooter />
     </>

@@ -3,16 +3,19 @@ import { SITE, LOCATIONS } from "@/lib/site";
 
 export function SiteFooter() {
   return (
+    // The rule stays full-bleed; only the contents come onto the measure,
+    // so the footer still reads as the floor of the page on a wide display
+    // instead of a left-stranded column under a full-width line.
     <footer
       className="border-t border-hair"
       style={{
-        paddingInline: "var(--gut)",
         // The Enquire pill is fixed bottom-right on every page and every
         // breakpoint, so the last row of the footer has to clear it or the
         // pill sits on top of it. Pill height + its own offset + a gap.
         paddingBlock: "28px calc(var(--gut) + 78px + env(safe-area-inset-bottom))",
       }}
     >
+      <div className="wrap">
       <div className="flex flex-wrap items-baseline justify-between gap-4">
         <span className="lab">
           © {new Date().getFullYear()} {SITE.artist} · {SITE.name}
@@ -58,6 +61,7 @@ export function SiteFooter() {
         >
           Instagram ↗
         </a>
+      </div>
       </div>
     </footer>
   );

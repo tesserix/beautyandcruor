@@ -15,7 +15,8 @@ export default function Contact() {
   return (
     <>
       <Chrome />
-      <main style={{ paddingTop: "var(--hud)", paddingInline: "var(--gut)" }} className="pt-10 pb-20">
+      <main style={{ paddingTop: "var(--hud)" }}>
+        <div className="wrap pt-10 pb-20">
         <p className="lab">Contact</p>
         <h1 className="mt-2 font-display text-[clamp(32px,9vw,56px)] leading-[1.02] font-600">
           Enquire
@@ -27,7 +28,7 @@ export default function Contact() {
         {/* TODO(client): a phone number belongs here, above the form.
             Nobody on a production books through a web form. */}
 
-        <div className="mt-8 grid gap-10 md:grid-cols-[1fr_0.7fr]">
+        <div className="mt-8 grid gap-10 md:grid-cols-[minmax(0,1fr)_minmax(0,0.75fr)] md:gap-16">
           <EnquiryForm />
           <div className="grid content-start gap-3">
             {LOCATIONS.map((l) => (
@@ -49,6 +50,7 @@ export default function Contact() {
               </a>
             </div>
           </div>
+        </div>
         </div>
       </main>
       <SiteFooter />
