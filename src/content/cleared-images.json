@@ -1,0 +1,20 @@
+{
+  "_note": [
+    "Images approved for publication that the live WordPress site never displayed.",
+    "",
+    "scripts/assets-sync.mjs refuses to upload any image the site references unless it",
+    "is either (a) recorded in capture/live-images.json as having been displayed on the",
+    "live site — which is evidence Parimiti already published it — or (b) listed here.",
+    "",
+    "This exists because docs/OPEN-QUESTIONS.md Q7 and Q8 are unresolved: the recovered",
+    "library mixes portfolio work with behind-the-scenes shots, phone snapshots and",
+    "photographs of other people, and model/photographer releases have not been",
+    "confirmed. Publishing an image she chose not to publish is not a decision this",
+    "build should make on her behalf.",
+    "",
+    "Add a manifest key here ONLY when she has confirmed that specific image. Put who",
+    "confirmed it and when in `provenance`, so the reason survives the conversation."
+  ],
+  "cleared": [],
+  "provenance": {}
+}

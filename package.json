@@ -7,10 +7,13 @@
     "build": "next build",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "images": "node scripts/images.mjs",
+    "images": "node scripts/images.mjs && node scripts/organize.mjs",
     "images:sample": "node scripts/images.mjs --sample",
     "content:posts": "node scripts/import-posts.mjs",
-    "serve:nginx": "docker build -t bac-web . && docker run --rm -p 8080:8080 bac-web"
+    "serve:nginx": "docker build -t bac-web . && docker run --rm -p 8080:8080 bac-web",
+    "assets": "node scripts/assets-sync.mjs",
+    "assets:upload": "node scripts/assets-sync.mjs --upload",
+    "organize": "node scripts/organize.mjs"
   },
   "dependencies": {
     "embla-carousel-react": "^8.6.0",

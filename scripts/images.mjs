@@ -17,7 +17,8 @@
  */
 import sharp from 'sharp';
 import pLimit from 'p-limit';
-import { mkdir, writeFile, readdir } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+import { mkdir, writeFile, readdir, readFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { dirname, join, relative, extname, basename } from 'node:path';
 
@@ -30,7 +31,19 @@ async function* walk(dir) {
   }
 }
 
-const SRC_ROOT = 'capture/assets/uploads';
+/**
+ * FULL-RESOLUTION originals, taken from the site's public_html bundle.
+ *
+ * NOT capture/assets/uploads — that directory holds what wp-json returned, and
+ * the Media Library's `source_url` points at WordPress's `-scaled.jpg`, which
+ * is capped at 2560px on the long edge. Every one of the 116 comparable pairs
+ * was higher resolution on disk (1920x2560 captured vs 3024x4032 actual), so
+ * building from the capture silently ceilinged the whole ladder.
+ *
+ * Built by deduplicating the bundle to one file per image, preferring the
+ * largest. Gitignored — 502 MB. Backed up to gs://beautyandcruor-prod-originals-in.
+ */
+const SRC_ROOT = 'capture/assets/originals';
 const OUT_ROOT = 'public/img';
 const MANIFEST = 'src/generated/images.json';
 
@@ -74,9 +87,32 @@ async function pickSample(files) {
   return [...seen.values()].sort((a, b) => b.width - a.width).slice(0, 12).map(s => s.f);
 }
 
+/**
+ * Short, deterministic content hash for one derivative.
+ *
+ * Derived from the SOURCE bytes plus the exact encode parameters, never from
+ * the output — so it is knowable before encoding and the "does this file
+ * already exist" check still works. Re-crop a photo or retune the encoder and
+ * the name changes; leave both alone and it does not.
+ *
+ * This is what makes `Cache-Control: immutable` safe on the CDN. The old names
+ * (`stem-1290.avif`) were stable across content changes, so replacing an image
+ * at the same path would have served the stale one from Cloudflare and from
+ * every browser that had seen it — for the full year of the max-age.
+ */
+function variantHash(srcDigest, fmt, w, opts) {
+  return createHash('sha256')
+    .update(`${srcDigest}|${fmt}|${w}|${JSON.stringify(opts)}`)
+    .digest('hex')
+    .slice(0, 8);
+}
+
 async function processOne(src) {
   const meta = await sharp(src).metadata();
   if (!meta.width || !meta.height) throw new Error('no dimensions');
+
+  // One read of the original, reused for every derivative's hash.
+  const srcDigest = createHash('sha256').update(await readFile(src)).digest('hex');
 
   const rel = relative(SRC_ROOT, src);
   const key = rel.replace(/\.[^.]+$/, '');
@@ -94,7 +130,7 @@ async function processOne(src) {
   for (const w of ladder) {
     const h = Math.round((meta.height / meta.width) * w);
     for (const [fmt, opts] of [['avif', AVIF], ['webp', WEBP]]) {
-      const outPath = join(outDir, `${stem}-${w}.${fmt}`);
+      const outPath = join(outDir, `${stem}-${w}.${variantHash(srcDigest, fmt, w, opts)}.${fmt}`);
       if (force || !existsSync(outPath)) {
         await sharp(src).rotate().resize(w).toFormat(fmt, opts).toFile(outPath);
       }
@@ -104,7 +140,7 @@ async function processOne(src) {
   }
 
   const fw = Math.min(JPEG_FALLBACK_WIDTH, meta.width);
-  const fbPath = join(outDir, `${stem}-${fw}.jpg`);
+  const fbPath = join(outDir, `${stem}-${fw}.${variantHash(srcDigest, 'jpg', fw, JPEG)}.jpg`);
   if (force || !existsSync(fbPath)) {
     await sharp(src).rotate().resize(fw).jpeg(JPEG).toFile(fbPath);
   }
