@@ -15,7 +15,7 @@ export default function Blogs() {
   return (
     <>
       <Chrome />
-      <main style={{ paddingTop: "var(--hud)", paddingInline: "var(--gut)" }} className="pt-10 pb-20">
+      <main id="main" style={{ paddingTop: "var(--hud)", paddingInline: "var(--gut)" }} className="pt-10 pb-20">
         <p className="lab">Journal</p>
         <h1 className="mt-2 font-display text-[clamp(32px,9vw,56px)] leading-[1.02] font-600">
           Journal

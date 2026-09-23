@@ -6,7 +6,7 @@ export default function NotFound() {
   return (
     <>
       <Chrome />
-      <main
+      <main id="main"
         style={{ paddingTop: "var(--hud)", paddingInline: "var(--gut)" }}
         className="flex min-h-[60svh] flex-col justify-center pb-20"
       >

@@ -4,6 +4,7 @@ import { SiteFooter } from "./SiteFooter";
 import { WorkReel } from "./WorkReel";
 import { DISCIPLINES, type Discipline } from "@/lib/site";
 import { galleryFor } from "@/lib/galleries";
+import { JsonLd, breadcrumbSchema } from "@/lib/jsonld";
 
 /**
  * One component for all four disciplines. Full-bleed reel filling the
@@ -18,7 +19,7 @@ export function DisciplinePage({ discipline }: { discipline: Discipline }) {
   return (
     <>
       <Chrome />
-      <main>
+      <main id="main">
         <h1 className="vh">{discipline.title}</h1>
 
         <section className="relative h-[100svh]" aria-label={discipline.title}>
@@ -61,6 +62,14 @@ export function DisciplinePage({ discipline }: { discipline: Discipline }) {
           </Link>
         </section>
       </main>
+      <JsonLd
+        schemas={[
+          breadcrumbSchema([
+            { name: "Home", path: "/" },
+            { name: discipline.title, path: `/${discipline.slug}/` },
+          ]),
+        ]}
+      />
       <SiteFooter />
     </>
   );

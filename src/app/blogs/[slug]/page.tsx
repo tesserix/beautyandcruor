@@ -42,7 +42,7 @@ export default async function Post({ params }: { params: Promise<{ slug: string 
   return (
     <>
       <Chrome />
-      <main style={{ paddingTop: "var(--hud)", paddingInline: "var(--gut)" }} className="pt-10 pb-20">
+      <main id="main" style={{ paddingTop: "var(--hud)", paddingInline: "var(--gut)" }} className="pt-10 pb-20">
         <article className="mx-auto max-w-[720px]">
           <p className="lab num">
             {new Date(post.date).toLocaleDateString("en-AU", {

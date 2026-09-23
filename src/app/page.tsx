@@ -24,7 +24,7 @@ export default function Home() {
   return (
     <>
       <Chrome solidMark={false} />
-      <main>
+      <main id="main">
         <h1 className="vh">
           {SITE.artist} — {SITE.tagline}
         </h1>

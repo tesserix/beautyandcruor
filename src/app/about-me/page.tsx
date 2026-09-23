@@ -7,6 +7,7 @@ import { SITE, LOCATIONS } from "@/lib/site";
 import { getCredits } from "@/lib/credits";
 import { artistPortrait } from "@/lib/galleries";
 import { Picture } from "@/components/Picture";
+import { JsonLd, breadcrumbSchema } from "@/lib/jsonld";
 
 export const metadata: Metadata = {
   title: "About",
@@ -22,7 +23,7 @@ export default function About() {
   return (
     <>
       <Chrome />
-      <main style={{ paddingTop: "var(--hud)" }}>
+      <main id="main" style={{ paddingTop: "var(--hud)" }}>
         {/* Two columns rather than a float. Floated, the portrait left the
             measure entirely: it pinned itself to the far right of the viewport
             while the prose stayed in the gutter, so on a wide display the two
@@ -86,6 +87,14 @@ export default function About() {
 
         <ProductionFacts />
       </main>
+      <JsonLd
+        schemas={[
+          breadcrumbSchema([
+            { name: "Home", path: "/" },
+            { name: "About", path: "/about-me/" },
+          ]),
+        ]}
+      />
       <SiteFooter />
     </>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 /**
  * The filterable credit list.
@@ -41,6 +41,31 @@ const ALL = "__all__";
 export function CreditsFilter({ rows, chips }: { rows: CreditRow[]; chips: Chip[] }) {
   const [active, setActive] = useState<string>(ALL);
 
+  /**
+   * The filter lives in the URL, so "here are her television credits" is a
+   * link someone can paste to a producer rather than an instruction to click
+   * a chip after arriving.
+   *
+   * Read after mount, not during render: the markup is prerendered at build
+   * time with no query string, so touching location during render would
+   * disagree with the server output. Written with replaceState rather than
+   * push so the back button leaves the page instead of walking the filters.
+   */
+  useEffect(() => {
+    const t = new URLSearchParams(window.location.search).get("type");
+    if (t && chips.some((c) => c.type === t)) setActive(t);
+    // Chips are derived from the dataset and stable for the page's lifetime.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const select = (type: string) => {
+    setActive(type);
+    const url = new URL(window.location.href);
+    if (type === ALL) url.searchParams.delete("type");
+    else url.searchParams.set("type", type);
+    window.history.replaceState(null, "", url);
+  };
+
   const shown = active === ALL ? rows : rows.filter((r) => r.type === active);
 
   // Rows arrive newest-first and sorted so equal group years are adjacent,
@@ -69,7 +94,7 @@ export function CreditsFilter({ rows, chips }: { rows: CreditRow[]; chips: Chip[
           label="All work"
           count={rows.length}
           active={active === ALL}
-          onClick={() => setActive(ALL)}
+          onClick={() => select(ALL)}
         />
         {chips.map((c) => (
           <FilterChip
@@ -77,7 +102,7 @@ export function CreditsFilter({ rows, chips }: { rows: CreditRow[]; chips: Chip[
             label={c.label}
             count={c.count}
             active={active === c.type}
-            onClick={() => setActive(c.type)}
+            onClick={() => select(c.type)}
           />
         ))}
       </div>

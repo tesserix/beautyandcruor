@@ -5,6 +5,7 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { Credits } from "@/components/Credits";
 import { SITE } from "@/lib/site";
 import { getCredits, leadCredits } from "@/lib/credits";
+import { JsonLd, creditSchemas, creditsListSchema, breadcrumbSchema } from "@/lib/jsonld";
 
 /**
  * Credits as a first-class surface (D10), not a section inside About.
@@ -32,7 +33,7 @@ export default function CreditsPage() {
   return (
     <>
       <Chrome />
-      <main style={{ paddingTop: "var(--hud)" }}>
+      <main id="main" style={{ paddingTop: "var(--hud)" }}>
         <section className="wrap pt-10">
           <p className="lab">Selected work</p>
           <h1 className="mt-2 font-display text-[clamp(32px,9vw,56px)] leading-[1.02] font-600">
@@ -92,6 +93,19 @@ export default function CreditsPage() {
           </p>
         </div>
       </main>
+      {/* The credits themselves, machine-readable: 27 works each naming her as
+          a contributor, plus the list that binds them. This is the page an
+          assistant should be able to answer "who did X" from. */}
+      <JsonLd
+        schemas={[
+          breadcrumbSchema([
+            { name: "Home", path: "/" },
+            { name: "Credits", path: "/credits/" },
+          ]),
+          creditsListSchema(credits),
+          ...creditSchemas(credits),
+        ]}
+      />
       <SiteFooter />
     </>
   );
