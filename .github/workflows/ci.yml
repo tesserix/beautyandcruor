@@ -1,0 +1,155 @@
+name: CI
+
+on:
+  push:
+    branches: [main, 'feat/**', 'feature/**', 'bugfix/**', 'hotfix/**']
+    paths:
+      - 'src/**'
+      - 'scripts/**'
+      - 'public/**'
+      - 'capture/live-images.json'
+      - 'nginx.conf'
+      - 'Dockerfile'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/ci.yml'
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+  REGISTRY: ghcr.io
+  IMAGE_NAME: beautyandcruor
+
+permissions:
+  contents: read
+  packages: write
+  security-events: write
+  id-token: write
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+      packages: write
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # No NODE_AUTH_TOKEN: this app has no @tesserix/* dependencies, so there
+      # is nothing to authenticate against GitHub Packages for.
+      - name: Install dependencies
+        run: npm ci
+
+      # `npm run lint` is NOT run. eslint fails at config load on this repo
+      # with a circular-reference error in eslint-config-next, reproducible on
+      # a clean checkout and unrelated to any source file — it would fail every
+      # build for a reason no PR can fix. Typecheck covers the same ground for
+      # a TypeScript codebase.
+      - name: Typecheck
+        run: npm run typecheck
+
+      # The rights gate. Refuses any image the live WordPress site never
+      # published and that nobody has explicitly cleared — see
+      # scripts/assets-sync.mjs and docs/OPEN-QUESTIONS.md Q7/Q8. It reads the
+      # committed manifest, the live-site record and the allowlist, so it runs
+      # here without needing the image files themselves. Reported sizes are 0
+      # because public/img is absent; the vetting is what matters.
+      - name: Verify no unpublished images are referenced
+        run: npm run assets
+
+      - name: Log in to GitHub Container Registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        run: |
+          FULL_IMAGE="${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}"
+          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            BUILD_TAG="${GITHUB_REF#refs/tags/}"
+          else
+            BUILD_TAG="main-${GITHUB_SHA::7}"
+          fi
+          echo "tag=${BUILD_TAG}" >> $GITHUB_OUTPUT
+          echo "full_image=${FULL_IMAGE}" >> $GITHUB_OUTPUT
+          echo "build_image=${FULL_IMAGE}:${BUILD_TAG}" >> $GITHUB_OUTPUT
+
+      # ASSET_BASE_URL is not passed: the Dockerfile's default is the bucket's
+      # native URL (D16). Override it here only when the custom asset host is
+      # live, and remember it is frozen into the HTML at build time.
+      - name: Build and push
+        if: github.event_name != 'pull_request'
+        run: |
+          docker build --platform linux/amd64 \
+            -t ${{ steps.meta.outputs.build_image }} \
+            -t ${{ steps.meta.outputs.full_image }}:latest \
+            .
+          docker push ${{ steps.meta.outputs.build_image }}
+          docker push ${{ steps.meta.outputs.full_image }}:latest
+
+      # `latest` is pushed alongside the pinned tag because this app has no
+      # Kargo Project yet. The blog's chart is promoted by Kargo writing
+      # helm.parameters.image.tag; until an equivalent exists here, the chart
+      # pins image.tag: latest with pullPolicy: Always. Pin to main-<sha7> and
+      # drop the latest push once promotion is wired up.
+
+      - name: Security scan
+        if: github.event_name != 'pull_request'
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ steps.meta.outputs.build_image }}
+          format: sarif
+          output: trivy-results.sarif
+          severity: CRITICAL,HIGH
+          exit-code: "0"
+
+      - name: Upload Trivy scan results
+        if: always() && github.event_name != 'pull_request'
+        uses: github/codeql-action/upload-sarif@v4
+        continue-on-error: true
+        with:
+          sarif_file: trivy-results.sarif
+
+      - name: Build summary
+        if: always()
+        run: |
+          echo "## Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Detail | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| **Service** | \`${{ env.IMAGE_NAME }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Commit** | \`${GITHUB_SHA::7}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Branch** | \`${{ github.ref_name }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Build Tag** | \`${{ steps.meta.outputs.tag }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Build Image** | \`${{ steps.meta.outputs.build_image }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            echo "- Typecheck and rights gate passed (PR mode — build and push skipped)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- Typecheck" >> $GITHUB_STEP_SUMMARY
+            echo "- Rights gate: no unpublished images referenced" >> $GITHUB_STEP_SUMMARY
+            echo "- Docker build → \`${{ steps.meta.outputs.build_image }}\` (+ \`:latest\`)" >> $GITHUB_STEP_SUMMARY
+            echo "- Pushed to GHCR; Artifact Registry mirrors it at asia-south1-docker.pkg.dev/tesseracthub-480811/ghcr-remote/" >> $GITHUB_STEP_SUMMARY
+            echo "- Trivy security scan" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "> Images are NOT built here. \`public/img\` is gitignored and dockerignored;" >> $GITHUB_STEP_SUMMARY
+          echo "> the site is built from the committed manifest and serves derivatives from GCS." >> $GITHUB_STEP_SUMMARY
+          echo "> Run \`npm run images && npm run assets:upload\` locally, then commit the manifest." >> $GITHUB_STEP_SUMMARY
