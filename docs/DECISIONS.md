@@ -129,7 +129,7 @@ type (The Bengal Files: 419 plays). Instagram will not carry credits — that is
 
 ---
 
-## D10 — Structural consequences of D9 (agreed in principle, not yet built)
+## D10 — Structural consequences of D9 (built, see D14)
 
 - **Credits become a first-class surface**, not a menu item. Confirmed as highest-leverage by two
   independent reviews.
@@ -180,3 +180,120 @@ tiebreaker was positive evidence of the video convention, not the absence itself
 
 Recorded as an optional experiment. What replaced it: showreel-carried transformation, numbered
 stage sequences, and edge/blend-line close-ups.
+
+---
+
+## D14 — The D10 structure, as built
+
+D10 listed the structural consequences of D9. Four of them are now in the app; the rest stay
+blocked on the client.
+
+**Credits are their own route, `/credits/`.** Previously a section inside About, reached by an
+anchor. It now leads with six credits and carries the full 27 below, filterable by type. The
+route is new — it is in `NEW_PATHS`, deliberately not in `PRESERVED_PATHS`, because that list has
+a job: the deploy check greps the old sitemap against it for 404s, and a URL the old site never
+had would be noise there. About keeps a link across rather than a second copy of the list.
+
+**Filter by type, not country**, per D10. The chips come from the data, so they change when the
+data does. Note what the filter is built on: type is read off the title text and nothing else —
+the source table has no format column. `Beco Commercial` and `Yaariyan … Feature Film` say what
+they are; fifteen titles do not, and fall to a `Film & TV` bucket. Two entries (`Ola Cabs`,
+`Sugar box`) are brands with no format word and may be commercials sitting in that bucket. Rather
+than assert quietly, the page says in plain sight that formats and roles are being confirmed and
+points at IMDb as the record.
+
+**The lead list holds back commercials *and* poster shoots.** D10 said features and TV lead.
+Excluding only commercials left `3 Monkeys - Poster` opening the page, which is not the first
+impression a features audience should get. Still interim — question 3 is hers to answer.
+
+**"For Production" is driven by data that is mostly null.** Every field in
+`src/content/production.ts` is `string | null`, and the block renders only what is confirmed. Two
+rows are live (based, in-house pipeline); six are waiting. An absent row beats an invented one
+here more than anywhere else on the site: a producer who costs a day off a guessed turnaround
+finds out on the day. The surface lights up row by row as answers arrive, with no code change.
+
+**The showreel slot exists and is empty.** `src/content/showreel.ts` is `null`, so the homepage
+hero falls back to the full-bleed image reel. When a cut lands, fill in the file — sources, a
+poster key through the image pipeline, and a duration — and it takes the slot. Deliberately a
+plain `<video controls>`: native controls are accessible for free and a custom player is JS this
+budget does not have.
+
+### The one place this departs from D10
+
+D10 said **drop the Journal**. The pages are still live and still in the sitemap; what was
+dropped is their prominence — gone from the header nav, demoted to a footer link.
+
+Deleting them would 404 two URLs that WordPress published and search engines have indexed, and
+`nginx.conf` already redirects their old root-level permalinks to `/blogs/`. Dropping them from
+the navigation achieves what D10 was actually after — two posts from 2023 no longer signal an
+unattended site — without throwing away link equity. **If the intent was to remove the content
+outright, this is the decision to revisit**, and it needs the 410s in `nginx.conf` rather than a
+route deletion.
+
+---
+
+## D15 — Assets move to GCS, and publication is gated on evidence
+
+Two decisions that turned out to be one.
+
+### The assets leave the container
+
+The export was 167 MB, of which 165 MB was `public/img` — derivatives for 276
+images, to serve maybe fifteen per visitor. They now live in a public GCS
+bucket behind Cloudflare, and the container is **2.7 MB** (verified by building
+with `public/img` moved aside; the build needs only the manifest).
+
+Cloudflare rather than Google Cloud CDN, for three reasons: the zone is already
+delegated to Cloudflare so the CDN is a DNS record rather than new infra; there
+are zero backend-buckets or url-maps in `tesseracthub-480811`, so Cloud CDN
+would be a net-new pattern; and a GCLB costs ~$18-25/month, which is the same
+money `GCP-COST-ANALYSIS-MARCH-2026.md` records reclaiming by deleting an
+orphaned AU load balancer. Total incremental cost is under a dollar a month.
+
+The URLs point at `assets.beautyandcruor.com`, not `storage.googleapis.com`,
+because static export freezes ~2500 absolute srcset URLs into the HTML.
+A host we own makes a future CDN change a DNS edit; a Google host would make it
+a full rebuild and redeploy of every page.
+
+**`NEXT_PUBLIC_ASSET_BASE_URL` is a Docker build arg, never a Helm value.**
+The chart cannot influence HTML that was already built.
+
+**Filenames are content-hashed** (`x-1290.d9746565.avif`). This is not tidiness:
+the objects are served `immutable, max-age=31536000`, and under the old stable
+names, replacing an image would have served the stale copy from Cloudflare and
+every browser that had seen it, for a year.
+
+### Publication is gated on what she actually published
+
+The pipeline builds 276 images; the site references 37. The other 239 are not
+spare capacity — Q7 and Q8 in `OPEN-QUESTIONS.md` are unresolved, and the
+recovered library mixes portfolio work with behind-the-scenes shots, phone
+snapshots and photographs of other people. So `scripts/assets-sync.mjs` derives
+the upload set from what the site references and never from `public/img/**`.
+
+Crawling the live WordPress site before decommission (`capture/live-images.json`,
+41 URLs, 219 photos actually rendered) then produced better evidence than our
+own curation: **8 of our 36 curated picks appear on no page of the live site.**
+Our selection was made by eye off contact sheets, so those 8 would have
+published images she chose not to.
+
+The sync therefore refuses to upload any referenced image that is neither
+recorded in `capture/live-images.json` nor listed in
+`src/content/cleared-images.json`. It **fails** rather than skipping, because
+the site references these images and silently dropping them would ship broken
+pages. Default-deny: a missing `live-images.json` is not permission.
+
+The bucket also gives `allUsers` `roles/storage.legacyObjectReader`, not
+`objectViewer` as `tesserix-blog-assets` does — `objectViewer` includes
+`storage.objects.list`, and an enumerable bucket is the wrong property for one
+holding photographs of third parties.
+
+### What the crawl also found
+
+The Media Library holds 294 items; the disk holds 411 originals. WordPress caps
+uploads at 2560px into `-scaled.jpg` and the Library's `source_url` points at
+**that**, so `capture/scripts/assets.mjs` has been feeding the pipeline
+downscaled copies throughout. All 116 comparable pairs are higher resolution on
+disk (e.g. 1920x2560 captured against 3024x4032 actual). Regenerating from the
+full-resolution originals is outstanding; it rescues only 4 of the 71 images
+below the retina floor, so the layout constraint largely stands.
