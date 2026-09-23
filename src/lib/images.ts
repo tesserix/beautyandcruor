@@ -23,6 +23,26 @@ export type ImageEntry = {
 
 const IMAGES = manifest as unknown as Record<string, ImageEntry>;
 
+/**
+ * Where the image derivatives are served from.
+ *
+ * Empty in dev, so `/img/...` resolves against the dev server and nothing has
+ * to be uploaded to work on the site. In CI it is set to the CDN origin and
+ * every srcset entry becomes absolute.
+ *
+ * MUST be a BUILD-time value, never a runtime one. This is a static export:
+ * these URLs are frozen into the emitted HTML, so a Helm env var would change
+ * nothing about pages that were already built. It is a Docker build arg.
+ *
+ * No trailing slash — stripped here so both forms work.
+ */
+const ASSET_BASE = (process.env.NEXT_PUBLIC_ASSET_BASE_URL ?? '').replace(/\/$/, '');
+
+/** Absolute CDN URL for one manifest-relative path (`/img/...`). */
+export function assetUrl(src: string): string {
+  return ASSET_BASE ? `${ASSET_BASE}${src}` : src;
+}
+
 export function getImage(key: string): ImageEntry | null {
   return IMAGES[key] ?? null;
 }
@@ -51,7 +71,7 @@ export function allImageKeys(): string[] {
 }
 
 export function srcSet(variants: Variant[]): string {
-  return variants.map((v) => `${v.src} ${v.w}w`).join(", ");
+  return variants.map((v) => `${assetUrl(v.src)} ${v.w}w`).join(", ");
 }
 
 /**

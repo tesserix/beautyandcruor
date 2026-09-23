@@ -4,10 +4,11 @@ import { Chrome } from "@/components/Chrome";
 import { SiteFooter } from "@/components/SiteFooter";
 import { Logo } from "@/components/Logo";
 import { WorkReel } from "@/components/WorkReel";
-import { Picture } from "@/components/Picture";
+import { Showreel, hasShowreel } from "@/components/Showreel";
+import { PreviewStrip } from "@/components/PreviewStrip";
 import { SITE, DISCIPLINES } from "@/lib/site";
 import { getCredits, leadCredits } from "@/lib/credits";
-import { heroKeys, galleryFor } from "@/lib/galleries";
+import { heroKeys, galleryFor, coverFor, PREVIEW_COUNT } from "@/lib/galleries";
 
 export const metadata: Metadata = {
   description:
@@ -28,10 +29,18 @@ export default function Home() {
           {SITE.artist} — {SITE.tagline}
         </h1>
 
-        {/* Opening: the work at full bleed, the mark over it. A showreel takes
-            this slot once one is cut — see capture/reels.json. */}
-        <section className="relative h-[100svh]" aria-label="Recent character work">
-          <WorkReel imageKeys={hero} label="Recent character work" priorityFirst />
+        {/* Opening: one slot, the mark over it. D10 puts the showreel above the
+            fold; until a cut exists (src/content/showreel.ts) the work itself
+            fills it at full bleed. */}
+        <section
+          className="relative h-[100svh]"
+          aria-label={hasShowreel ? "Showreel" : "Recent character work"}
+        >
+          {hasShowreel ? (
+            <Showreel />
+          ) : (
+            <WorkReel imageKeys={hero} label="Recent character work" priorityFirst />
+          )}
           <div
             className="pointer-events-none absolute inset-x-0 z-[4] grid gap-3"
             style={{ bottom: "calc(120px + env(safe-area-inset-bottom))", paddingInline: "var(--gut)" }}
@@ -43,47 +52,54 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Each discipline gets a full-bleed plate with its title over it. */}
+        {/* Each discipline shows several of its best works, not one plate: the
+            homepage has to prove range before anyone clicks through. The title
+            block is the link — the strip itself scrolls, and making the whole
+            section clickable would fire a navigation at the end of a swipe. */}
         <nav aria-label="Disciplines">
           {DISCIPLINES.map((d, i) => {
             const keys = galleryFor(d.slug);
-            const cover = keys[0];
+            const cover = coverFor(d.slug);
+            // Lead with the configured cover, then the rest of the curated order.
+            const preview = [
+              ...(cover ? [cover] : []),
+              ...keys.filter((k) => k !== cover),
+            ].slice(0, PREVIEW_COUNT);
+
             return (
-              <Link
+              <section
                 key={d.slug}
-                href={`/${d.slug}/`}
-                className="relative block h-[62svh] overflow-hidden no-underline md:h-[78svh]"
+                aria-labelledby={`disc-${d.slug}`}
+                className="relative h-[62svh] overflow-hidden md:h-[78svh]"
               >
-                {cover && (
-                  <Picture
-                    imageKey={cover}
-                    alt=""
-                    size="fullBleed"
-                    imgClassName="h-full w-full object-cover"
-                    aspectRatio="auto"
-                    className="block h-full w-full"
-                  />
-                )}
-                <span
-                  className="pointer-events-none absolute inset-x-0 bottom-0 z-[2] block"
+                <PreviewStrip imageKeys={preview} label={d.title} />
+                <div
+                  className="pointer-events-none absolute inset-x-0 bottom-0 z-[2]"
                   style={{
                     paddingInline: "var(--gut)",
                     paddingBottom: 24,
-                    paddingTop: 72,
+                    paddingTop: 96,
                     background:
-                      "linear-gradient(rgba(7,7,10,0) 0%, rgba(7,7,10,.72) 40%, rgba(7,7,10,.94) 100%)",
+                      "linear-gradient(rgba(7,7,10,0) 0%, rgba(7,7,10,.72) 45%, rgba(7,7,10,.94) 100%)",
                   }}
                 >
                   <span className="lab num block">{String(i + 1).padStart(2, "0")}</span>
-                  <span
-                    className="mt-1 block font-display font-600 leading-[1.03]"
+                  <Link
+                    id={`disc-${d.slug}`}
+                    href={`/${d.slug}/`}
+                    className="pointer-events-auto mt-1 block font-display font-600 leading-[1.03] text-chalk no-underline"
                     style={{ fontSize: "clamp(26px,7vw,44px)" }}
                   >
                     {d.title}
-                  </span>
-                  <span className="lab mt-1.5 block">{keys.length} works →</span>
-                </span>
-              </Link>
+                  </Link>
+                  <Link
+                    href={`/${d.slug}/`}
+                    className="lab pointer-events-auto mt-1.5 inline-flex min-h-[32px] items-center no-underline hover:text-chalk"
+                  >
+                    {keys.length} works →
+                  </Link>
+                </div>
+              </section>
             );
           })}
         </nav>
@@ -101,8 +117,8 @@ export default function Home() {
           </ul>
           <p className="lab mt-6">
             {credits.length} productions ·{" "}
-            <Link href="/about-me/#credits" className="text-chalk underline underline-offset-4">
-              Full list
+            <Link href="/credits/" className="text-chalk underline underline-offset-4">
+              All credits
             </Link>
           </p>
         </section>

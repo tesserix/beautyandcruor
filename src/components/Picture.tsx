@@ -1,4 +1,4 @@
-import { requireImage, srcSet, SIZES, type SizeKey } from "@/lib/images";
+import { requireImage, srcSet, assetUrl, SIZES, type SizeKey } from "@/lib/images";
 
 type Props = {
   /** Manifest key, e.g. "2023/04/3D-print-Nose" */
@@ -44,7 +44,7 @@ export function Picture({
       <source type="image/avif" srcSet={srcSet(img.avif)} sizes={sizes} />
       <source type="image/webp" srcSet={srcSet(img.webp)} sizes={sizes} />
       <img
-        src={img.fallback.src}
+        src={assetUrl(img.fallback.src)}
         alt={alt}
         width={img.width}
         height={img.height}

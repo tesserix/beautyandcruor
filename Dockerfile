@@ -16,6 +16,11 @@
 #      public/img and src/generated/images.json already exist in the build
 #      context. Fast to iterate, NOT reproducible from a clean clone.
 #
+# WHAT ACTUALLY SHIPS: only the manifest. public/img is in .dockerignore
+# because the derivatives are served from GCS behind Cloudflare — see
+# scripts/assets-sync.mjs, which uploads only the images the site references.
+# The runtime image is the HTML/CSS/JS plus nginx, a couple of MB.
+#
 # The builder below takes B when the manifest is present and otherwise fails
 # with an explicit message, rather than silently producing a site with holes.
 # =============================================================================
@@ -38,6 +43,16 @@ COPY . .
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
+
+# Where the image derivatives are served from.
+#
+# This is a BUILD-time value and can only be a build arg: `output: 'export'`
+# freezes every srcset URL into the emitted HTML, so setting it in the Helm
+# chart at runtime would change nothing about pages that were already built.
+# Empty by default, which keeps same-origin `/img/...` working for a local
+# `docker build` that still has public/img in context.
+ARG ASSET_BASE_URL=""
+ENV NEXT_PUBLIC_ASSET_BASE_URL=$ASSET_BASE_URL
 
 # Fail loudly and early. A missing manifest means every <Picture> would throw
 # mid-render, which is a confusing way to discover the same problem.

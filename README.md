@@ -3,9 +3,15 @@
 Rebuilding the portfolio of **Parimiti**, a hair, makeup and SFX prosthetics artist working
 between Sydney and Mumbai, replacing a WordPress + Elementor build that is being decommissioned.
 
-**Status:** pre-build. Reference captured, image pipeline proven, three design directions
-explored and reviewed. The production Next.js app has not been scaffolded yet — it is blocked on
-client answers (see [`docs/OPEN-QUESTIONS.md`](docs/OPEN-QUESTIONS.md)).
+**Status:** in build. The app is scaffolded and built to the D10 structure — credits as their
+own route, a "For Production" block, a showreel slot, the Journal demoted. Nine routes export
+statically and the build is clean.
+
+What is left is mostly **not ours**: roles for the 27 credits, which credits lead, the booking
+facts, alt text for 290 images. Those are in
+[`docs/OPEN-QUESTIONS.md`](docs/OPEN-QUESTIONS.md), and the surfaces waiting on them are already
+built — they render what is confirmed and omit what is not, so answers light them up without a
+code change.
 
 Start with [`docs/FINDINGS.md`](docs/FINDINGS.md) for what the old site and the research actually
 turned up, and [`docs/DECISIONS.md`](docs/DECISIONS.md) for what was decided and why.
@@ -26,6 +32,13 @@ serialized JSON in postmeta and are worthless outside Elementor — do not try t
 ## Repository layout
 
 ```
+src/
+  app/                  Routes. One page per preserved URL, plus /credits/ (new).
+  components/           Chrome, MobileMenu, Reel, Picture, Credits, ProductionFacts, Showreel.
+  content/              credits.json, galleries.json, posts/*.mdx, production.ts, showreel.ts
+  generated/images.json Written by scripts/images.mjs. Never edited by hand.
+  lib/                  site.ts (facts), credits.ts, galleries.ts, images.ts, posts.ts, jsonld.tsx
+
 brand/                  Brand mark, traced to vector
   logo.svg              Two-path SVG: .bc-script and .bc-leaf, recolourable via
                         --logo-ink and --logo-leaf. 4x potrace trace of the raster original.
@@ -162,10 +175,17 @@ letsencrypt-prod`), with **two named SANs**, not a wildcard. Their CAA records r
 
 | | |
 |---|---|
-| JS | under 150 KB gzipped (old homepage: 50 scripts, 47 stylesheets) |
+| JS | target under 150 KB gzipped — **currently 185 KB and over budget, see below** |
 | Lighthouse mobile | 95+ performance, 100 accessibility |
 | Primary viewport | **390px** — design and test here first, then scale up |
 | No jQuery | |
+
+**The JS budget is blown by ~35 KB and it is not application code.** Nine chunks ship on every
+route, 185 KB gzipped, of which the app's own client components (the reel counter, the credits
+filter, the mobile menu, the enquiry form) are about 1 KB. The rest is the Next 16 App Router
+runtime and React 19. Framer Motion and Embla are in `package.json` but imported nowhere, so they
+cost nothing. Getting under 150 KB means changing the framework posture, not trimming components
+— that is a decision, not a cleanup, and it has not been made.
 
 **Accessibility 100 is currently unreachable** for a reason that has nothing to do with code: all
 290 images have empty alt text. Alt text must be authored, not migrated.

@@ -63,13 +63,21 @@ Nothing here is a design decision. These are facts only she has.
 
 ## Not blocked on her — our side
 
-- Scaffold the Next.js app (Next 16 / React 19 / Tailwind v4 / Node 22, matching `tesserix-blog`).
-- Rebuild direction C to the D10 structure: credits primary, For Production block, showreel slot,
-  Journal dropped.
-- Typography pass — the reviews were unanimous that a neutral grotesque leaves a stripped-back
-  design with no personality.
-- Dockerfile (multi-stage → nginx) and `nginx.conf` handling trailing slashes plus 410s for the
-  dead and demo URLs.
+**Done**
+
+- ~~Scaffold the Next.js app~~ (Next 16 / React 19 / Tailwind v4).
+- ~~Rebuild direction C to the D10 structure~~ — credits primary at `/credits/`, For Production
+  block, showreel slot, Journal demoted. See D14 for what was built and the one departure.
+- ~~Typography pass~~ — Eczar / Archivo / IBM Plex Mono.
+- ~~Dockerfile (multi-stage → nginx) and `nginx.conf`~~ handling trailing slashes plus 410s.
+
+**Still ours**
+
+- **JS budget.** 185 KB gzipped against a 150 KB target. Almost none of it is application code —
+  it is the App Router runtime plus React. Needs a decision, not a cleanup. See README.
+- **No favicon or app icon.** `/favicon.ico` 404s. Blocked in practice on the logo question
+  above: the mark is a wide script signature and illegible at 32px, so an icon is a brand
+  decision, not an export.
 - Helm chart in `tesserix-k8s` following the `tesserix-home` pattern.
 - Re-capture the 1920 homepage properly — the split-slider defeats `fullPage` screenshots.
 - Decide whether to obtain the WXR export for the Testimonials CPT. Low value given the Portfolio

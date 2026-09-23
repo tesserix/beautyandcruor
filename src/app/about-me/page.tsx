@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Chrome } from "@/components/Chrome";
 import { SiteFooter } from "@/components/SiteFooter";
-import { Credits } from "@/components/Credits";
+import { ProductionFacts } from "@/components/ProductionFacts";
 import { SITE, LOCATIONS } from "@/lib/site";
 import { getCredits } from "@/lib/credits";
 import { artistPortrait } from "@/lib/galleries";
@@ -16,6 +17,8 @@ export const metadata: Metadata = {
 
 export default function About() {
   const portrait = artistPortrait();
+  const creditCount = getCredits().length;
+
   return (
     <>
       <Chrome />
@@ -51,14 +54,24 @@ export default function About() {
               Australian Academy of Cinemagraphic Make-up.
             </p>
           </div>
+
+          {/* The credits live on their own page (D10). This is the route across,
+              not a second copy of the list. */}
+          <Link
+            href="/credits/"
+            className="mt-9 flex items-baseline justify-between gap-4 border-y border-hair py-5 no-underline hover:text-chalk"
+          >
+            <span>
+              <span className="lab block">Credits</span>
+              <span className="mt-1 block font-display text-[clamp(20px,5vw,28px)] font-600 text-chalk">
+                {creditCount} productions
+              </span>
+            </span>
+            <span className="lab shrink-0">View →</span>
+          </Link>
         </section>
 
-        {/* TODO(client): the "For Production" block goes here — availability,
-            crew, turnaround, insurance, ABN/GST, WWCC. Almost no competitor
-            publishes this, which is exactly why it earns its place. Waiting on
-            docs/OPEN-QUESTIONS.md. */}
-
-        <Credits credits={getCredits()} />
+        <ProductionFacts />
       </main>
       <SiteFooter />
     </>

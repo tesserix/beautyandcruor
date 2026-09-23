@@ -6,6 +6,9 @@ out/
 # Reference capture — large, regenerable from the live site while it exists.
 # Keep manifests and parsed data (they are the durable record); ignore the bulk.
 capture/assets/uploads/
+# Full-resolution originals deduplicated from the public_html bundle (502 MB).
+# This is the pipeline's real source — see scripts/images.mjs.
+capture/assets/originals/
 capture/screens/
 capture/contactsheets/*.jpg
 capture/audit/*.png

@@ -1,13 +1,53 @@
-import { groupByYear, countsByLocation, type Credit } from "@/lib/credits";
+import {
+  byYearDesc,
+  countsByLocation,
+  typesPresent,
+  TYPE_LABEL,
+  type Credit,
+} from "@/lib/credits";
+import { CreditsFilter, type Chip, type CreditRow } from "./CreditsFilter";
 
 /**
- * The credibility engine. A producer reads role first, then title — so the
- * role slot is rendered whenever present and its absence is visible rather
- * than hidden. TODO(client): roles are not yet in the data.
+ * The credibility engine, and the surface this site exists to put in front of
+ * a producer (D9/D10).
+ *
+ * Server component: it resolves the dataset and hands the client filter
+ * display-ready strings, so credits.json never crosses the boundary.
+ *
+ * A producer reads role first, then title. TODO(client): not one of the 27
+ * credits has a role — question 1 in docs/OPEN-QUESTIONS.md, and the single
+ * biggest gap in the dataset. The slot renders as soon as the data has it.
  */
 export function Credits({ credits }: { credits: Credit[] }) {
-  const grouped = groupByYear(credits);
   const locs = countsByLocation(credits);
+
+  const rows: CreditRow[] = byYearDesc(credits).map((c) => {
+    const groupYear = c.year.slice(0, 4);
+    return {
+    id: `${c.title}-${c.year}`,
+    title: c.title,
+    groupYear,
+    type: c.type,
+    meta: [
+      // Only when the raw value says more than the heading above it, e.g.
+      // "2019-2020" grouped under 2019.
+      c.year !== groupYear ? c.year : null,
+      TYPE_LABEL[c.type],
+      c.role,
+      c.inProgress ? "In progress" : c.director && `Dir. ${c.director}`,
+      c.production,
+      c.location,
+    ]
+      .filter(Boolean)
+      .join(" · "),
+    };
+  });
+
+  const chips: Chip[] = typesPresent(credits).map((t) => ({
+    type: t.type,
+    label: TYPE_LABEL[t.type],
+    count: t.count,
+  }));
 
   return (
     <section
@@ -30,32 +70,7 @@ export function Credits({ credits }: { credits: Credit[] }) {
           .join(" · ")}
       </p>
 
-      {grouped.map(([year, rows]) => (
-        <div key={year} className="mt-8 border-t border-hair pt-4">
-          <h3 className="font-display text-[22px] font-600">{year}</h3>
-          <ul className="mt-2">
-            {rows.map((c) => (
-              <li
-                key={`${c.title}-${c.year}`}
-                className="grid gap-1 border-b border-hair/70 py-3 last:border-0"
-              >
-                <span className="text-[17px] leading-snug">{c.title}</span>
-                <span className="lab" style={{ letterSpacing: "0.06em" }}>
-                  {[
-                    c.type,
-                    c.role,
-                    c.inProgress ? "In progress" : c.director && `Dir. ${c.director}`,
-                    c.production,
-                    c.location,
-                  ]
-                    .filter(Boolean)
-                    .join(" · ")}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ))}
+      <CreditsFilter rows={rows} chips={chips} />
     </section>
   );
 }

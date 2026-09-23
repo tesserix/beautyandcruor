@@ -14,3 +14,12 @@ brand/*.png
 *.md
 !README.md
 .DS_Store
+
+# Image derivatives live in GCS behind the CDN, not in the container. The
+# build only needs src/generated/images.json — it reads dimensions, LQIPs and
+# the derivative paths from the manifest and emits absolute CDN URLs, so
+# shipping the files too would add ~165 MB to every push and node pull for
+# bytes nginx would never serve.
+#
+# Keep public/brand: the logo SVGs are tiny and are referenced same-origin.
+public/img/

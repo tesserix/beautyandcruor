@@ -75,6 +75,13 @@ export const PRESERVED_PATHS = [
 ] as const;
 
 /**
+ * Routes the rebuild adds that the old site never had. Kept separate from
+ * PRESERVED_PATHS because that list has a job — the deploy check greps the old
+ * sitemap against it for 404s — and a new URL would be noise there.
+ */
+export const NEW_PATHS = ["/credits/"] as const;
+
+/**
  * Dead on the old site and deliberately not rebuilt. nginx returns 410 Gone so
  * search engines de-index faster than with a 404. `/portfolio-item/*` was Curly
  * theme demo content with no imagery of its own.

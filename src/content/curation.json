@@ -1,0 +1,70 @@
+{
+  "_note": [
+    "Human curation: which images lead each gallery, and what the homepage opens on.",
+    "",
+    "capture/live-images.json answers 'did she publish this?' \u2014 a rights question.",
+    "It does NOT answer 'is this her best work?'. Deriving the hero from the old",
+    "WordPress homepage produced a behind-the-scenes shot of a film set, a beard",
+    "trim and some plaster hands, in place of the character builds the design was",
+    "built around. Those are different questions and need different sources.",
+    "",
+    "Keyed by ORIGINAL upload path, not by manifest key: scripts/organize.mjs",
+    "renumbers keys whenever categories shift, so `sfx/sfx-048` is not a stable",
+    "address. sourcePath is.",
+    "",
+    "Anything listed here still has to pass the rights gate. Listing an image",
+    "she never published does not clear it \u2014 see cleared-images.json for that.",
+    "",
+    "          first screen shows range rather than four variations of one craft.",
+    "hero    = the homepage opening reel. The strongest character work, full stop \u2014",
+    "          NOT one image per discipline. Spreading it across categories diluted",
+    "          the opening; the discipline strips below already carry the range.",
+    "covers  = the image on each discipline plate further down the homepage.",
+    "leads   = what each discipline gallery opens on.",
+    "",
+    "All four are plain lists of source paths. An admin UI, if one is ever built,",
+    "writes this file and nothing else changes."
+  ],
+  "hero": [
+    "2025/02/IMG_4654",
+    "2025/02/IMG_4652",
+    "2025/02/IMG_4656",
+    "2025/02/IMG_4653",
+    "2025/02/IMG_4659"
+  ],
+  "leads": {
+    "sfx": [
+      "2023/01/IMG_8172",
+      "2024/04/5da47ebd-1022-456d-9389-b900ddd5641f",
+      "2024/11/81A86990-F8D1-422E-8499-F4FF52726962-scaled",
+      "2025/02/IMG_4657",
+      "2024/04/55b721a8-4a39-4661-9f79-bd53299ab63a"
+    ],
+    "casting": [
+      "2022/09/IMG_8356-scaled",
+      "2024/11/IMG_2947",
+      "2024/04/IMG_3542-scaled",
+      "2024/04/IMG_8668-scaled"
+    ],
+    "film": [
+      "2022/09/WhatsApp-Image-2019-06-29-at-1.41.08-AM",
+      "2022/09/WhatsApp-Image-2019-06-15-at-5.43.20-PM",
+      "2022/09/IMG_1605-scaled"
+    ],
+    "editorial": [
+      "2022/09/mermaid_edit3",
+      "2023/01/SDIM2009-1-scaled",
+      "2023/01/SDIM2048-1-scaled",
+      "2023/01/SDIM2479-1-scaled",
+      "2022/09/rebecca-8989_Original-scaled",
+      "2022/09/IMG_4431-scaled"
+    ]
+  },
+  "artist": "2024/11/IMG_2489-scaled",
+  "covers": {
+    "sfx-prosthetics": "2025/02/IMG_4657",
+    "casting-sculpting": "2024/04/IMG_3542",
+    "film-television": "2022/09/47143e19-566c-45c4-87e6-7f2b6c7d313d",
+    "editorial-fashion": "2022/09/rebecca-8989_Original"
+  }
+}
