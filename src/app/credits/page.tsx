@@ -3,7 +3,6 @@ import Link from "next/link";
 import { Chrome } from "@/components/Chrome";
 import { SiteFooter } from "@/components/SiteFooter";
 import { Credits } from "@/components/Credits";
-import { SITE } from "@/lib/site";
 import { getCredits, leadCredits } from "@/lib/credits";
 import { JsonLd, creditSchemas, creditsListSchema, breadcrumbSchema } from "@/lib/jsonld";
 
@@ -63,22 +62,20 @@ export default function CreditsPage() {
             ))}
           </ul>
 
-          <div className="mt-8 flex flex-wrap gap-2">
-            <a
-              href={SITE.imdb}
-              target="_blank"
-              rel="noopener"
-              className="lab min-w-[150px] flex-1 border border-hair px-4 py-3 text-center text-chalk no-underline hover:border-chalk"
-            >
-              IMDb ↗
-            </a>
-            <Link
-              href="/about-me/#for-production"
-              className="lab min-w-[150px] flex-1 border border-hair px-4 py-3 text-center text-chalk no-underline hover:border-chalk"
-            >
-              Booking details
-            </Link>
-          </div>
+          {/* One link, not a row of them. IMDb is in the footer of every page
+              and Enquire is the fixed pill, so a pair here put both of them on
+              screen twice; booking details is the only thing this page adds.
+              Sized to its text rather than stretched, so it reads as the next
+              step rather than as a second navigation bar. */}
+          <Link
+            href="/about-me/#for-production"
+            className="lab group mt-8 inline-flex min-h-[44px] items-center gap-3 border-b border-hair pb-2 no-underline hover:border-chalk hover:text-chalk"
+          >
+            Booking details
+            <span className="inline-block transition-transform duration-300 group-hover:translate-x-1">
+              →
+            </span>
+          </Link>
         </section>
 
         <Credits credits={credits} />

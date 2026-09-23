@@ -18,7 +18,7 @@ export function DisciplinePage({ discipline }: { discipline: Discipline }) {
 
   return (
     <>
-      <Chrome />
+      <Chrome plate />
       <main id="main">
         <h1 className="vh">{discipline.title}</h1>
 

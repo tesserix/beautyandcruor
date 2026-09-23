@@ -22,7 +22,22 @@ import { MobileMenu } from "./MobileMenu";
 /** Matches the prototype's `deck.scrollTop > innerHeight * 0.55`. */
 const REVEAL_AT = 0.55;
 
-export function Chrome({ solidMark = true }: { solidMark?: boolean }) {
+export function Chrome({
+  solidMark = true,
+  plate = false,
+}: {
+  solidMark?: boolean;
+  /**
+   * The page opens with a full-bleed image plate.
+   *
+   * There the header stays the gradient scrim c-immersive specifies and never
+   * solidifies: a rule across a photograph is a seam, and the whole point of
+   * the scrim is that the plate runs under it unbroken. Only text surfaces —
+   * where rows were visibly dissolving into the top of the window — take the
+   * opaque treatment.
+   */
+  plate?: boolean;
+}) {
   // Starts true when the mark is unconditional, so server and first client
   // render agree and nothing flashes during hydration.
   const [past, setPast] = useState(solidMark);
@@ -33,7 +48,7 @@ export function Chrome({ solidMark = true }: { solidMark?: boolean }) {
     const read = () => {
       frame = 0;
       const y = window.scrollY;
-      setScrolled(y > 8);
+      setScrolled(!plate && y > 8);
       if (!solidMark) setPast(y > window.innerHeight * REVEAL_AT);
     };
     // Coalesce to one read per frame: scroll fires far faster than paint.
@@ -49,28 +64,24 @@ export function Chrome({ solidMark = true }: { solidMark?: boolean }) {
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onScroll);
     };
-  }, [solidMark]);
+  }, [solidMark, plate]);
 
   return (
     <>
       <header
         className="fixed inset-x-0 top-0 z-40 flex items-center justify-between pointer-events-none"
-        /* At rest the header is a gradient scrim, so the opening plate runs
-           under it unbroken. Once the page moves it becomes opaque: the
-           gradient is transparent across its lower third, and over a text
-           surface — the credits list especially, now that the filter bar
-           sticks directly beneath it — that read as rows dissolving into the
-           top of the window rather than as depth. */
+        /* Gradient scrim, exactly as c-immersive specifies — and deliberately
+           no bottom rule: over a photograph that reads as a black seam across
+           the plate. Text surfaces deepen the scrim once the page moves (see
+           `plate`), which is enough to stop rows showing through it, without
+           drawing a line. */
         style={{
           height: "var(--hud)",
           paddingInline: "var(--gut)",
           background: scrolled
-            ? "rgba(7,7,10,.94)"
+            ? "linear-gradient(rgba(7,7,10,.97) 0%, rgba(7,7,10,.93) 62%, rgba(7,7,10,.82) 100%)"
             : "linear-gradient(rgba(7,7,10,.92) 0%, rgba(7,7,10,.66) 62%, rgba(7,7,10,0) 100%)",
-          backdropFilter: scrolled ? "blur(10px)" : undefined,
-          WebkitBackdropFilter: scrolled ? "blur(10px)" : undefined,
-          borderBottom: `1px solid ${scrolled ? "var(--color-hair)" : "transparent"}`,
-          transition: "background .35s ease, border-color .35s ease",
+          transition: "background .35s ease",
         }}
       >
         <Link
@@ -82,12 +93,10 @@ export function Chrome({ solidMark = true }: { solidMark?: boolean }) {
              sighted keyboard user who cannot see where focus went. */
           aria-hidden={past ? undefined : true}
           tabIndex={past ? undefined : -1}
-          style={{
-            opacity: past ? 1 : 0,
-            // Rises the last few pixels into place rather than appearing flat.
-            transform: past ? "none" : "translateY(-6px)",
-            transition: "opacity .45s ease, transform .45s ease",
-          }}
+          /* Opacity and nothing else, at .45s — the prototype's transition
+             verbatim. A translate here was mine, and it read as a different
+             move from the one that was signed off. */
+          style={{ opacity: past ? 1 : 0, transition: "opacity .45s ease" }}
         >
           <Logo className="h-[26px] md:h-[30px]" />
         </Link>
