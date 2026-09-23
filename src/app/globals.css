@@ -27,6 +27,12 @@
 :root {
   --gut: 18px;
   --hud: 58px;
+  /* The reading measure. Every text surface is full-bleed below this width and
+     centred above it: the pages were built phone-first with only a gutter, so
+     on a 1900px display the credits, the footer and the enquiry form all
+     stranded themselves against the left edge. Full-bleed imagery opts out by
+     simply not using .wrap. */
+  --wrap: 1180px;
   color-scheme: dark;
 }
 
@@ -103,5 +109,150 @@ img {
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/* ===========================================================================
+   Measure
+   =========================================================================== */
+
+/* The centred column. Carries the gutter itself, so a section using .wrap must
+   not also set paddingInline — that would double it. */
+.wrap {
+  width: 100%;
+  max-width: var(--wrap);
+  margin-inline: auto;
+  padding-inline: var(--gut);
+}
+
+/* Full-bleed media that still wants its caption on the measure. */
+.wrap-flush {
+  width: 100%;
+  max-width: var(--wrap);
+  margin-inline: auto;
+}
+
+/* ===========================================================================
+   Scroll motion
+
+   Driven entirely by the scroll timeline, so there is no observer, no
+   requestAnimationFrame and no client JavaScript for any of it.
+
+   The a-darkroom prototype ruled out scroll reveals because the old WordPress
+   build faded blocks in with Waypoints and left content invisible when the
+   script failed. That objection is about content being *gated* on script, not
+   about motion, so the rest state here is the finished state: a browser
+   without scroll-driven animation support, or a reader with reduced motion,
+   gets the fully visible page and skips only the movement.
+   =========================================================================== */
+
+@keyframes rise-in {
+  from {
+    opacity: 0.18;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes settle-in {
+  from {
+    opacity: 0.3;
+    transform: translateY(10px) scale(0.994);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Slow drift on full-bleed plates: the frame moves fractionally slower than
+   the page, which reads as depth without ever detaching from the scroll. */
+@keyframes plate-drift {
+  from {
+    transform: scale(1.06) translateY(-1.2%);
+  }
+  to {
+    transform: scale(1.06) translateY(1.2%);
+  }
+}
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .rise {
+      animation: rise-in linear both;
+      animation-timeline: view();
+      animation-range: entry 4% cover 24%;
+    }
+
+    .settle {
+      animation: settle-in linear both;
+      animation-timeline: view();
+      animation-range: entry 2% cover 20%;
+    }
+
+    /* Staggered children — a credit list arriving a row at a time rather than
+       as one block. Kept to a handful of steps; beyond that the last rows wait
+       long enough to feel broken. */
+    .rise-stagger > * {
+      animation: rise-in linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 18%;
+    }
+
+    .drift {
+      animation: plate-drift linear both;
+      animation-timeline: view();
+      animation-range: cover;
+    }
+  }
+}
+
+/* ===========================================================================
+   Horizontal rails
+   =========================================================================== */
+
+/* Shared scroll-rail behaviour. The scrollbar is hidden because the counter
+   and the frame overhang already say the row scrolls. */
+.rail {
+  display: flex;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+
+.rail::-webkit-scrollbar {
+  display: none;
+}
+
+/* ===========================================================================
+   The mark handoff
+   The opening frame's mark leaves as the header's arrives, so the two are
+   never both on screen. Tied to the same 55vh the header uses. Scroll-driven,
+   so it costs nothing; where it is unsupported the opening mark simply stays
+   put, which is the pre-existing behaviour and reads fine.
+   =========================================================================== */
+@keyframes mark-handoff {
+  from {
+    opacity: 1;
+    transform: none;
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+}
+
+@supports (animation-timeline: scroll()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .hero-mark {
+      animation: mark-handoff linear both;
+      animation-timeline: scroll(root block);
+      animation-range: 12vh 52vh;
+    }
   }
 }

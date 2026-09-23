@@ -1,4 +1,5 @@
 import { Picture } from "./Picture";
+import { Rail } from "./Rail";
 
 /**
  * A discipline's best work on the homepage: a horizontal strip of several
@@ -10,7 +11,8 @@ import { Picture } from "./Picture";
  *
  * Deliberately NOT the Reel component used for full galleries: that carries a
  * counter and progress bar, and four of those stacked down the homepage is
- * chrome competing with the work. Native scroll-snap needs no JavaScript.
+ * chrome competing with the work. It shares Reel's <Rail>, so it gets the
+ * desktop arrows and arrow-key support without the gallery dressing.
  */
 export function PreviewStrip({
   imageKeys,
@@ -20,12 +22,7 @@ export function PreviewStrip({
   label: string;
 }) {
   return (
-    <div
-      className="flex h-full snap-x snap-mandatory gap-1 overflow-x-auto overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-      style={{ overscrollBehaviorX: "contain" }}
-      role="group"
-      aria-label={`${label} — preview`}
-    >
+    <Rail count={imageKeys.length} label={`${label} — preview`} className="gap-1 overflow-y-hidden">
       {imageKeys.map((key, i) => (
         <figure
           key={key}
@@ -42,6 +39,6 @@ export function PreviewStrip({
           />
         </figure>
       ))}
-    </div>
+    </Rail>
   );
 }

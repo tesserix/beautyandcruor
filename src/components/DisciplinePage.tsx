@@ -41,21 +41,23 @@ export function DisciplinePage({ discipline }: { discipline: Discipline }) {
           </div>
         </section>
 
-        <section style={{ paddingInline: "var(--gut)" }} className="py-12">
-          <p className="max-w-[52ch] text-ash">{discipline.blurb}</p>
-          <p className="lab mt-6">
+        <section className="wrap py-12 md:py-20">
+          <p className="rise max-w-[52ch] text-ash">{discipline.blurb}</p>
+          <p className="lab rise mt-6">
             {keys.length} works ·{" "}
             <span className="text-ash-img">titles and credits pending confirmation</span>
           </p>
           <Link
             href={`/${next.slug}/`}
-            className="lab mt-10 flex items-baseline gap-3 border-t border-hair pt-6 no-underline hover:text-chalk"
+            className="lab rise group mt-10 flex items-baseline gap-3 border-t border-hair pt-6 no-underline hover:text-chalk"
           >
             Next
             <span className="font-display text-[clamp(20px,5vw,28px)] normal-case tracking-normal text-chalk">
               {next.title}
             </span>
-            →
+            <span className="inline-block transition-transform duration-300 group-hover:translate-x-1.5">
+              →
+            </span>
           </Link>
         </section>
       </main>

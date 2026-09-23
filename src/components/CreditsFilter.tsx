@@ -54,8 +54,14 @@ export function CreditsFilter({ rows, chips }: { rows: CreditRow[]; chips: Chip[
 
   return (
     <>
+      {/* Sticky under the header: the list runs to 27 rows across a decade of
+          year groups, and a filter you have to scroll back to the top to
+          change is a filter nobody uses twice. The ink backdrop matches the
+          page ground, so it reads as the row parting the list rather than as a
+          floating bar. */}
       <div
-        className="mt-8 flex flex-wrap gap-2"
+        className="sticky z-20 -mx-[var(--gut)] flex flex-wrap gap-2 border-b border-hair/60 bg-ink/95 px-[var(--gut)] py-3 backdrop-blur-sm"
+        style={{ top: "var(--hud)" }}
         role="group"
         aria-label="Filter credits by production type"
       >
@@ -85,9 +91,12 @@ export function CreditsFilter({ rows, chips }: { rows: CreditRow[]; chips: Chip[
       {groups.map(([year, items]) => (
         <div key={year} className="mt-8 border-t border-hair pt-4">
           <h3 className="font-display text-[22px] font-600">{year}</h3>
-          <ul className="mt-2">
+          <ul className="rise-stagger mt-2">
             {items.map((c) => (
-              <li key={c.id} className="grid gap-1 border-b border-hair/70 py-3 last:border-0">
+              <li
+                key={c.id}
+                className="grid gap-1 border-b border-hair/70 py-3 last:border-0 md:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] md:items-baseline md:gap-8"
+              >
                 <span className="text-[17px] leading-snug">{c.title}</span>
                 {c.meta && (
                   <span className="lab" style={{ letterSpacing: "0.06em" }}>

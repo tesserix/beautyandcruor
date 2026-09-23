@@ -42,7 +42,7 @@ export default function Home() {
             <WorkReel imageKeys={hero} label="Recent character work" priorityFirst />
           )}
           <div
-            className="pointer-events-none absolute inset-x-0 z-[4] grid gap-3"
+            className="hero-mark pointer-events-none absolute inset-x-0 z-[4] grid gap-3"
             style={{ bottom: "calc(120px + env(safe-area-inset-bottom))", paddingInline: "var(--gut)" }}
           >
             <Logo className="h-[clamp(44px,14vw,72px)]" />
@@ -74,7 +74,7 @@ export default function Home() {
               >
                 <PreviewStrip imageKeys={preview} label={d.title} />
                 <div
-                  className="pointer-events-none absolute inset-x-0 bottom-0 z-[2]"
+                  className="settle pointer-events-none absolute inset-x-0 bottom-0 z-[2]"
                   style={{
                     paddingInline: "var(--gut)",
                     paddingBottom: 24,
@@ -104,9 +104,9 @@ export default function Home() {
           })}
         </nav>
 
-        <section style={{ paddingInline: "var(--gut)" }} className="py-14">
-          <p className="lab">Selected credits</p>
-          <ul className="mt-4 grid gap-3">
+        <section className="wrap py-14 md:py-20">
+          <p className="lab rise">Selected credits</p>
+          <ul className="rise-stagger mt-4 grid gap-3">
             {lead.map((c) => (
               <li key={`${c.title}-${c.year}`} className="flex flex-wrap items-baseline gap-x-3">
                 <span className="font-display text-[19px]">{c.title}</span>
@@ -115,7 +115,7 @@ export default function Home() {
               </li>
             ))}
           </ul>
-          <p className="lab mt-6">
+          <p className="lab rise mt-6">
             {credits.length} productions ·{" "}
             <Link href="/credits/" className="text-chalk underline underline-offset-4">
               All credits

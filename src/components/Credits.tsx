@@ -50,12 +50,7 @@ export function Credits({ credits }: { credits: Credit[] }) {
   }));
 
   return (
-    <section
-      id="credits"
-      aria-labelledby="credits-heading"
-      style={{ paddingInline: "var(--gut)" }}
-      className="py-14"
-    >
+    <section id="credits" aria-labelledby="credits-heading" className="wrap py-14 md:py-20">
       <p className="lab">Credits</p>
       <h2
         id="credits-heading"

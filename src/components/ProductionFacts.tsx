@@ -17,9 +17,9 @@ export function ProductionFacts() {
     <section
       id="for-production"
       aria-labelledby="for-production-heading"
-      style={{ paddingInline: "var(--gut)" }}
-      className="border-t border-hair py-14"
+      className="border-t border-hair py-14 md:py-20"
     >
+      <div className="wrap">
       <p className="lab">For production</p>
       <h2
         id="for-production-heading"
@@ -28,7 +28,7 @@ export function ProductionFacts() {
         Booking details
       </h2>
 
-      <dl className="mt-7 grid max-w-[62ch] gap-0">
+      <dl className="rise-stagger mt-7 grid max-w-[62ch] gap-0">
         {facts.map((f) => (
           <div
             key={f.term}
@@ -50,6 +50,7 @@ export function ProductionFacts() {
         </Link>{" "}
         and you get it the same day.
       </p>
+      </div>
     </section>
   );
 }
