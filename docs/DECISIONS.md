@@ -339,3 +339,46 @@ identical to the live zone and every one DNS-only so nothing proxies the
 WordPress site. Nameservers for the eventual switch are `algin.ns.cloudflare.com`
 and `nola.ns.cloudflare.com`. The Transform Rule must be deleted when the
 renamed bucket lands, or it will prepend a bucket path onto a bucket-named host.
+
+---
+
+## D17 — Deployed to a staging host, not the production domain
+
+The site is live at `beautyandcruor.tesserix.app` rather than `beautyandcruor.com`, deliberately:
+the rebuild is not signed off, and moving a client's live DNS to host an unfinished site is the
+wrong order. The chart reaches the real domain through a values change — `domains.primary`, the
+`www` alias, `tls.enabled: true` — not a rewrite. Both states were rendered and verified.
+
+Three things were learned the hard way and are worth keeping.
+
+**A `tesserix.app` host needs no in-cluster certificate.** Traffic arrives through the Cloudflare
+Tunnel, which terminates TLS at the edge and forwards plain HTTP to the ingress gateway. That is
+why `blog.tesserix.app` has no Certificate in the cluster and there is no `*.tesserix.app`
+wildcard. Asking cert-manager for one on a domain that still points at Hostinger leaves a
+Certificate pending forever — a permanently failing resource in production, which is how people
+learn to ignore alerts.
+
+**No tunnel or DNS change was needed.** A `*.tesserix.app` wildcard CNAME already points at the
+tunnel and a catch-all rule forwards to `istio-ingressgateway`. The hostname resolved and reached
+Istio from the first attempt.
+
+**Every public hostname must be listed in `frontendApps`, and only one of the two copies counts.**
+The gateway answered 403 `RBAC: access denied` before consulting any route. The cause is Istio's
+ALLOW semantics rather than any DENY rule: once a workload is selected by at least one ALLOW
+policy, anything matching none of them is denied. `require-customer-auth` looks like the culprit
+and is not — its `notHosts` is scoped alongside `paths: /api/v1/*`, so a static site serving `/`
+never matches it.
+
+The trap: `frontendApps` is defined **twice** — in
+`charts/infrastructure/istio-auth-policies/values-prod.yaml`, and again in a 405-line inline
+`helm.values` block on the ArgoCD Application. Inline values are applied after `valueFiles` and
+Helm replaces lists rather than merging them, so the chart's copy is shadowed and inert. Editing
+it changes nothing: the sync reports "unchanged", the resource stays at the same `generation`, and
+a hard refresh does not help because the cache was never the problem. The chart's copy is the
+obvious place to edit and sits directly beneath comments documenting this same 403 happening twice
+before, to `blog.tesserix.app` and `observability.tesserix.app`.
+
+Two related fixes that are ours and still outstanding: delete the shadowed `frontendApps` from the
+chart values so there is one source of truth, and pin the image tag rather than push `latest` —
+Artifact Registry negative-caches a 404, so the `latest` tag stayed unresolvable through the
+mirror long after the image existed, while a fresh `main-<sha7>` tag resolved immediately.
