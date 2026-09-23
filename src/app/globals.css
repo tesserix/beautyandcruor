@@ -48,6 +48,16 @@ body {
   height: 100%;
 }
 
+/* Anchor jumps and the skip link glide rather than cut. Guarded, because
+   smooth scrolling is the single worst offender for motion sickness — the
+   reduced-motion block below also forces `scroll-behavior: auto`, so this is
+   belt and braces. */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
 body {
   margin: 0;
   background: var(--color-ink);
@@ -202,9 +212,12 @@ img {
       animation-range: entry 0% cover 18%;
     }
 
+    /* view(block) is explicit on purpose: these plates sit inside a rail that
+       scrolls horizontally, and a bare view() would bind to that scrollport
+       and never advance as the page moves down. */
     .drift {
       animation: plate-drift linear both;
-      animation-timeline: view();
+      animation-timeline: view(block);
       animation-range: cover;
     }
   }
@@ -229,33 +242,6 @@ img {
   display: none;
 }
 
-/* ===========================================================================
-   The mark handoff
-   The opening frame's mark leaves as the header's arrives, so the two are
-   never both on screen. Tied to the same 55vh the header uses. Scroll-driven,
-   so it costs nothing; where it is unsupported the opening mark simply stays
-   put, which is the pre-existing behaviour and reads fine.
-   =========================================================================== */
-@keyframes mark-handoff {
-  from {
-    opacity: 1;
-    transform: none;
-  }
-  to {
-    opacity: 0;
-    transform: translateY(-12px);
-  }
-}
-
-@supports (animation-timeline: scroll()) {
-  @media (prefers-reduced-motion: no-preference) {
-    .hero-mark {
-      animation: mark-handoff linear both;
-      animation-timeline: scroll(root block);
-      animation-range: 12vh 52vh;
-    }
-  }
-}
 
 /* ===========================================================================
    Interaction defaults
@@ -318,4 +304,26 @@ p {
 
 .skip:focus-visible {
   transform: none;
+}
+
+/* The opening mark is not animated out. It scrolls away with its own panel,
+   which is what c-immersive does — the only scroll-driven move in the header
+   is the bar mark fading in behind it. */
+
+/* ===========================================================================
+   Rail controls
+   A plain class rather than an arbitrary Tailwind variant: the
+   `[@media(hover:hover)_and_(pointer:fine)]:grid` form never generated, so the
+   buttons fell back to a button's default inline-block — visible on touch,
+   where the gesture already exists, and with the chevron not centred.
+   =========================================================================== */
+.rail-btn {
+  display: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .rail-btn {
+    display: grid;
+    place-items: center;
+  }
 }

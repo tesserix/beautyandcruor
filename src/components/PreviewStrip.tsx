@@ -28,14 +28,18 @@ export function PreviewStrip({
           key={key}
           className="relative m-0 h-full w-[78%] flex-none snap-start bg-ink-2 sm:w-[52%] md:w-[34%] xl:w-[26%]"
         >
+          {/* The plate drifts fractionally slower than the page as its
+              section passes, which reads as depth. Scale 1.06 is the
+              headroom that keeps the crop from showing an edge at either
+              end of the travel. */}
           <Picture
             imageKey={key}
             /* TODO(client): real titles pending — see OPEN-QUESTIONS #9. */
             alt={`${label}, ${i + 1} of ${imageKeys.length}`}
             size="gallery"
-            imgClassName="h-full w-full object-cover"
+            imgClassName="drift h-full w-full object-cover"
             aspectRatio="auto"
-            className="block h-full w-full"
+            className="block h-full w-full overflow-hidden"
           />
         </figure>
       ))}

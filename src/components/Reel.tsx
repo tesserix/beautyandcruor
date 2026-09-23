@@ -36,7 +36,7 @@ export function Reel({
       count={count}
       label={label}
       className="overflow-y-hidden"
-      status={(index) => (
+      status={(index, perView) => (
         <div
           className="pointer-events-none absolute inset-x-0 bottom-0 z-[3]"
           style={{
@@ -48,8 +48,16 @@ export function Reel({
           }}
         >
           <div className="flex items-center gap-3">
+            {/* A range when several frames share the screen: at xl the rail
+                shows four at once, so a single number claimed the gallery was
+                on frame 2 while it had already reached the end. */}
             <span className="lab num">
-              {String(index + 1).padStart(2, "0")} / {String(count).padStart(2, "0")}
+              {perView > 1 && index + perView < count + 1
+                ? `${String(index + 1).padStart(2, "0")}–${String(
+                    Math.min(count, index + perView),
+                  ).padStart(2, "0")}`
+                : String(index + 1).padStart(2, "0")}{" "}
+              / {String(count).padStart(2, "0")}
             </span>
             <span className="flex max-w-[190px] flex-1 gap-1">
               {Array.from({ length: count }, (_, i) => (
@@ -57,7 +65,10 @@ export function Reel({
                   key={i}
                   className="h-0.5 flex-1 transition-colors"
                   style={{
-                    background: i === index ? "var(--color-chalk)" : "rgba(242,239,234,.45)",
+                    background:
+                      i >= index && i < index + perView
+                        ? "var(--color-chalk)"
+                        : "rgba(242,239,234,.45)",
                   }}
                 />
               ))}

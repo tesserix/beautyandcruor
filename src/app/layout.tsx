@@ -81,19 +81,25 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en-AU" className={`${eczar.variable} ${archivo.variable} ${plexMono.variable}`}>
-      <head>
+      <body>
         {/* Every photograph on the site is served from the assets bucket, and
             the first one is the LCP element. Opening the connection alongside
             the document saves the DNS + TLS round trips that would otherwise
-            happen only once the markup referencing it has parsed. */}
-        {ASSET_ORIGIN && (
+            happen only once the markup referencing it has parsed.
+
+            Rendered in the tree rather than inside a hand-written <head>:
+            React hoists link tags itself, and an explicit <head> here put a
+            text node in it whenever ASSET_ORIGIN was empty — `"" && …` renders
+            the empty string — which fails hydration (React #418) and takes the
+            stylesheet down with the regenerated tree. Production always sets
+            the variable so it never surfaced there, but every local build
+            without it came up unstyled. The ternary returns null, not "". */}
+        {ASSET_ORIGIN ? (
           <>
             <link rel="preconnect" href={ASSET_ORIGIN} crossOrigin="" />
             <link rel="dns-prefetch" href={ASSET_ORIGIN} />
           </>
-        )}
-      </head>
-      <body>
+        ) : null}
         {/* First stop for a keyboard or screen-reader user: the header and its
             nav sit ahead of the content on every page. */}
         <a href="#main" className="skip">

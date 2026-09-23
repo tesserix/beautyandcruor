@@ -23,7 +23,7 @@ export default function Home() {
 
   return (
     <>
-      <Chrome solidMark={false} />
+      <Chrome solidMark={false} plate />
       <main id="main">
         <h1 className="vh">
           {SITE.artist} — {SITE.tagline}
@@ -42,7 +42,7 @@ export default function Home() {
             <WorkReel imageKeys={hero} label="Recent character work" priorityFirst />
           )}
           <div
-            className="hero-mark pointer-events-none absolute inset-x-0 z-[4] grid gap-3"
+            className="pointer-events-none absolute inset-x-0 z-[4] grid gap-3"
             style={{ bottom: "calc(120px + env(safe-area-inset-bottom))", paddingInline: "var(--gut)" }}
           >
             <Logo className="h-[clamp(44px,14vw,72px)]" />
