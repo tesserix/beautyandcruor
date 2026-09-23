@@ -15,9 +15,18 @@ capture/audit/*.png
 capture/*.html
 capture/meta/home.html
 
-# Generated image derivatives — rebuilt by `npm run images`
+# Generated image derivatives — rebuilt by `npm run images`.
+# public/img stays out: the derivatives live in GCS and the container never
+# carries them.
 public/img/
-src/generated/
+
+# src/generated/images.json is COMMITTED on purpose — see below.
+# It is the only thing a build needs: public/img is in .dockerignore, so CI
+# builds the site from the manifest alone and never touches an image file.
+# Leaving it generated-only meant a clean clone could not build at all, and
+# the Dockerfile's "fetch originals from object storage" path does not exist
+# (that bucket was deliberately deleted). Regenerate with `npm run images`
+# on a machine that has capture/assets/originals, then commit the diff.
 
 # Prototype bundles — rebuilt from design/sources by build-imm.mjs
 capture/proto-images.json
