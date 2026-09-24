@@ -21,15 +21,24 @@ package main
 // the library mixes work she published with photographs of other people whose
 // releases are unresolved. Publishing on upload would skip both.
 //
-// WHY A PRIVATE BUCKET
+// WHERE IT GOES, AND WHAT STOPS IT GOING ANYWHERE ELSE
 //
-// public-access-prevention is enforced on it, and the identity below can only
-// CREATE objects there: it cannot read them back, overwrite them, delete them,
-// or touch the bucket that serves the site. An upload can therefore add to the
-// pile and can never alter or expose what is already published.
+// One bucket, the same one that serves the site, under an uploads/ prefix.
+// That prefix is not a convention anyone has to remember: the identity this
+// runs as holds objectCreator with an IAM CONDITION restricting it to
+// resource names starting uploads/, so it cannot write img/ — the derivatives
+// the site actually serves — at all.
 //
-// It is also the backup her originals never had. Until this bucket existed the
-// only copy of 225MB of her work was one laptop.
+// objectCreator and not objectAdmin, so it cannot read an object back,
+// overwrite one, or delete one either. An upload can add to the pile and can
+// never alter what is already published.
+//
+// The bucket is world-READABLE but not world-LISTABLE: allUsers holds
+// legacyObjectReader, which grants storage.objects.get and not
+// storage.objects.list, so an anonymous caller who knows an exact object name
+// can fetch it and one who does not cannot enumerate anything. An upload is
+// therefore not secret. It is also not discoverable, and the only person who
+// can put anything there is whoever holds the admin password.
 
 import (
 	"bytes"
@@ -106,11 +115,21 @@ func sniffImage(head []byte) string {
 // treat it as one.
 var unsafeName = regexp.MustCompile(`[^a-zA-Z0-9_-]+`)
 
-// objectName is where the upload lands. Her filename is kept because it is
-// often the only description of the photograph that exists, but it is
-// sanitised and prefixed with a timestamp, so two files called IMG_0001.jpg do
-// not collide and nothing can escape the uploads/ prefix.
-func objectName(now time.Time, original, kind string) string {
+// objectName is where the upload lands.
+//
+// GALLERY FIRST, not year/month. `2022/09/` is WordPress's filing system, and
+// it is in this project only because that is how the recovered library
+// arrived. Our own structure is by discipline — the published derivatives are
+// already img/sfx/, img/casting/, img/film/, img/editorial/ — and new uploads
+// follow it rather than perpetuating someone else's.
+//
+// "unsorted" when she has not said which, because guessing would be worse
+// than admitting it is unfiled.
+//
+// Her filename is kept, because it is often the only description of the
+// photograph that exists, but it is sanitised and timestamped so two files
+// called IMG_0001.jpg cannot collide and nothing can escape the prefix.
+func objectName(now time.Time, original, kind, gallery string) string {
 	stem := strings.TrimSuffix(path.Base(original), path.Ext(original))
 	stem = strings.Trim(unsafeName.ReplaceAllString(stem, "-"), "-_")
 	if len(stem) > 60 {
@@ -120,7 +139,25 @@ func objectName(now time.Time, original, kind string) string {
 		stem = "upload"
 	}
 	return fmt.Sprintf("uploads/%s/%s-%s.%s",
-		now.UTC().Format("2006/01"), now.UTC().Format("02T150405"), stem, kind)
+		galleryFolder(gallery), now.UTC().Format("20060102T150405"), stem, kind)
+}
+
+// galleryFolder maps what she typed to one of the four disciplines, or
+// "unsorted". Anything unrecognised is unsorted rather than a new folder
+// invented from a typo.
+func galleryFolder(gallery string) string {
+	switch strings.ToLower(strings.TrimSpace(gallery)) {
+	case "sfx", "sfx-prosthetics", "prosthetics":
+		return "sfx"
+	case "casting", "casting-sculpting", "sculpting":
+		return "casting"
+	case "film", "film-television", "film-tv", "tv":
+		return "film"
+	case "editorial", "editorial-fashion", "fashion":
+		return "editorial"
+	default:
+		return "unsorted"
+	}
 }
 
 // metadataToken asks the GKE metadata server for this pod's access token.
@@ -229,7 +266,7 @@ func (a *adminHandler) postImage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	now := time.Now()
-	object := objectName(now, header.Filename, kind)
+	object := objectName(now, header.Filename, kind, r.FormValue("gallery"))
 	if err := a.uploads.put(object, body, "image/"+kind); err != nil {
 		log.Printf("admin: storing upload: %v", err)
 		writeJSON(w, http.StatusBadGateway, map[string]string{"error": "The upload did not save. Nothing was stored."})
