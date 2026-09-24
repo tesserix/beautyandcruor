@@ -48,8 +48,10 @@ export function Chrome({
   const [past, setPast] = useState(solidMark);
   const [scrolled, setScrolled] = useState(false);
   /** null until the opening mark has been measured, or when motion is off. */
-  const [travel, setTravel] = useState<{ dy: number; scale: number } | null>(null);
-  const markRef = useRef<HTMLAnchorElement>(null);
+  const [travel, setTravel] = useState<{ dy: number; heroH: number; barH: number } | null>(null);
+  const markRef = useRef<HTMLSpanElement>(null);
+  /** The bar's own geometry, read from a node nothing ever overrides. */
+  const slotRef = useRef<HTMLAnchorElement>(null);
   const progress = useRef(0);
 
   /**
@@ -65,23 +67,20 @@ export function Chrome({
 
     const measure = () => {
       const hero = document.querySelector<HTMLElement>("[data-hero-mark]");
-      const mark = markRef.current;
-      if (!hero || !mark) return;
+      const slot = slotRef.current;
+      if (!hero || !slot) return;
 
       /**
-       * Clear the transform before reading.
+       * The bar geometry comes from the link, never from the mark.
        *
-       * getBoundingClientRect reports the *transformed* box, so measuring
-       * while the mark was already scaled compared a 72px-scaled mark against
-       * a 72px opening mark and concluded scale 1, offset 0 — the transform
-       * quietly solving itself away to nothing on the second pass. This reads
-       * the layout box, then the next scroll frame reapplies.
+       * The mark is the thing being transformed *and* resized — once it is
+       * carrying the opening size, measuring it reports 72px as the bar
+       * height, the reduction computes to 1, and the animation solves itself
+       * away to nothing. The link keeps the bar's own box at all times, so it
+       * is the only honest source for where the mark has to land.
        */
-      const previous = mark.style.transform;
-      mark.style.transform = "none";
       const h = hero.getBoundingClientRect();
-      const m = mark.getBoundingClientRect();
-      mark.style.transform = previous;
+      const m = slot.getBoundingClientRect();
 
       // Both measure 0 until the fonts and the mask have painted.
       if (!h.height || !m.height) return;
@@ -90,7 +89,8 @@ export function Chrome({
       const heroCentreAtTop = h.top + window.scrollY + h.height / 2;
       setTravel({
         dy: heroCentreAtTop - (m.top + m.height / 2),
-        scale: h.height / m.height,
+        heroH: h.height,
+        barH: m.height,
       });
       document.documentElement.dataset.markTravel = "";
     };
@@ -122,9 +122,21 @@ export function Chrome({
         const p = Math.min(1, Math.max(0, y / (window.innerHeight * REVEAL_AT)));
         progress.current = p;
         const k = 1 - p;
-        mark.style.transform = `translateY(${travel.dy * k}px) scale(${
-          1 + (travel.scale - 1) * k
-        })`;
+        /**
+         * The mark is drawn at the opening size and scaled *down* to the bar,
+         * never up.
+         *
+         * Drawn at the bar's 30px and scaled up 2.4x it was visibly soft: the
+         * mask rasterises once at the element's layout size and the transform
+         * stretches that bitmap — and `will-change` pins the layer, so it
+         * never re-rasterises at the size actually on screen. Downscaling a
+         * larger raster has no such problem.
+         *
+         * -50% keeps it centred on the bar's own line; the travel rides on
+         * top of that.
+         */
+        const scale = 1 + (travel.barH / travel.heroH - 1) * p;
+        mark.style.transform = `translateY(calc(-50% + ${travel.dy * k}px)) scale(${scale})`;
       } else if (mark) {
         mark.style.transform = "";
       }
@@ -164,8 +176,8 @@ export function Chrome({
       >
         <Link
           href="/"
-          ref={markRef}
-          className="pointer-events-auto"
+          ref={slotRef}
+          className="pointer-events-auto relative block h-[26px] w-[98px] md:h-[30px] md:w-[113px]"
           aria-label={`${SITE.name} — home`}
           /* aria-hidden while invisible: the same link is still reachable in
              the mobile menu, and an opacity-0 link is a focus trap for a
@@ -176,15 +188,29 @@ export function Chrome({
           tabIndex={travel || past ? undefined : -1}
           style={{
             opacity: travel ? 1 : past ? 1 : 0,
-            transformOrigin: "left center",
-            // No transition on transform: the scroll position drives it frame
-            // by frame, and easing a value that is already following the
-            // pointer only adds lag.
             transition: travel ? "none" : "opacity .45s ease",
-            willChange: travel ? "transform" : undefined,
           }}
         >
-          <Logo className="h-[26px] md:h-[30px]" />
+          <Logo
+            ref={markRef}
+            /* The height classes are the unmeasured default — and the size
+               measure() reads to work out the reduction. Without them the
+               node has no box, so nothing can be measured and the mark never
+               appears at all. */
+            className="absolute left-0 top-1/2 h-[26px] md:h-[30px]"
+            style={{
+              // Sized to the opening mark once measured, so every transform
+              // from here is a reduction. Falls back to the bar's own size
+              // while unmeasured, which is what interior pages use.
+              height: travel ? travel.heroH : undefined,
+              transformOrigin: "left center",
+              // No transition on transform: the scroll position drives it
+              // frame by frame, and easing a value that is already following
+              // the pointer only adds lag.
+              transform: travel ? undefined : "translateY(-50%)",
+              willChange: travel ? "transform" : undefined,
+            }}
+          />
         </Link>
         {/* Journal is deliberately absent (D10): two posts from 2023 signals an
             unattended site. The pages still resolve and stay in the sitemap —

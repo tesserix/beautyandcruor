@@ -13,20 +13,25 @@
  *
  * Use `tone="brand"` for the two-colour original where the green is wanted.
  */
+import { forwardRef, type CSSProperties } from "react";
+
 type Props = {
   className?: string;
+  style?: CSSProperties;
   tone?: "current" | "brand";
   title?: string;
   /** Marks the opening mark so <Chrome> can measure and then replace it. */
   "data-hero-mark"?: boolean | "";
 };
 
-export function Logo({
-  className,
-  tone = "current",
-  title = "Beauty & Cruor",
-  ...rest
-}: Props) {
+/**
+ * forwardRef because <Chrome> measures this node directly: the travelling mark
+ * is sized and scaled from its own layout box, not the link wrapping it.
+ */
+export const Logo = forwardRef<HTMLSpanElement, Props>(function Logo(
+  { className, style, tone = "current", title = "Beauty & Cruor", ...rest },
+  ref,
+) {
   if (tone === "brand") {
     return (
       // eslint-disable-next-line @next/next/no-img-element
@@ -37,6 +42,7 @@ export function Logo({
   return (
     <span
       role="img"
+      ref={ref}
       aria-label={title}
       className={className}
       {...rest}
@@ -52,7 +58,8 @@ export function Logo({
         maskSize: "contain",
         WebkitMaskPosition: "center",
         maskPosition: "center",
+        ...style,
       }}
     />
   );
-}
+});
