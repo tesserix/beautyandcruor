@@ -83,6 +83,11 @@
 <section id="login" hidden>
   <h1>Beauty &amp; Cruor</h1>
   <p class="sub">Sign in to edit your credits.</p>
+  <!-- Inside the login section on purpose. The editor's #message lives in a
+       section that stays hidden until you are signed in, so writing a
+       sign-in error there set the text on something that never paints: a
+       wrong password redisplayed the form with no explanation at all. -->
+  <p id="login-error" class="msg err" role="alert" hidden>That password was not right.</p>
   <form class="login" method="post" action="/admin/login">
     <label for="password">Password</label>
     <input id="password" name="password" type="password" autocomplete="current-password" required autofocus>
@@ -127,12 +132,17 @@
 <script>
   const STATE = "__STATE__";
   const CSRF = "__CSRF__";
+  const FAILED = "__FAILED__" === "1";
   const $ = (id) => document.getElementById(id);
 
   document.getElementById(STATE === "editor" ? "editor" : "login").hidden = false;
   if (STATE !== "editor") {
-    // A failed sign-in re-renders this page with a 401.
-    if (location.pathname === "/admin/login") say("That password was not right.", true);
+    // The server says whether the last attempt was rejected. Inferring it from
+    // the URL also fired for anyone who simply opened /admin/login.
+    if (FAILED) {
+      $("login-error").hidden = false;
+      $("password").focus();
+    }
   } else {
     $("bar").hidden = false;
     load();

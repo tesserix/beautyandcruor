@@ -82,6 +82,12 @@ func (a *adminHandler) routes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /admin", a.page)
 	mux.HandleFunc("GET /admin/", a.page)
 	mux.HandleFunc("POST /admin/login", a.login)
+	// A GET here is someone following a bookmark of the form's action. The
+	// subtree pattern above would render the page at that URL, which works but
+	// leaves her on a path that is not the page; send her to the real one.
+	mux.HandleFunc("GET /admin/login", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/admin", http.StatusSeeOther)
+	})
 	mux.HandleFunc("POST /admin/logout", a.logout)
 	mux.HandleFunc("GET /admin/credits", a.getCredits)
 	mux.HandleFunc("PUT /admin/credits", a.putCredits)
@@ -138,9 +144,24 @@ func (a *adminHandler) page(w http.ResponseWriter, r *http.Request) {
 	if a.signedIn(r) {
 		state = "editor"
 	}
+	fmt.Fprint(w, a.render(state, a.csrfToken(r), false))
+}
+
+// render fills the page's three placeholders.
+//
+// `failed` is passed explicitly rather than inferred from the URL. It used to
+// be `location.pathname === "/admin/login"`, which is true both after a
+// rejected password AND when someone simply navigates to that path — so a
+// bookmark of the form's POST target greeted her with "that password was not
+// right" before she had typed anything.
+func (a *adminHandler) render(state, csrf string, failed bool) string {
 	page := strings.ReplaceAll(adminHTML, "__STATE__", state)
-	page = strings.ReplaceAll(page, "__CSRF__", a.csrfToken(r))
-	fmt.Fprint(w, page)
+	page = strings.ReplaceAll(page, "__CSRF__", csrf)
+	failedFlag := ""
+	if failed {
+		failedFlag = "1"
+	}
+	return strings.ReplaceAll(page, "__FAILED__", failedFlag)
 }
 
 func (a *adminHandler) login(w http.ResponseWriter, r *http.Request) {
@@ -158,9 +179,9 @@ func (a *adminHandler) login(w http.ResponseWriter, r *http.Request) {
 		// there is exactly one person who should ever be typing here.
 		log.Printf("admin: failed sign-in from %s", ip)
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.Header().Set("Cache-Control", "no-store")
 		w.WriteHeader(http.StatusUnauthorized)
-		page := strings.ReplaceAll(adminHTML, "__STATE__", "login")
-		fmt.Fprint(w, strings.ReplaceAll(page, "__CSRF__", ""))
+		fmt.Fprint(w, a.render("login", "", true))
 		return
 	}
 	now := time.Now()
