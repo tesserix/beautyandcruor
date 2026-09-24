@@ -32,9 +32,38 @@
   button.primary { background: var(--chalk); color: var(--ink); border-color: var(--chalk); font-weight: 600; }
   button.primary[disabled] { opacity: .45; cursor: default; }
   button.tiny { min-height: 34px; padding: 0 10px; font-size: 13px; }
+  /* Move up / down / Delete are small enough to mis-tap on a phone, where the
+     row controls are the only way to reorder. Full target size below the
+     breakpoint, where there is room for it. */
+  @media (max-width: 759px) { button.tiny { min-height: 44px; padding: 0 14px; } }
   .row { border: 1px solid var(--hair); border-radius: 10px; padding: 14px; margin-bottom: 12px; background: #0b0b10; }
+  #add { margin-bottom: 16px; }
+  /* Widths follow FIELDS, and are sized to the longest value each field
+     actually holds: title 40 characters, production 31, director 26, and year
+     and location 9 apiece. They were previously in a different order to the
+     fields, which gave production — the second longest — the narrowest column,
+     so "Mothership Production" showed as "Mothersh". */
   .grid { display: grid; gap: 12px; grid-template-columns: 1fr; }
-  @media (min-width: 760px) { .grid { grid-template-columns: 2fr 1.4fr 1.4fr .7fr 1fr 1.2fr; } }
+  @media (min-width: 760px) {
+    /* Two rows per credit, not one.
+       Six fields across a single row cannot fit what they hold: the longest
+       title is 40 characters, production 31, director 26. Squeezed onto one
+       line every one of them clipped, and "Mothership Production" read as
+       "Mothersh". Title and her role take the first line — the one that
+       identifies the credit and the one field she is here to fill — and the
+       four shorter fields share the second. */
+    .grid { grid-template-columns: repeat(12, minmax(0, 1fr)); }
+    .c-title      { grid-column: span 7; }
+    .c-role       { grid-column: span 5; }
+    .c-director   { grid-column: span 4; }
+    .c-production { grid-column: span 4; }
+    .c-year       { grid-column: span 2; }
+    .c-location   { grid-column: span 2; }
+  }
+
+  /* Inputs sit at the bottom of their cell, so a label that wraps to two lines
+     does not push its field out of line with the rest of the row. */
+  .grid > div { display: flex; flex-direction: column; justify-content: flex-end; }
   .rowbar { display: flex; gap: 8px; align-items: center; margin-top: 12px; }
   .rowbar .n { color: var(--ash); font-size: 12px; margin-right: auto; letter-spacing: .08em; }
   .bar {
@@ -108,8 +137,10 @@
     it is the one field none of these have yet.
   </p>
   <div id="message" class="msg" hidden></div>
-  <div id="rows"></div>
+  <!-- Above the list: it prepends, and with 27 rows a button at the bottom
+       means scrolling the whole list to reach it. -->
   <button id="add" type="button">Add a credit</button>
+  <div id="rows"></div>
 </section>
 
 <section id="sequence" hidden>
@@ -181,6 +212,7 @@
     grid.className = "grid";
     for (const [key, label, autocomplete] of FIELDS) {
       const cell = document.createElement("div");
+      cell.className = "c-" + key;
       const id = `${key}-${Math.random().toString(36).slice(2, 8)}`;
       const l = document.createElement("label");
       l.setAttribute("for", id);
