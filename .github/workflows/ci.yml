@@ -109,6 +109,12 @@ jobs:
           echo "enquiry_image=${ENQUIRY_IMAGE}:${BUILD_TAG}" >> $GITHUB_OUTPUT
           echo "enquiry_repo=${ENQUIRY_IMAGE}" >> $GITHUB_OUTPUT
 
+      # OPENPANEL_CLIENT_ID is a repository *variable*, not a secret: it
+      # identifies the project to a script running in the browser, so it is
+      # public by construction. It has to be here rather than mounted at
+      # runtime because this is a static export — there is no server to read
+      # config. Unset, the analytics component renders nothing.
+      #
       # ASSET_BASE_URL is not passed: the Dockerfile's default is the bucket's
       # native URL (D16). Override it here only when the custom asset host is
       # live, and remember it is frozen into the HTML at build time.
@@ -116,6 +122,7 @@ jobs:
         if: github.event_name != 'pull_request'
         run: |
           docker build --platform linux/amd64 \
+            --build-arg OPENPANEL_CLIENT_ID="${{ vars.OPENPANEL_CLIENT_ID }}" \
             -t ${{ steps.meta.outputs.build_image }} \
             -t ${{ steps.meta.outputs.full_image }}:latest \
             .
