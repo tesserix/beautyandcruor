@@ -68,66 +68,67 @@ curl -so /dev/null -w '%{http_code} -> %{redirect_url}\n' localhost:8080/about-m
 
 ## Turning on the credits editor
 
-The sidecar serves a password-protected editor at `/admin` that commits
-`src/content/credits.json` and lets her fill in the one field no credit has:
-her role. It is **off unless configured** — a missing `ADMIN_PASSWORD_HASH`
-logs a line and leaves `/admin` unrouted, so the enquiry form, which is the
-launch-blocking half of this service, comes up either way.
+The sidecar serves a password-protected editor at `/admin`: her credits,
+including the `role` field none of them have, and the running order — what the
+homepage opens on, what each gallery leads with, the discipline plates, the
+About portrait. A save is a commit, which CI builds and Kargo promotes, so a
+change is live in minutes without anyone being asked.
 
-Three secrets, and the chart change lives in `tesserix-k8s`, not here.
+It is **off unless configured**. A missing `ADMIN_PASSWORD_HASH` logs a line
+and leaves `/admin` unrouted, so the enquiry form — the launch-blocking half of
+this service — comes up either way.
 
-**1. The password.** Never type it into a file. The binary derives the
-verifier, so the password exists only in the terminal that created it:
+### Done
+
+- `prod-bac-admin-password-hash` — a PBKDF2-SHA256 verifier, 600k iterations.
+  The password itself was never stored: it is in `~/.beautyandcruor-admin-password`
+  on the machine that created it, mode 0600, to be passed to Parimiti and then
+  deleted. Round-tripped against the stored verifier — correct password 303,
+  wrong password 401.
+- `prod-bac-admin-session-key` — 32 random bytes. Signs session cookies and is
+  never shown to anyone. Supplying it rather than letting the service generate
+  one at startup is what keeps her signed in when the pod moves.
+- The chart wiring, in `tesserix-k8s` — a separate ExternalSecret for these
+  three, so that a typo in one cannot stop `RESEND_API_KEY` being written and
+  take the contact form down with it.
+
+### Outstanding
+
+**1. A GitHub token.** Has to be created by hand; there is no API for
+fine-grained PATs. Settings → Developer settings → Personal access tokens →
+Fine-grained. Repository access: **only `tesserix/beautyandcruor`**.
+Permissions: **Contents: read and write**, nothing else. Then:
 
 ```
-docker run --rm -i ghcr.io/tesserix/beautyandcruor-enquiry:latest -hash
-# Password: ...
-# pbkdf2-sha256$600000$...$...
+gcloud secrets create prod-bac-admin-github-token \
+  --project=tesseracthub-480811 --replication-policy=automatic --data-file=-
+# paste the token, then Ctrl-D
 ```
 
-Store that output as `prod-bac-admin-password-hash` in Secret Manager. Anyone
-who reads the secret has a PBKDF2 verifier, not a password.
+The narrow scope is the real boundary. The service refuses to write any path
+outside its own allowlist — credits, curation, alt text — so a stolen session
+cannot reach the workflow that deploys the site; keep the token narrow anyway,
+because that half is enforced by GitHub rather than by us.
 
-**2. A session key.** 32 random bytes, `prod-bac-admin-session-key`. Without
-one the service generates a key at startup, which works but signs her out
-every time the pod moves.
+**2. Flip the switch.** In `tesserix-k8s`, set
+`charts/apps/beautyandcruor/values.yaml` → `enquiry.admin.enabled: true`.
 
-**3. A GitHub token.** Fine-grained, **this repository only**, with
-`Contents: read and write` and nothing else. Store as
-`prod-bac-admin-github-token`.
+That order matters. The deployment mounts the three secrets by reference, and a
+`secretKeyRef` to a Secret that does not exist stops the pod starting — so the
+secrets go in first and the flag second.
 
-The token's scope is the real boundary. The service refuses to write any path
-outside `writablePaths` — credits, curation and alt text — so a stolen session
-cannot reach the workflow that deploys the site. Keep the token narrow anyway:
-belt and braces, and the braces are the part GitHub enforces.
+### What she sees
 
-Then in the `tesserix-k8s` chart, add an ExternalSecret for the three and pass
-them to the enquiry container as `ADMIN_PASSWORD_HASH`, `ADMIN_SESSION_KEY`
-and `ADMIN_GITHUB_TOKEN`, plus a plain `ADMIN_GITHUB_REPO:
-tesserix/beautyandcruor`. Remember that an ExternalSecret needs both an entry
-in the parent kustomization and a `kustomization.yaml` of its own, or
-`kustomize build` fails.
+`https://<site>/admin`, one password, two tabs. The running-order pickers offer
+only images already in a gallery: the manifest holds 68 more under
+`unpublished`, and `scripts/assets-sync.mjs` refuses to upload anything outside
+the cleared list, so choosing one would fail the build on the rights gate
+rather than publish it.
 
 Optionally `ADMIN_ASSET_BASE_URL`, which must match the site's
-`ASSET_BASE_URL` build arg — the running-order pickers load thumbnails from the
-bucket, since `public/img` is excluded from the site image and there is nothing
-same-origin to point at. Both default to the same bucket and both move at the
-cutover.
-
-**What she sees.** `https://<site>/admin`, one password, two tabs.
-
-- **Credits** — the 27 rows, editable, with the `role` field none of them have.
-- **Running order** — what the homepage opens on, what each gallery leads with,
-  the plate behind each discipline title, and the About portrait.
-
-Either one commits to `main`, which builds, advances `deploy`, and promotes, so
-a change is live in a few minutes without anyone being asked.
-
-The pickers offer only images that are already in a gallery. The manifest holds
-68 more under `unpublished` — work the live WordPress site never showed — and
-`scripts/assets-sync.mjs` refuses to upload anything outside the cleared list,
-so choosing one would fail the build on the rights gate rather than publish it.
-Not offering it is the right place to enforce that.
+`ASSET_BASE_URL` build arg — the pickers load thumbnails from the bucket, since
+`public/img` is excluded from the site image. Both default to the same bucket
+and both move at the cutover.
 
 ## Not wired up yet
 
