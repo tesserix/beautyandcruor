@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Eczar, Archivo, IBM_Plex_Mono } from "next/font/google";
 import { SITE, ASSET_ORIGIN } from "@/lib/site";
 import { JsonLd, personSchema, localBusinessSchemas } from "@/lib/jsonld";
+import { Analytics } from "@/components/Analytics";
 import "./globals.css";
 
 /**
@@ -107,6 +108,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </a>
         {children}
         <JsonLd schemas={[personSchema(), ...localBusinessSchemas()]} />
+        <Analytics />
       </body>
     </html>
   );

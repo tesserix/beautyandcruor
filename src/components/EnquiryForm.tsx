@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Select } from "./Select";
 
 /**
@@ -8,17 +8,14 @@ import { Select } from "./Select";
  *
  * IMPORTANT — Resend cannot be called from the browser. Its API key is a
  * secret; putting it in client code publishes it. So the form posts to
- * NEXT_PUBLIC_ENQUIRY_ENDPOINT, and something server-side owns the key.
- * Options, in order of preference for this project:
+ * /api/enquiry, which nginx proxies to the enquiry sidecar in this pod — see
+ * enquiry/main.go. Same origin, so no CORS; loopback only, so the service has
+ * no public address; and the key is mounted into the pod, never shipped.
  *
- *   1. The team's existing `notification-service` — already deployed, already
- *      holds credentials, no new third party.
- *   2. A small Cloud Run function that forwards to Resend.
- *   3. A hosted form service (Web3Forms, Formspree) which uses a public access
- *      key designed to be exposed.
- *
- * Until one is chosen the form is inert and says so, rather than silently
- * discarding what someone typed.
+ * The earlier plan named `notification-service` as the destination on the
+ * grounds that it was already deployed. It is not — it appears nowhere in
+ * tesserix-k8s — and its send endpoint requires auth a static site cannot
+ * hold. Resend is the platform's provider and the sidecar calls it directly.
  *
  * Fields carry `name` and `autocomplete` — the audit flagged that their
  * absence is a WCAG 2.1 AA 1.3.5 failure, and without `name` nothing posts.
@@ -31,7 +28,11 @@ import { Select } from "./Select";
  * needs to announce the problem at all.
  */
 
-const ENDPOINT = process.env.NEXT_PUBLIC_ENQUIRY_ENDPOINT ?? "";
+/**
+ * Same-origin by default. The env var stays as an override for a preview
+ * deployment pointing at another environment's endpoint.
+ */
+const ENDPOINT = process.env.NEXT_PUBLIC_ENQUIRY_ENDPOINT ?? "/api/enquiry";
 
 /** TODO(client): confirm these are the enquiries she actually wants sorted by. */
 const ENQUIRY_TYPES = [
@@ -50,6 +51,18 @@ export function EnquiryForm() {
   const [state, setState] = useState<State>({ status: "idle" });
   const [errors, setErrors] = useState<Errors>({});
   const formRef = useRef<HTMLFormElement>(null);
+  /**
+   * When this form appeared, posted alongside it.
+   *
+   * The sidecar discards anything completed implausibly fast, and anything
+   * from a page old enough to be a replayed capture. Set after mount rather
+   * than during render: the markup is prerendered at build time, so a value
+   * baked into it would be the build's clock, not the visitor's.
+   */
+  const startedRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (startedRef.current) startedRef.current.value = String(Date.now());
+  }, []);
 
   function validate(data: Record<string, FormDataEntryValue>): Errors {
     const next: Errors = {};
@@ -84,15 +97,6 @@ export function EnquiryForm() {
       return;
     }
 
-    if (!ENDPOINT) {
-      setState({
-        status: "error",
-        message:
-          "This form isn’t connected yet. Please email or call instead — we’re sorry for the detour.",
-      });
-      return;
-    }
-
     setState({ status: "sending" });
     try {
       const res = await fetch(ENDPOINT, {
@@ -100,13 +104,23 @@ export function EnquiryForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-      if (!res.ok) throw new Error(`Server responded ${res.status}`);
+      if (!res.ok) {
+        // The sidecar answers a refusal in the site's own voice — too many
+        // from one address, or a field it could not use — so show that rather
+        // than a generic failure.
+        const said = (await res.text()).trim();
+        throw new Error(said || `Server responded ${res.status}`);
+      }
       setState({ status: "sent" });
       form.reset();
-    } catch {
+      if (startedRef.current) startedRef.current.value = String(Date.now());
+    } catch (err) {
       setState({
         status: "error",
-        message: "That didn’t send. Please try again, or email instead.",
+        message:
+          err instanceof Error && err.message && err.message.length < 200
+            ? err.message
+            : "That didn’t send. Please try again, or email instead.",
       });
     }
   }
@@ -188,6 +202,7 @@ export function EnquiryForm() {
         aria-hidden="true"
         className="vh"
       />
+      <input ref={startedRef} type="hidden" name="started" defaultValue="" />
 
       <button
         type="submit"

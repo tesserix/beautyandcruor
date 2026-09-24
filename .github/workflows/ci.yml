@@ -58,6 +58,21 @@ jobs:
       # a clean checkout and unrelated to any source file — it would fail every
       # build for a reason no PR can fix. Typecheck covers the same ground for
       # a TypeScript codebase.
+      # Pinned rather than left to the runner's default: go.mod asks for 1.25
+      # and a runner image bump should not silently change the toolchain that
+      # gates the spam rules.
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: enquiry/go.mod
+          cache-dependency-path: enquiry/go.sum
+
+      - name: Test the enquiry sidecar
+        run: |
+          cd enquiry
+          go vet ./...
+          go test ./...
+
       - name: Typecheck
         run: npm run typecheck
 
@@ -82,6 +97,7 @@ jobs:
         id: meta
         run: |
           FULL_IMAGE="${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}"
+          ENQUIRY_IMAGE="${FULL_IMAGE}-enquiry"
           if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
             BUILD_TAG="${GITHUB_REF#refs/tags/}"
           else
@@ -90,6 +106,8 @@ jobs:
           echo "tag=${BUILD_TAG}" >> $GITHUB_OUTPUT
           echo "full_image=${FULL_IMAGE}" >> $GITHUB_OUTPUT
           echo "build_image=${FULL_IMAGE}:${BUILD_TAG}" >> $GITHUB_OUTPUT
+          echo "enquiry_image=${ENQUIRY_IMAGE}:${BUILD_TAG}" >> $GITHUB_OUTPUT
+          echo "enquiry_repo=${ENQUIRY_IMAGE}" >> $GITHUB_OUTPUT
 
       # ASSET_BASE_URL is not passed: the Dockerfile's default is the bucket's
       # native URL (D16). Override it here only when the custom asset host is
@@ -103,6 +121,20 @@ jobs:
             .
           docker push ${{ steps.meta.outputs.build_image }}
           docker push ${{ steps.meta.outputs.full_image }}:latest
+
+      # The enquiry sidecar. A separate image because it is a separate process
+      # — the site container is nginx serving files and nothing else. Its
+      # Dockerfile runs `go test` before it builds, so a spam rule that stops
+      # working fails the push rather than shipping.
+      - name: Build and push the enquiry sidecar
+        if: github.event_name != 'pull_request'
+        run: |
+          docker build --platform linux/amd64 \
+            -t ${{ steps.meta.outputs.enquiry_image }} \
+            -t ${{ steps.meta.outputs.enquiry_repo }}:latest \
+            ./enquiry
+          docker push ${{ steps.meta.outputs.enquiry_image }}
+          docker push ${{ steps.meta.outputs.enquiry_repo }}:latest
 
       # `latest` is pushed alongside the pinned tag because this app has no
       # Kargo Project yet. The blog's chart is promoted by Kargo writing
