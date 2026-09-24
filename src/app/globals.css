@@ -327,3 +327,136 @@ p {
     place-items: center;
   }
 }
+
+/* ===========================================================================
+   Outbound buttons
+   IMDb and Instagram are the two links that leave the site, and they were a
+   1px --color-hair outline on ink — about 1.4:1 against the ground, which is
+   a hairline you have to hunt for rather than a control. They get a surface,
+   a border that clears 3:1, and a hover that lifts.
+   =========================================================================== */
+.btn-out {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 12px 18px;
+  background: var(--color-ink-3);
+  border: 1px solid rgba(242, 239, 234, 0.24);
+  color: var(--color-chalk);
+  text-decoration: none;
+  transition:
+    background-color 0.25s ease,
+    border-color 0.25s ease,
+    transform 0.25s ease;
+}
+
+.btn-out:hover {
+  background: #1d1d24;
+  border-color: rgba(242, 239, 234, 0.7);
+  transform: translateY(-1px);
+}
+
+.btn-out:active {
+  transform: none;
+}
+
+/* ===========================================================================
+   Scrollbar
+   The page is a darkened gallery; the OS default light scrollbar sat beside it
+   as a bright strip. `color-scheme: dark` already darkens it on some
+   platforms — this makes it deliberate, and narrow enough not to read as
+   chrome. Rails opt out separately (.rail hides its own).
+   =========================================================================== */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: #33333d transparent;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2c2c35;
+  border: 2px solid var(--color-ink);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #464652;
+}
+
+/* The opening mark yields to the travelling one. `data-mark-travel` is set by
+   <Chrome> only after it has measured successfully, so the opening mark stays
+   visible when there is no script, when motion is reduced, or if the
+   measurement never resolves. */
+html[data-mark-travel] [data-hero-mark] {
+  opacity: 0;
+}
+
+/* ===========================================================================
+   Scroll cue
+   c-immersive's opening plate carries `<i class="ln"></i> Swipe · Scroll`
+   under the caption, and the build never got it — so the opening frame filled
+   the viewport with no indication anything was below it. The rule nudges, and
+   the whole cue fades out once the page has moved, because a prompt that is
+   still there after you have obeyed it is noise.
+   =========================================================================== */
+.cue {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--color-ash-img);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.cue .ln {
+  display: block;
+  width: 26px;
+  height: 1px;
+  background: currentColor;
+  transform-origin: left center;
+}
+
+@keyframes cue-nudge {
+  0%,
+  100% {
+    transform: scaleX(1);
+    opacity: 0.55;
+  }
+  50% {
+    transform: scaleX(1.55);
+    opacity: 1;
+  }
+}
+
+@keyframes cue-retire {
+  to {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .cue .ln {
+    animation: cue-nudge 2.6s ease-in-out infinite;
+  }
+
+  @supports (animation-timeline: scroll()) {
+    .cue {
+      animation: cue-retire linear both;
+      animation-timeline: scroll(root block);
+      animation-range: 0 22vh;
+    }
+  }
+}

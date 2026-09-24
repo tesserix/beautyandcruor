@@ -42,11 +42,11 @@ export default function Contact() {
             ))}
             <div className="mt-4 flex flex-wrap gap-2">
               <a href={SITE.imdb} target="_blank" rel="noopener"
-                 className="lab flex-1 min-w-[130px] border border-hair px-4 py-3 text-center text-chalk no-underline hover:border-chalk">
+                 className="btn-out lab flex-1 min-w-[130px]">
                 IMDb ↗
               </a>
               <a href={SITE.instagram} target="_blank" rel="noopener"
-                 className="lab flex-1 min-w-[130px] border border-hair px-4 py-3 text-center text-chalk no-underline hover:border-chalk">
+                 className="btn-out lab flex-1 min-w-[130px]">
                 Instagram ↗
               </a>
             </div>

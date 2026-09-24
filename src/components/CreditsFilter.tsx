@@ -120,7 +120,7 @@ export function CreditsFilter({ rows, chips }: { rows: CreditRow[]; chips: Chip[
             {items.map((c) => (
               <li
                 key={c.id}
-                className="grid gap-1 border-b border-hair/70 py-3 last:border-0 md:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] md:items-baseline md:gap-8"
+                className="grid gap-1 border-b border-hair/70 py-3 transition-[background-color,padding] duration-200 last:border-0 hover:bg-ink-2 md:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] md:items-baseline md:gap-8 md:px-3 md:hover:px-4"
               >
                 <span className="text-[17px] leading-snug">{c.title}</span>
                 {c.meta && (
