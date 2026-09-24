@@ -33,6 +33,7 @@
 import { readFile, writeFile, mkdir, rename, readdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { dirname, basename, join } from 'node:path';
+import { identity } from '../src/lib/identity.mjs';
 
 const MANIFEST = 'src/generated/images.json';
 const LIVE = 'capture/live-images.json';
@@ -53,16 +54,9 @@ const ABOUT = 'https://beautyandcruor.com/about-me/';
 const isPost = (url) =>
   /^https:\/\/beautyandcruor\.com\/[a-z0-9-]{20,}\/$/.test(url) && !url.includes('/blogs/');
 
-/** Match one upload across WordPress's several names for it. */
-function identity(path) {
-  const dir = dirname(path);
-  const stem = basename(path)
-    .replace(/\.[^.]+$/, '')
-    .replace(/-\d+x\d+$/, '')
-    .replace(/(-scaled|-rotated)$/, '')
-    .toLowerCase();
-  return `${dir}/${stem}`;
-}
+// Match one upload across WordPress's several names for it. Shared with the
+// site's own resolution so the two cannot disagree — see the module for why
+// the extension list matters.
 
 const manifest = JSON.parse(await readFile(MANIFEST, 'utf8'));
 

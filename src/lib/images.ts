@@ -1,4 +1,5 @@
 import manifest from "@/generated/images.json";
+import { identity } from "@/lib/identity.mjs";
 
 /** One emitted width of one format. */
 export type Variant = { w: number; h: number; src: string };
@@ -19,6 +20,8 @@ export type ImageEntry = {
   fallback: { w: number; src: string };
   /** Inline 24px WebP, ~273 bytes. Prevents the grey flash on 4G. */
   lqip: string;
+  /** The upload this was derived from, e.g. "2022/09/IMG_1605-scaled.jpg". */
+  sourcePath: string;
 };
 
 const IMAGES = manifest as unknown as Record<string, ImageEntry>;
@@ -60,6 +63,36 @@ export function requireImage(key: string): ImageEntry {
     );
   }
   return e;
+}
+
+/**
+ * The stable address of an image: its upload, normalised.
+ *
+ * Manifest keys are NOT stable. scripts/organize.mjs renumbers them whenever
+ * categories shift, and it reuses names — after two images left `unpublished`,
+ * the key `unpublished/unpublished-059` still existed and pointed at a
+ * different photograph. Anything that has to survive a reorganise addresses
+ * images this way; curation.json and alt.json both do.
+ */
+export function sourceIdentity(key: string): string | null {
+  const entry = IMAGES[key];
+  if (!entry) return null;
+  return identity(entry.sourcePath ?? entry.src);
+}
+
+/** Every manifest key, indexed by the upload it refers to. */
+const KEY_BY_IDENTITY: Map<string, string> = new Map(
+  Object.entries(IMAGES).map(([key, entry]) => [identity(entry.sourcePath ?? entry.src), key]),
+);
+
+/**
+ * The manifest key for an upload path, however that path happens to be
+ * written. This is how hand-authored content — curation.json, written in
+ * whatever form the WordPress media library showed — reaches an image in
+ * this build.
+ */
+export function keyForSource(path: string): string | null {
+  return KEY_BY_IDENTITY.get(identity(path)) ?? null;
 }
 
 export function hasImage(key: string): boolean {

@@ -93,7 +93,10 @@ preferred. Hers: questions 5 and 6.
   useless to a screen reader and worthless for image search. Now authored per image in
   `src/content/alt.json`, read through `altFor()`, with the positional string kept only as the
   fallback for an image added since. `scripts/alt-check.mjs` fails the build if a published image
-  has no entry, so the fallback cannot quietly come back. Still wants her corrections.
+  has no entry, so the fallback cannot quietly come back. Keyed by upload path rather than manifest
+  key, for the reason `curation.json` already documents — `organize.mjs` renumbers manifest keys
+  and reuses the names it frees, so keying on them would move a description onto a different
+  photograph at the next reorganise. Still wants her corrections.
 - **SEO and AI-crawler surface** — see the section below; several gaps are ours alone.
 - ~~**JS budget.** 185 KB gzipped against a 150 KB target.~~ The target was unmeetable by
   construction — React 19 plus the Next 16 runtime is ~170 KB before any of our code loads, so
