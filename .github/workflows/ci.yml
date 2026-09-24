@@ -27,9 +27,7 @@ env:
   IMAGE_NAME: beautyandcruor
 
 permissions:
-  # write, so the build can fast-forward `deploy` once both images are pushed.
-  # Kargo watches that branch rather than main — see the step at the end.
-  contents: write
+  contents: read
   packages: write
   security-events: write
   id-token: write
@@ -39,7 +37,15 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       id-token: write
-      contents: read
+      # write, so the build can fast-forward `deploy` once both images are
+      # pushed — Kargo watches that branch rather than main.
+      #
+      # This block is the one that counts. A job-level `permissions` replaces
+      # the workflow-level one outright rather than merging with it, so
+      # granting contents: write at the top while this said read left the
+      # token read-only and the push failed with a 403 that named
+      # github-actions[bot] and looked like a repository setting.
+      contents: write
       packages: write
       security-events: write
     steps:
