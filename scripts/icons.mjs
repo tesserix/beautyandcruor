@@ -1,50 +1,81 @@
 /**
- * Builds the favicon set. Run by hand, not at build time:
+ * Builds the favicon set from the logo itself. Run by hand, not at build time:
  *
  *   node scripts/icons.mjs
  *
- * The glyph is rasterised here with a local serif, so the output must be
- * committed rather than regenerated inside the container, where that face does
- * not exist and the mark would silently change shape.
+ * The output is committed. It is derived from public/brand/logo-mask.svg, so
+ * regenerating it in the container would work — but there is no reason to run
+ * it on every build for a file that changes when the logo does and never
+ * otherwise.
  *
- * WHY AN AMPERSAND, NOT THE MARK
+ * WHY A CROP, NOT THE WHOLE MARK
  *
- * /favicon.ico 404'd, and the obvious fix — shrink the logo — does not work:
- * the mark is a wide botanical script signature at 1067x327, and at 32px it is
- * a grey smudge. b-plaster.src.html proposed the answer already: "the
- * ampersand, in cruor red, is the mark. It is the hinge the name is built on,
- * and it works at 12px as well as 120px."
+ * The mark is 1067x327 — a 3.26:1 script signature. Fitted into a 32px square
+ * the lettering is roughly four pixels tall and reads as a grey smear. What
+ * survives at that size is the botanical emblem it opens with: a bold, nearly
+ * square shape at 225x245, legible down to 16px.
  *
- * One departure from that note. It specifies a red ampersand, which suits the
- * bone ground that direction used; on our ink it lands around 2.8:1 and reads
- * near-black in a tab strip. The ampersand is cruor here by being the cruor
- * *field*, with the glyph knocked out in chalk — same idea, legible at 16px.
+ * The heart loop is deliberately left out. It interlocks with the B of
+ * "Beauty", so every crop wide enough to include it also clips a letterform,
+ * which reads as damage rather than as design. The leaves stand alone.
+ *
+ * An earlier version set an ampersand instead, on b-plaster's reasoning that
+ * "the ampersand is the mark". That was a proposal for a direction this build
+ * did not take, and using the artist's own mark is the better answer.
  */
 import sharp from "sharp";
-import { writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 
-const CRUOR = "#B3111D";
+const INK = "#07070A";
 const CHALK = "#F2EFEA";
 
-/** The glyph, drawn to fill its box — sized per output so it stays crisp. */
-const card = (size) => Buffer.from(
-  `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
-     <rect width="${size}" height="${size}" fill="${CRUOR}"/>
-     <text x="50%" y="50%" fill="${CHALK}"
-           font-family="Georgia, 'Times New Roman', serif" font-style="italic"
-           font-size="${Math.round(size * 0.78)}" font-weight="700"
-           text-anchor="middle" dominant-baseline="central">&amp;</text>
-   </svg>`,
-);
+/**
+ * The emblem's box within the 1067x327 mark, measured off the render.
+ *
+ * Chosen by rendering the candidates at a true 32px rather than judging them
+ * at poster size. Wider crops pull in the heart loop, which interlocks with
+ * the B of "Beauty": every rectangle big enough to hold the whole loop also
+ * clips a letterform, and a clipped letter reads as damage. This takes the
+ * three leaves and the stem, which stand on their own.
+ */
+const EMBLEM = { left: 55, top: 118, width: 200, height: 175 };
 
-const png = (size) => sharp(card(size)).png({ compressionLevel: 9 }).toBuffer();
+/** Fraction of the icon the emblem occupies, leaving margin so it can breathe. */
+const INSET = 0.78;
+
+const mark = readFileSync("public/brand/logo-mask.svg", "utf8")
+  // The mask ships as black shapes; the mark is chalk on this site.
+  .replace('fill="#000"', `fill="${CHALK}"`)
+  .replace("<svg ", '<svg width="1067" height="327" ');
+
+const full = await sharp({
+  create: { width: 1067, height: 327, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } },
+})
+  .composite([{ input: Buffer.from(mark) }])
+  .png()
+  .toBuffer();
+
+const emblem = await sharp(full).extract(EMBLEM).png().toBuffer();
+
+/** One square icon at the given size. */
+async function icon(size) {
+  const inner = Math.round(size * INSET);
+  const fitted = await sharp(emblem)
+    .resize(inner, inner, { fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 0 } })
+    .png()
+    .toBuffer();
+  return sharp({ create: { width: size, height: size, channels: 4, background: INK } })
+    .composite([{ input: fitted, gravity: "center" }])
+    .png({ compressionLevel: 9 })
+    .toBuffer();
+}
 
 /**
  * ICO wrapping a PNG. Every browser that still asks for /favicon.ico supports
- * PNG-in-ICO, so this is a 22-byte header around the 32px card rather than a
+ * PNG-in-ICO, so this is a 22-byte header around the 32px icon rather than a
  * bitmap encoder.
  */
-function ico(pngBuffer, size) {
+function ico(png, size) {
   const header = Buffer.alloc(6);
   header.writeUInt16LE(0, 0); // reserved
   header.writeUInt16LE(1, 2); // type: icon
@@ -56,22 +87,19 @@ function ico(pngBuffer, size) {
   entry.writeUInt8(0, 3); // reserved
   entry.writeUInt16LE(1, 4); // colour planes
   entry.writeUInt16LE(32, 6); // bits per pixel
-  entry.writeUInt32LE(pngBuffer.length, 8);
+  entry.writeUInt32LE(png.length, 8);
   entry.writeUInt32LE(header.length + entry.length, 12); // offset
-  return Buffer.concat([header, entry, pngBuffer]);
+  return Buffer.concat([header, entry, png]);
 }
 
-const outputs = [
-  // Next's file conventions: it emits the <link> tags for these itself.
+// Next's file conventions: it emits the <link> tags for these itself.
+for (const [path, size] of [
   ["src/app/icon.png", 64],
   ["src/app/apple-icon.png", 180],
-];
-
-for (const [path, size] of outputs) {
-  writeFileSync(path, await png(size));
+]) {
+  writeFileSync(path, await icon(size));
   console.log(`wrote ${path} — ${size}x${size}`);
 }
 
-const thirtyTwo = await png(32);
-writeFileSync("src/app/favicon.ico", ico(thirtyTwo, 32));
+writeFileSync("src/app/favicon.ico", ico(await icon(32), 32));
 console.log("wrote src/app/favicon.ico — 32x32 (PNG-in-ICO)");
