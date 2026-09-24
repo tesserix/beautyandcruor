@@ -196,13 +196,33 @@ jobs:
       # never advances `deploy`, so Kargo never tries to deploy it.
       #
       # Fast-forward only. `deploy` tracks main and nothing else writes to it,
-      # so a rejected push means something unexpected happened and the build
+      # so a rejected update means something unexpected happened and the build
       # should say so rather than force past it.
+      #
+      # Done through the API rather than `git push`. actions/checkout fetches a
+      # single commit, so the runner's clone has no history: git cannot show
+      # that the new sha descends from what `deploy` points at, and the push is
+      # refused as a non-fast-forward even when it plainly is one. It passed the
+      # first time only because `deploy` did not exist yet, and creating a ref
+      # needs no such proof — so the very first UPDATE was the one that broke.
+      #
+      # `force=false` is not a formality: it is the fast-forward check itself,
+      # made server side where the full history actually lives. Deepening the
+      # checkout would also work, at the cost of a full clone on every build.
       - name: Advance the deploy branch
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "advancing deploy to ${GITHUB_SHA}"
-          git push origin "${GITHUB_SHA}:refs/heads/deploy"
+          if gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/deploy" >/dev/null 2>&1; then
+            gh api -X PATCH "repos/${GITHUB_REPOSITORY}/git/refs/heads/deploy" \
+              -f sha="${GITHUB_SHA}" -F force=false
+          else
+            echo "deploy does not exist yet — creating it"
+            gh api -X POST "repos/${GITHUB_REPOSITORY}/git/refs" \
+              -f ref="refs/heads/deploy" -f sha="${GITHUB_SHA}"
+          fi
 
       - name: Security scan
         if: github.event_name != 'pull_request'
