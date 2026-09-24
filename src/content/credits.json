@@ -1,43 +1,48 @@
 [
   {
-    "title": "Beco Commercial",
+    "title": "Beco",
     "director": "Anirudh More",
     "production": "Dryfit production",
     "year": "2026",
     "location": "India",
-    "role": "Prosthetic Makeup Artist"
+    "role": "Prosthetic Makeup Artist",
+    "type": "Commercial"
   },
   {
-    "title": "Asian Paints Commercial",
+    "title": "Asian Paints",
     "director": "Shayak Roy",
     "production": "BLTN",
     "year": "2026",
     "location": "India",
-    "role": "Prosthetic Makeup Artist"
+    "role": "Prosthetic Makeup Artist",
+    "type": "Commercial"
   },
   {
-    "title": "Himalaya Baby CARE Commercial",
+    "title": "Himalaya Baby CARE",
     "director": "Dhara",
     "production": "Mothership Production",
     "year": "2026",
     "location": "India",
-    "role": "Prosthetic Makeup Artist"
+    "role": "Prosthetic Makeup Artist",
+    "type": "Commercial"
   },
   {
-    "title": "Baby Sebamed Commercial",
+    "title": "Baby Sebamed",
     "director": "Indrasish Mukherjee",
     "production": "Leo Brunett",
     "year": "2026",
     "location": "India",
-    "role": "Prosthetic Makeup Artist"
+    "role": "Prosthetic Makeup Artist",
+    "type": "Commercial"
   },
   {
-    "title": "Johnson Baby Commercial",
+    "title": "Johnson Baby",
     "director": "Gaurav Gupta",
     "production": "Mothership Production",
     "year": "2025",
     "location": "India",
-    "role": "Prosthetic Makeup Artist"
+    "role": "Prosthetic Makeup Artist",
+    "type": "Commercial"
   },
   {
     "title": "Rakht Brahmand",
@@ -56,20 +61,22 @@
     "role": "Prosthetic Makeup Artist"
   },
   {
-    "title": "Personal Trainer Web Series",
+    "title": "Personal Trainer",
     "director": "Amit Khanna",
     "production": "A Square",
     "year": "2024",
     "location": "India",
-    "role": "Prosthetic Makeup Artist"
+    "role": "Prosthetic Makeup Artist",
+    "type": "Series"
   },
   {
-    "title": "3 Monkeys - Poster",
+    "title": "3 Monkeys",
     "director": "Abbas Mastan",
     "production": "AV Pictures",
     "year": "2024",
     "location": "India",
-    "role": "Makeup Artist"
+    "role": "Makeup Artist",
+    "type": "Poster"
   },
   {
     "title": "ISSAC’S DREAM",
@@ -128,12 +135,13 @@
     "role": "Makeup Artist"
   },
   {
-    "title": "Yaariyan Dildariyan Punjabi Feature Film",
+    "title": "Yaariyan Dildariyan Punjabi",
     "director": "Dave Sidhu",
     "production": "Captain Cook Films",
     "year": "2019",
     "location": "Australia",
-    "role": "Look Designer"
+    "role": "Look Designer",
+    "type": "Feature"
   },
   {
     "title": "Savadhan India",
@@ -161,36 +169,40 @@
     "role": "Prosthetic Makeup Artist"
   },
   {
-    "title": "HSBC Bank Commercial",
+    "title": "HSBC Bank",
     "director": "Venky",
     "production": "Content Factory",
     "year": "2020",
     "location": "India",
-    "role": "Makeup Artist"
+    "role": "Makeup Artist",
+    "type": "Commercial"
   },
   {
-    "title": "Danaher Corporate Commercial",
+    "title": "Danaher Corporate",
     "director": "Swapnil Kore",
     "production": "Clematis Communications Pvt Ltd",
     "year": "2020",
     "location": "India",
-    "role": "Makeup Artist"
+    "role": "Makeup Artist",
+    "type": "Commercial"
   },
   {
-    "title": "TMF Multi Asset Commercial",
+    "title": "TMF Multi Asset",
     "director": "Content Factory",
     "production": "",
     "year": "2020",
     "location": "India",
-    "role": "Makeup Artist"
+    "role": "Makeup Artist",
+    "type": "Commercial"
   },
   {
-    "title": "Panasonic A/C Commercial",
+    "title": "Panasonic A/C",
     "director": "Tejender Sharma",
     "production": "Gibbous Films",
     "year": "2020",
     "location": "India",
-    "role": "Makeup Artist"
+    "role": "Makeup Artist",
+    "type": "Commercial"
   },
   {
     "title": "Sugar box",
