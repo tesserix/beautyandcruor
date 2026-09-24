@@ -382,3 +382,130 @@ Two related fixes that are ours and still outstanding: delete the shadowed `fron
 chart values so there is one source of truth, and pin the image tag rather than push `latest` —
 Artifact Registry negative-caches a 404, so the `latest` tag stayed unresolvable through the
 mirror long after the image existed, while a fresh `main-<sha7>` tag resolved immediately.
+
+---
+
+## D18 — Authoring: a login for images, credits and sequence
+
+**Proposal. Not decided — this document exists to be chosen from.**
+
+The ask is that Parimiti can log in and do three things: upload images, add and edit credits, and
+set the order work appears in.
+
+### D1 said no CMS, and its reason has expired
+
+D1 weighed Keystatic and Sanity and chose neither. The deciding argument was not that a CMS is
+wrong, it was that one could not help her:
+
+> on GKE with a static nginx container, **any** content change requires a container rebuild and
+> redeploy regardless of CMS. A CMS only helps Parimiti if a CI rebuild-on-commit pipeline is also
+> built, which does not exist yet.
+
+That pipeline exists now. Merging to `main` builds and pushes both images, and has done so
+repeatedly. So the reasoning that closed the question no longer applies, and D1 anticipated this —
+it kept the content schema "shaped so Keystatic could be layered on later without migrating
+content." That shape held: credits are 27 rows of JSON, and sequence is four lists in
+`curation.json`.
+
+### Two of the three asks are nearly free
+
+**Credits** are `src/content/credits.json`: title, director, production, year, location, type. Any
+editor that can write JSON to a branch can serve them.
+
+**Sequence** is `src/content/curation.json` — `hero`, `leads`, `covers`, `artist`. Reordering is
+moving strings in an array. A drag-and-drop list over the gallery is a small piece of UI.
+
+### Images are the hard part, and it is not the upload
+
+Three constraints make "upload an image" the wrong mental model.
+
+**They are not in the repository.** D15 moved them out: the export was 167 MB, of which 165 MB was
+`public/img`, and `.dockerignore` excludes it so the container ships without them. They live in
+GCS and are fetched by the visitor's browser. A git-based CMS commits images into the repo, which
+is the precise thing that decision reversed.
+
+**They are not files, they are ladders.** `scripts/images.mjs` takes an original and derives seven
+widths in AVIF and WebP, a JPEG fallback, and a 24px LQIP, then writes `src/generated/images.json`
+with dimensions and blur data. The site reads only the manifest. Dropping a JPEG somewhere
+produces an image the site cannot render.
+
+**Publication is gated on evidence.** D15 again: `scripts/assets-sync.mjs` refuses to publish
+anything not in the cleared list, and CI enforces it on every build. That gate exists because the
+recovered library mixes in work she never published. An upload path has to add to that list —
+which is correct, since uploading her own work *is* the consent the gate is asking for, but it
+means the gate must be written to as well as read.
+
+So "upload" means ingest, derive, push to GCS, write the manifest, extend the cleared list. That
+is a pipeline with a UI in front of it, not a file picker.
+
+### And a fourth thing nobody asked for: the deploy has to be automatic
+
+Today: commit → CI builds → **someone bumps the image tag by hand** in `tesserix-k8s` → ArgoCD
+syncs. If she edits a credit and it appears four days later when a human happens to bump a tag,
+the editor is worse than no editor, because it promises something it does not do.
+
+This is the cheapest gap to close. Kargo is already deployed on the cluster, the blog already uses
+it, and the chart's own comment says what is missing: "Until this app has a Kargo Project, bump
+this by hand." **Whatever else is chosen, this comes first** — and it is worth doing even if
+authoring is never built, because it removes a manual step from every deploy.
+
+### The options
+
+**A — Git CMS, admin hosted separately.** Keystatic or Decap writing to the repo through the
+GitHub API.
+
+Credits and sequence fit immediately; this is what D1 kept the schema shaped for. Images do not:
+both want to commit files into the repo, against D15. The admin also cannot live in this site —
+`output: "export"` has no API routes to host the OAuth exchange — so it needs a second, non-static
+app on the cluster. And she needs an identity: a GitHub account, or Keystatic Cloud, which is paid
+and external.
+
+*Cheapest for credits and sequence, wrong shape for images, and it asks a makeup artist to hold a
+GitHub account.*
+
+**B — Extend the enquiry sidecar into a small admin.** It already exists, already runs beside
+nginx, already holds a secret, and already has an nginx route in front of it.
+
+Add a session login, an upload endpoint that runs the derivative ladder and writes to GCS, and
+endpoints that commit `credits.json` and `curation.json` through the GitHub API. She gets one
+password and a UI built for her three tasks rather than a general-purpose content editor.
+
+The image pipeline is the real work — the encode is minutes of CPU per photograph and cannot run
+inside a request, so it needs a job and somewhere to report progress.
+
+*Most work, exactly the right shape, and no third party or GitHub account.*
+
+**C — Headless CMS.** Sanity or similar holds credits, sequence and images; the build pulls at
+deploy time.
+
+Solves images by taking them out of our hands entirely, and gives a polished editor for free.
+Against: a second content home and a migration, an external dependency and cost for a site that
+changed twice in three years, and it makes the rights gate somebody else's property.
+
+*Fastest to a good editor, worst fit for a site whose whole architecture is "no runtime, no
+dependencies."*
+
+**D — Do not build it.** She sends changes; they are applied by hand.
+
+The honest baseline. The site changed twice between 2023 and the rebuild. Against: it makes her
+dependent on someone else's availability for her own portfolio, which is the thing she is most
+likely to want to change the day before a job.
+
+### Recommendation
+
+**Kargo first, regardless.** One day, removes a manual step from every deploy, and is a
+prerequisite for anything else being worth building.
+
+**Then B, in two halves.** Credits and sequence first: they are JSON, the UI is a form and a
+sortable list, and they deliver most of the value — a producer reads credits, and she can already
+feel the cost of not being able to fix them. Image upload second, as a job rather than a request,
+once the shape of the first half is proven.
+
+A is tempting for the first half alone, and if images were never in scope it would win. They are
+in scope, and splitting authoring across two systems — a git CMS for text, something bespoke for
+images — is worse than one small thing that does all three.
+
+**What this needs before it starts:** a decision on where her session lives (a single shared
+password in Secret Manager is enough for one user and avoids standing up identity for one person),
+and confirmation that the ~165 MB of GCS assets stays the source of truth rather than being
+migrated anywhere.
