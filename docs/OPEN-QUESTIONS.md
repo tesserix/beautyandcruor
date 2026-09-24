@@ -149,6 +149,10 @@ at WordPress.
 
 **Still ours**
 
+- **Authoring.** She has no way to upload an image, fix a credit or reorder a gallery without
+  someone else doing it. D18 writes up the options and recommends one; it needs a decision, and
+  the Kargo half of it is worth doing whatever is chosen.
+
 - ~~**JS budget.**~~ Decided. The 150 KB target sat below the framework floor, so it was replaced
   with a split budget — under 25 KB for our own client code, a 200 KB tripwire on the total. See
   README.
