@@ -1,7 +1,7 @@
 // Command enquiry accepts the site's contact form and sends it on through
 // Resend.
 //
-// WHY THIS EXISTS
+// # WHY THIS EXISTS
 //
 // The site is a static export served by nginx, so nothing in it can hold a
 // credential: anything the browser can read is published. Resend is already
@@ -13,7 +13,7 @@
 // only. nginx proxies /api/enquiry to it, so the browser talks to the site's
 // own origin: no CORS, no public service, and the key never leaves the pod.
 //
-// WHY NOT nginx ALONE
+// # WHY NOT nginx ALONE
 //
 // nginx can inject an Authorization header, but it cannot build Resend's
 // payload from the form post. Forwarding the body verbatim would let a caller
@@ -30,9 +30,12 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
+	"crypto/rand"
 	"encoding/json"
 	"errors"
+	"flag"
 	"fmt"
 	"html"
 	"log"
@@ -52,9 +55,9 @@ const (
 	maxEmail      = 254 // RFC 5321
 	maxEnquiry    = 80
 	maxDetails    = 4000
-	minFillTime   = 3 * time.Second  // nobody reads and completes it faster
-	maxFormAge    = 6 * time.Hour    // a stale page is a replayed one
-	maxLinks      = 2                // a genuine enquiry rarely carries more
+	minFillTime   = 3 * time.Second // nobody reads and completes it faster
+	maxFormAge    = 6 * time.Hour   // a stale page is a replayed one
+	maxLinks      = 2               // a genuine enquiry rarely carries more
 	resendTimeout = 10 * time.Second
 )
 
@@ -70,6 +73,17 @@ type submission struct {
 var linkRe = regexp.MustCompile(`(?i)\b(?:https?://|www\.)\S+`)
 
 func main() {
+	// `enquiry -hash` derives the verifier that goes in Secret Manager, so the
+	// password itself is typed once, here, and never stored or transmitted.
+	// It is in this binary rather than a script because the parameters have to
+	// match the ones that check it, and two implementations drift.
+	hashMode := flag.Bool("hash", false, "read a password on stdin and print its ADMIN_PASSWORD_HASH")
+	flag.Parse()
+	if *hashMode {
+		printPasswordHash()
+		return
+	}
+
 	apiKey := mustEnv("RESEND_API_KEY")
 	to := splitList(mustEnv("ENQUIRY_TO"))
 	if len(to) == 0 {
@@ -92,6 +106,7 @@ func main() {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /enquiry", h.enquiry)
+	mountAdmin(mux)
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
@@ -360,4 +375,77 @@ func firstNonEmpty(vals ...string) string {
 		}
 	}
 	return ""
+}
+
+// mountAdmin wires up the credits editor, if it is configured.
+//
+// Optional on purpose. The enquiry form is the launch-blocking part of this
+// service and must come up whether or not the admin has its secrets yet, so a
+// missing ADMIN_PASSWORD_HASH logs a line and leaves /admin unrouted rather
+// than killing the pod. Half-configured is the one state that would be worse
+// than either, so it is treated as fatal: a hash that will not parse, or a
+// hash with no GitHub token behind it, stops the process.
+func mountAdmin(mux *http.ServeMux) {
+	encoded := os.Getenv("ADMIN_PASSWORD_HASH")
+	if encoded == "" {
+		log.Print("enquiry: ADMIN_PASSWORD_HASH unset — the credits editor is off")
+		return
+	}
+	v, err := parseVerifier(encoded)
+	if err != nil {
+		log.Fatalf("enquiry: ADMIN_PASSWORD_HASH is malformed: %v", err)
+	}
+
+	repo := mustEnv("ADMIN_GITHUB_REPO")
+	if strings.Count(repo, "/") != 1 {
+		log.Fatalf("enquiry: ADMIN_GITHUB_REPO should be owner/name, got %q", repo)
+	}
+	a := &adminHandler{
+		verifier: v,
+		sessions: sessions{key: sessionKey()},
+		limiter:  newLimiter(loginAttempts, time.Hour),
+		gh: &github{
+			token:  mustEnv("ADMIN_GITHUB_TOKEN"),
+			repo:   repo,
+			branch: envOr("ADMIN_GITHUB_BRANCH", "main"),
+			client: &http.Client{Timeout: githubTimeout},
+		},
+	}
+	a.routes(mux)
+	log.Printf("enquiry: credits editor on /admin, committing to %s@%s", a.gh.repo, a.gh.branch)
+}
+
+// sessionKey returns the HMAC key for session cookies.
+//
+// A supplied key keeps sessions valid across a restart. Without one a random
+// key is generated, which is safe but signs everyone out whenever the pod
+// moves — acceptable for one user, and much better than a default constant
+// that would let anyone who read this file mint a session.
+func sessionKey() []byte {
+	if s := os.Getenv("ADMIN_SESSION_KEY"); s != "" {
+		return []byte(s)
+	}
+	key := make([]byte, 32)
+	if _, err := rand.Read(key); err != nil {
+		log.Fatalf("enquiry: generating a session key: %v", err)
+	}
+	log.Print("enquiry: ADMIN_SESSION_KEY unset — sessions will not survive a restart")
+	return key
+}
+
+func printPasswordHash() {
+	fmt.Fprint(os.Stderr, "Password: ")
+	line, err := bufio.NewReader(os.Stdin).ReadString('\n')
+	if err != nil && line == "" {
+		log.Fatalf("reading the password: %v", err)
+	}
+	password := strings.TrimRight(line, "\r\n")
+	if len(password) < 12 {
+		log.Fatal("use at least 12 characters — this is the only thing between the internet and her credits")
+	}
+	v, err := newVerifier(password)
+	if err != nil {
+		log.Fatalf("deriving: %v", err)
+	}
+	fmt.Println(encodeVerifier(v))
 }

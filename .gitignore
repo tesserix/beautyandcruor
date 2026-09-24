@@ -34,3 +34,6 @@ capture/proto-images.json
 # Next.js / TS build artefacts
 tsconfig.tsbuildinfo
 next-env.d.ts
+
+# The sidecar binary, if built in place.
+/enquiry/enquiry

@@ -168,9 +168,17 @@ the cutover.
 
 **Still ours**
 
-- **Authoring.** She has no way to upload an image, fix a credit or reorder a gallery without
-  someone else doing it. D18 writes up the options and recommends one; it needs a decision, and
-  the Kargo half of it is worth doing whatever is chosen.
+- **Authoring.** Decided (D18) and half built.
+
+  - ~~Automatic promotion~~ — done. A merge to `main` builds, advances `deploy`, and Kargo
+    promotes it with no human step. Three consecutive cycles observed.
+  - ~~Credits~~ — done. `/admin`, one password, commits `credits.json`. It carries a `role`
+    field, which is the answer to question 1 arriving one credit at a time rather than as one
+    large questionnaire reply.
+  - **Sequence** — next. `curation.json` now takes effect at build time, so an edit to it ships;
+    the remaining work is a UI with thumbnails.
+  - **Image upload** — after that, as a job rather than a request: the derivative ladder is
+    minutes of CPU per photograph and cannot run inside an HTTP handler.
 
 - ~~**JS budget.**~~ Decided. The 150 KB target sat below the framework floor, so it was replaced
   with a split budget — under 25 KB for our own client code, a 200 KB tripwire on the total. See

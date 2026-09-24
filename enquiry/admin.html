@@ -1,0 +1,243 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Credits — Beauty &amp; Cruor</title>
+<style>
+  :root {
+    --ink: #07070a; --ink-2: #131318; --hair: #2a2a33;
+    --chalk: #f4f4f2; --ash: #9a9aa4; --leaf: #7ac943; --warn: #e2725b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--ink); color: var(--chalk);
+    font: 15px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    padding: 24px 16px 96px;
+  }
+  main { max-width: 1100px; margin: 0 auto; }
+  h1 { font-size: 26px; margin: 0 0 4px; font-weight: 600; }
+  .sub { color: var(--ash); margin: 0 0 28px; }
+  label { display: block; font-size: 11px; letter-spacing: .09em; text-transform: uppercase; color: var(--ash); margin-bottom: 6px; }
+  input {
+    width: 100%; background: var(--ink-2); color: var(--chalk);
+    border: 1px solid var(--hair); border-radius: 6px; padding: 10px 12px; font: inherit;
+    min-height: 44px;
+  }
+  input:focus-visible { outline: 2px solid var(--leaf); outline-offset: 1px; }
+  button {
+    font: inherit; min-height: 44px; padding: 0 16px; border-radius: 999px; cursor: pointer;
+    background: transparent; color: var(--chalk); border: 1px solid var(--hair);
+  }
+  button:hover { border-color: var(--chalk); }
+  button.primary { background: var(--chalk); color: var(--ink); border-color: var(--chalk); font-weight: 600; }
+  button.primary[disabled] { opacity: .45; cursor: default; }
+  button.tiny { min-height: 34px; padding: 0 10px; font-size: 13px; }
+  .row { border: 1px solid var(--hair); border-radius: 10px; padding: 14px; margin-bottom: 12px; background: #0b0b10; }
+  .grid { display: grid; gap: 12px; grid-template-columns: 1fr; }
+  @media (min-width: 760px) { .grid { grid-template-columns: 2fr 1.4fr 1.4fr .7fr 1fr 1.2fr; } }
+  .rowbar { display: flex; gap: 8px; align-items: center; margin-top: 12px; }
+  .rowbar .n { color: var(--ash); font-size: 12px; margin-right: auto; letter-spacing: .08em; }
+  .bar {
+    position: fixed; left: 0; right: 0; bottom: 0; background: rgba(7,7,10,.96);
+    border-top: 1px solid var(--hair); padding: 12px 16px; display: flex; gap: 12px;
+    align-items: center; backdrop-filter: blur(6px);
+  }
+  .bar .state { color: var(--ash); font-size: 13px; margin-right: auto; }
+  .msg { border-radius: 8px; padding: 12px 14px; margin-bottom: 18px; border: 1px solid; }
+  .msg.err { border-color: var(--warn); color: var(--warn); }
+  .msg.ok { border-color: var(--leaf); color: var(--leaf); }
+  .login { max-width: 360px; }
+  .login button { width: 100%; margin-top: 16px; }
+  [hidden] { display: none !important; }
+</style>
+
+<main>
+<!-- login -->
+<section id="login" hidden>
+  <h1>Beauty &amp; Cruor</h1>
+  <p class="sub">Sign in to edit your credits.</p>
+  <form class="login" method="post" action="/admin/login">
+    <label for="password">Password</label>
+    <input id="password" name="password" type="password" autocomplete="current-password" required autofocus>
+    <button class="primary" type="submit">Sign in</button>
+  </form>
+</section>
+
+<!-- editor -->
+<section id="editor" hidden>
+  <h1>Credits</h1>
+  <p class="sub">
+    Changes go live a few minutes after saving. Role is what a producer reads first —
+    it is the one field none of these have yet.
+  </p>
+  <div id="message" class="msg" hidden></div>
+  <div id="rows"></div>
+  <button id="add" type="button">Add a credit</button>
+</section>
+</main>
+
+<div class="bar" id="bar" hidden>
+  <span class="state" id="state">Loading…</span>
+  <form method="post" action="/admin/logout"><button type="submit" class="tiny">Sign out</button></form>
+  <button id="save" class="primary" type="button" disabled>Save</button>
+</div>
+
+<script>
+  const STATE = "__STATE__";
+  const CSRF = "__CSRF__";
+  const $ = (id) => document.getElementById(id);
+
+  document.getElementById(STATE === "editor" ? "editor" : "login").hidden = false;
+  if (STATE !== "editor") {
+    // A failed sign-in re-renders this page with a 401.
+    if (location.pathname === "/admin/login") say("That password was not right.", true);
+  } else {
+    $("bar").hidden = false;
+    load();
+  }
+
+  const FIELDS = [
+    ["title", "Title", "organization-title"],
+    ["role", "Her role", "off"],
+    ["director", "Director", "off"],
+    ["production", "Production company", "off"],
+    ["year", "Year", "off"],
+    ["location", "Location", "off"],
+  ];
+
+  let sha = null;
+  let dirty = false;
+
+  function say(text, isError) {
+    const el = $("message");
+    el.textContent = text;
+    el.className = "msg " + (isError ? "err" : "ok");
+    el.hidden = false;
+  }
+  function clearMessage() { $("message").hidden = true; }
+
+  function markDirty() {
+    dirty = true;
+    $("save").disabled = false;
+    $("state").textContent = "Unsaved changes";
+  }
+
+  function rowEl(row) {
+    const wrap = document.createElement("div");
+    wrap.className = "row";
+    const grid = document.createElement("div");
+    grid.className = "grid";
+    for (const [key, label, autocomplete] of FIELDS) {
+      const cell = document.createElement("div");
+      const id = `${key}-${Math.random().toString(36).slice(2, 8)}`;
+      const l = document.createElement("label");
+      l.setAttribute("for", id);
+      l.textContent = label;
+      const input = document.createElement("input");
+      input.id = id;
+      input.value = row[key] || "";
+      input.dataset.key = key;
+      input.autocomplete = autocomplete;
+      if (key === "year") { input.inputMode = "numeric"; input.placeholder = "2024"; }
+      input.addEventListener("input", markDirty);
+      cell.append(l, input);
+      grid.append(cell);
+    }
+    const bar = document.createElement("div");
+    bar.className = "rowbar";
+    const n = document.createElement("span");
+    n.className = "n";
+    bar.append(n);
+    bar.append(
+      button("Move up", () => move(wrap, -1)),
+      button("Move down", () => move(wrap, 1)),
+      button("Delete", () => {
+        if (!confirm(`Delete "${wrap.querySelector('[data-key="title"]').value || "this credit"}"?`)) return;
+        wrap.remove(); renumber(); markDirty();
+      }),
+    );
+    wrap.append(grid, bar);
+    return wrap;
+  }
+
+  function button(text, onClick) {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "tiny"; b.textContent = text;
+    b.addEventListener("click", onClick);
+    return b;
+  }
+
+  function move(el, delta) {
+    const sibling = delta < 0 ? el.previousElementSibling : el.nextElementSibling;
+    if (!sibling) return;
+    delta < 0 ? el.parentNode.insertBefore(el, sibling) : el.parentNode.insertBefore(sibling, el);
+    renumber(); markDirty();
+  }
+
+  function renumber() {
+    [...$("rows").children].forEach((r, i) => {
+      r.querySelector(".n").textContent = `${i + 1} of ${$("rows").children.length}`;
+    });
+  }
+
+  function collect() {
+    return [...$("rows").children].map((r) => {
+      const row = {};
+      for (const input of r.querySelectorAll("input")) row[input.dataset.key] = input.value.trim();
+      return row;
+    });
+  }
+
+  async function load() {
+    try {
+      const res = await fetch("/admin/credits", { headers: { Accept: "application/json" } });
+      if (res.status === 401) { location.href = "/admin"; return; }
+      const data = await res.json();
+      if (!res.ok) { say(data.error || "Could not load the credits.", true); return; }
+      sha = data.sha;
+      $("rows").replaceChildren(...data.rows.map(rowEl));
+      renumber();
+      dirty = false;
+      $("save").disabled = true;
+      $("state").textContent = `${data.rows.length} credits`;
+    } catch {
+      say("Could not reach the server.", true);
+    }
+  }
+
+  $("add").addEventListener("click", () => {
+    const el = rowEl({ year: String(new Date().getFullYear()) });
+    $("rows").prepend(el);
+    renumber(); markDirty();
+    el.querySelector("input").focus();
+  });
+
+  $("save").addEventListener("click", async () => {
+    clearMessage();
+    $("save").disabled = true;
+    $("state").textContent = "Saving…";
+    try {
+      const res = await fetch("/admin/credits", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": CSRF },
+        body: JSON.stringify({ rows: collect(), sha }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        dirty = false;
+        say("Saved. It will be live in a few minutes.", false);
+        $("state").textContent = "Saved";
+        await load();
+        return;
+      }
+      say(data.error || "Could not save.", true);
+      $("save").disabled = false;
+      $("state").textContent = "Unsaved changes";
+    } catch {
+      say("Could not reach the server. Nothing was saved.", true);
+      $("save").disabled = false;
+    }
+  });
+
+  addEventListener("beforeunload", (e) => { if (dirty) e.preventDefault(); });
+</script>

@@ -66,6 +66,52 @@ done
 curl -so /dev/null -w '%{http_code} -> %{redirect_url}\n' localhost:8080/about-me
 ```
 
+## Turning on the credits editor
+
+The sidecar serves a password-protected editor at `/admin` that commits
+`src/content/credits.json` and lets her fill in the one field no credit has:
+her role. It is **off unless configured** — a missing `ADMIN_PASSWORD_HASH`
+logs a line and leaves `/admin` unrouted, so the enquiry form, which is the
+launch-blocking half of this service, comes up either way.
+
+Three secrets, and the chart change lives in `tesserix-k8s`, not here.
+
+**1. The password.** Never type it into a file. The binary derives the
+verifier, so the password exists only in the terminal that created it:
+
+```
+docker run --rm -i ghcr.io/tesserix/beautyandcruor-enquiry:latest -hash
+# Password: ...
+# pbkdf2-sha256$600000$...$...
+```
+
+Store that output as `prod-bac-admin-password-hash` in Secret Manager. Anyone
+who reads the secret has a PBKDF2 verifier, not a password.
+
+**2. A session key.** 32 random bytes, `prod-bac-admin-session-key`. Without
+one the service generates a key at startup, which works but signs her out
+every time the pod moves.
+
+**3. A GitHub token.** Fine-grained, **this repository only**, with
+`Contents: read and write` and nothing else. Store as
+`prod-bac-admin-github-token`.
+
+The token's scope is the real boundary. The service refuses to write any path
+outside `writablePaths` — credits, curation and alt text — so a stolen session
+cannot reach the workflow that deploys the site. Keep the token narrow anyway:
+belt and braces, and the braces are the part GitHub enforces.
+
+Then in the `tesserix-k8s` chart, add an ExternalSecret for the three and pass
+them to the enquiry container as `ADMIN_PASSWORD_HASH`, `ADMIN_SESSION_KEY`
+and `ADMIN_GITHUB_TOKEN`, plus a plain `ADMIN_GITHUB_REPO:
+tesserix/beautyandcruor`. Remember that an ExternalSecret needs both an entry
+in the parent kustomization and a `kustomization.yaml` of its own, or
+`kustomize build` fails.
+
+**What she sees.** `https://<site>/admin`, one password, one screen. Editing a
+credit commits to `main`, which builds, advances `deploy`, and promotes — so a
+correction is live in a few minutes without anyone being asked.
+
 ## Not wired up yet
 
 - **Image sourcing in CI.** The pipeline emits ~224 MB of derivatives from

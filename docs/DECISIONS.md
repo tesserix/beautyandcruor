@@ -509,3 +509,34 @@ images — is worse than one small thing that does all three.
 password in Secret Manager is enough for one user and avoids standing up identity for one person),
 and confirmation that the ~165 MB of GCS assets stays the source of truth rather than being
 migrated anywhere.
+
+### D18 addendum — what was built
+
+Kargo first, then B, as recommended. Recording the two things that turned out
+differently from the write-up.
+
+**`curation.json` did not work the way D18 assumed.** The proposal said
+sequence was "nearly free" because the file was already JSON and an admin could
+just write it. It could — and nothing would have happened. The file was read
+only by `scripts/organize.mjs`, which needs the image originals and rewrites
+`public/img`, so it runs on a laptop and never in CI; the build read the
+*generated* `galleries.json`. An editor writing `curation.json` would have
+appeared to work and changed nothing. Ordering now happens at build time, which
+is what makes the file's own promise — "an admin UI, if one is ever built,
+writes this file and nothing else changes" — true rather than aspirational.
+
+**Credits shipped before sequence, not with it.** D18 put them in the same
+half. Credits alone is the larger share of the value and needs no image
+pipeline, no thumbnails and no manifest in the container, so it went first and
+is live on its own. Sequence follows now that curation actually takes effect.
+
+The editor writes through the GitHub contents API with the blob sha from the
+read, so two people editing at once produces a refusal rather than one of them
+silently losing their work. The path is not an input: `writablePaths` is a
+fixed set of three content files, checked before any call, on the same
+principle as `ENQUIRY_TO` — a session that is somehow stolen can edit her
+credits, not the workflow that deploys them.
+
+Session auth is one shared password, as agreed: PBKDF2-SHA256 from the standard
+library, so `go.sum` is still empty and the image is still `scratch` plus one
+binary.
