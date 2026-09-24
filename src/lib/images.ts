@@ -19,6 +19,8 @@ export type ImageEntry = {
   fallback: { w: number; src: string };
   /** Inline 24px WebP, ~273 bytes. Prevents the grey flash on 4G. */
   lqip: string;
+  /** The upload this was derived from, e.g. "2022/09/IMG_1605-scaled.jpg". */
+  sourcePath: string;
 };
 
 const IMAGES = manifest as unknown as Record<string, ImageEntry>;
@@ -60,6 +62,21 @@ export function requireImage(key: string): ImageEntry {
     );
   }
   return e;
+}
+
+/**
+ * The stable address of an image: its upload path without the extension.
+ *
+ * Manifest keys are NOT stable. scripts/organize.mjs renumbers them whenever
+ * categories shift, and it reuses names — after two images left `unpublished`,
+ * the key `unpublished/unpublished-059` still existed and pointed at a
+ * different photograph. Anything that has to survive a reorganise addresses
+ * images this way; curation.json and alt.json both do.
+ */
+export function sourceIdentity(key: string): string | null {
+  const entry = IMAGES[key];
+  if (!entry) return null;
+  return (entry.sourcePath ?? entry.src).replace(/\.[^.]+$/, "");
 }
 
 export function hasImage(key: string): boolean {

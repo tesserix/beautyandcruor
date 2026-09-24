@@ -1,4 +1,5 @@
 import authored from "@/content/alt.json";
+import { sourceIdentity } from "@/lib/images";
 
 /**
  * Alt text for the image library.
@@ -17,6 +18,13 @@ import authored from "@/content/alt.json";
  * It lives in src/content alongside credits.json and curation.json because it
  * is content she will correct, not code — the same place the planned authoring
  * UI (D18) will write to.
+ *
+ * KEYED BY UPLOAD PATH, not by manifest key, for the same reason curation.json
+ * is: scripts/organize.mjs renumbers manifest keys whenever categories shift
+ * and reuses the names it frees, so `sfx/sfx-019` is not a stable address for
+ * a photograph. Keying on it would silently move a description onto a
+ * different image the next time the library is reorganised — the exact failure
+ * this text exists to avoid.
  */
 const ALT: Record<string, string> = authored;
 
@@ -28,11 +36,7 @@ const ALT: Record<string, string> = authored;
  * worse than a vague description.
  */
 export function altFor(imageKey: string, fallback: string): string {
-  const text = ALT[imageKey];
+  const id = sourceIdentity(imageKey);
+  const text = id ? ALT[id] : undefined;
   return text && text.trim() ? text : fallback;
-}
-
-/** Every key with authored alt text. Used by the coverage test. */
-export function authoredKeys(): string[] {
-  return Object.keys(ALT);
 }
