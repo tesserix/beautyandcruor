@@ -76,6 +76,9 @@ type adminHandler struct {
 	// same-origin to point at.
 	assetBase string
 	index     indexCache
+	// nil when image upload is not configured, which is the normal state
+	// until the bucket and Workload Identity binding exist.
+	uploads *uploads
 }
 
 func (a *adminHandler) routes(mux *http.ServeMux) {
@@ -93,6 +96,7 @@ func (a *adminHandler) routes(mux *http.ServeMux) {
 	mux.HandleFunc("PUT /admin/credits", a.putCredits)
 	mux.HandleFunc("GET /admin/sequence", a.getSequence)
 	mux.HandleFunc("PUT /admin/sequence", a.putSequence)
+	mux.HandleFunc("POST /admin/images", a.postImage)
 }
 
 // --- session plumbing -------------------------------------------------------
@@ -161,7 +165,12 @@ func (a *adminHandler) render(state, csrf string, failed bool) string {
 	if failed {
 		failedFlag = "1"
 	}
-	return strings.ReplaceAll(page, "__FAILED__", failedFlag)
+	page = strings.ReplaceAll(page, "__FAILED__", failedFlag)
+	uploadFlag := ""
+	if a.uploads != nil {
+		uploadFlag = "1"
+	}
+	return strings.ReplaceAll(page, "__UPLOADS__", uploadFlag)
 }
 
 func (a *adminHandler) login(w http.ResponseWriter, r *http.Request) {
