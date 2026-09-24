@@ -387,7 +387,7 @@ func firstNonEmpty(vals ...string) string {
 // than either, so it is treated as fatal: a hash that will not parse, or a
 // hash with no GitHub token behind it, stops the process.
 func mountAdmin(mux *http.ServeMux) {
-	encoded := os.Getenv("ADMIN_PASSWORD_HASH")
+	encoded := secretEnv("ADMIN_PASSWORD_HASH")
 	if encoded == "" {
 		log.Print("enquiry: ADMIN_PASSWORD_HASH unset — the credits editor is off")
 		return
@@ -397,7 +397,7 @@ func mountAdmin(mux *http.ServeMux) {
 		log.Fatalf("enquiry: ADMIN_PASSWORD_HASH is malformed: %v", err)
 	}
 
-	repo := mustEnv("ADMIN_GITHUB_REPO")
+	repo := strings.TrimSpace(mustEnv("ADMIN_GITHUB_REPO"))
 	if strings.Count(repo, "/") != 1 {
 		log.Fatalf("enquiry: ADMIN_GITHUB_REPO should be owner/name, got %q", repo)
 	}
@@ -413,7 +413,7 @@ func mountAdmin(mux *http.ServeMux) {
 		assetBase: strings.TrimRight(
 			envOr("ADMIN_ASSET_BASE_URL", "https://storage.googleapis.com/beautyandcruor-prod-assets-in"), "/"),
 		gh: &github{
-			token:  mustEnv("ADMIN_GITHUB_TOKEN"),
+			token:  secretEnv("ADMIN_GITHUB_TOKEN"),
 			repo:   repo,
 			branch: envOr("ADMIN_GITHUB_BRANCH", "main"),
 			client: &http.Client{Timeout: githubTimeout},
@@ -431,7 +431,7 @@ func mountAdmin(mux *http.ServeMux) {
 // moves — acceptable for one user, and much better than a default constant
 // that would let anyone who read this file mint a session.
 func sessionKey() []byte {
-	if s := os.Getenv("ADMIN_SESSION_KEY"); s != "" {
+	if s := secretEnv("ADMIN_SESSION_KEY"); s != "" {
 		return []byte(s)
 	}
 	key := make([]byte, 32)
@@ -481,4 +481,30 @@ func localAPIOverride() string {
 	}
 	log.Printf("enquiry: GitHub API overridden to %s — this is for testing", base)
 	return strings.TrimRight(base, "/")
+}
+
+// secretEnv reads a credential from the environment, without whatever
+// whitespace the thing that stored it left behind.
+//
+// This is not defensiveness for its own sake. A secret is almost always
+// created by piping a value into something, and a trailing newline survives
+// the whole chain: `gcloud secrets create --data-file=-` stores the byte,
+// External Secrets copies it into the Kubernetes Secret verbatim, and the
+// container receives it in the variable.
+//
+// The token is where that becomes a real failure. Go's http client refuses a
+// header value containing a newline — correctly, since that is how header
+// injection works — so every GitHub call died with
+//
+//	net/http: invalid header field value for "Authorization"
+//
+// while the token itself was perfectly valid. The editor signed in, listed
+// nothing, and reported that it could not load the credits.
+//
+// It also hides from the obvious check. Shell command substitution strips
+// trailing newlines, so `TOK=$(gcloud secrets versions access ...)` inspects a
+// value that has already been cleaned, and the secret passes every test while
+// remaining broken in the cluster.
+func secretEnv(name string) string {
+	return strings.TrimSpace(os.Getenv(name))
 }

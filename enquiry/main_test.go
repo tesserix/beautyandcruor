@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"net/http"
 	"strings"
 	"testing"
 	"time"
@@ -154,4 +155,43 @@ func TestGitHubAPIOverrideIsLoopbackOnly(t *testing.T) {
 	// A non-loopback host calls log.Fatal, which exits the process, so it
 	// cannot be exercised in-process. The parse is what is asserted here; the
 	// refusal itself is a one-line host comparison directly above it.
+}
+
+// A trailing newline is what a piped `gcloud secrets create --data-file=-`
+// leaves behind, and it survives all the way into the container. Go's http
+// client then refuses the Authorization header, so a perfectly valid token
+// fails every call. Credentials are trimmed on the way in.
+func TestSecretEnvTrimsWhatStorageLeavesBehind(t *testing.T) {
+	const want = "github_pat_11ABCDEF0123456789"
+	for name, stored := range map[string]string{
+		"trailing newline": want + "\n",
+		"crlf":             want + "\r\n",
+		"leading space":    " " + want,
+		"both":             "\t" + want + " \n",
+		"clean":            want,
+	} {
+		t.Setenv("TEST_SECRET", stored)
+		if got := secretEnv("TEST_SECRET"); got != want {
+			t.Errorf("%s: got %q, want %q", name, got, want)
+		}
+	}
+	t.Setenv("TEST_SECRET", "   \n\t ")
+	if got := secretEnv("TEST_SECRET"); got != "" {
+		t.Errorf("whitespace-only should read as unset, got %q", got)
+	}
+}
+
+// The failure this prevents, stated as a test: a header value with a newline
+// is rejected by net/http, so an untrimmed token can never make a request.
+func TestUntrimmedTokenWouldBreakTheRequest(t *testing.T) {
+	req, err := http.NewRequest(http.MethodGet, "https://api.github.com/user", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.Header.Set("Authorization", "Bearer token-with-a-newline\n")
+	if _, err := (&http.Client{}).Do(req); err == nil {
+		t.Skip("net/http accepted a newline in a header; the guard is belt and braces")
+	} else if !strings.Contains(err.Error(), "invalid header field value") {
+		t.Logf("rejected, though not for the reason expected: %v", err)
+	}
 }

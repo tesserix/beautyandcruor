@@ -100,10 +100,29 @@ Fine-grained. Repository access: **only `tesserix/beautyandcruor`**.
 Permissions: **Contents: read and write**, nothing else. Then:
 
 ```
-gcloud secrets create prod-bac-admin-github-token \
+printf '%s' 'github_pat_...' | gcloud secrets create prod-bac-admin-github-token \
   --project=tesseracthub-480811 --replication-policy=automatic --data-file=-
-# paste the token, then Ctrl-D
 ```
+
+**`printf '%s'`, not a paste followed by Enter.** A trailing newline survives
+the whole chain: Secret Manager stores the byte, External Secrets copies it
+into the Kubernetes Secret verbatim, and the container receives it in the
+variable. Go's http client then refuses the Authorization header — a newline
+in a header value is how injection works — and every GitHub call fails with
+`invalid header field value` while the token itself is perfectly valid. That
+is exactly how this went wrong the first time.
+
+It also hides from the obvious check. Shell command substitution strips
+trailing newlines, so `TOK=$(gcloud secrets versions access ...)` inspects an
+already-cleaned value: the secret passes every test and is still broken in the
+cluster. Count bytes instead.
+
+```
+gcloud secrets versions access latest --secret=<name> --project=... | wc -c
+```
+
+The service trims its credentials on the way in, so this can no longer break
+it. The stored value should still be clean.
 
 The narrow scope is the real boundary. The service refuses to write any path
 outside its own allowlist — credits, curation, alt text — so a stolen session
