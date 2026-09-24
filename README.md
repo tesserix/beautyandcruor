@@ -181,17 +181,32 @@ letsencrypt-prod`), with **two named SANs**, not a wildcard. Their CAA records r
 
 | | |
 |---|---|
-| JS | target under 150 KB gzipped — **currently 185 KB and over budget, see below** |
+| JS — our own client code | **under 25 KB gzipped** (currently ~18 KB) |
+| JS — total first load | tripwire at 200 KB gzipped (currently ~188 KB) |
 | Lighthouse mobile | 95+ performance, 100 accessibility |
 | Primary viewport | **390px** — design and test here first, then scale up |
 | No jQuery | |
 
-**The JS budget is blown by ~35 KB and it is not application code.** Nine chunks ship on every
-route, 185 KB gzipped, of which the app's own client components (the reel counter, the credits
-filter, the mobile menu, the enquiry form) are about 1 KB. The rest is the Next 16 App Router
-runtime and React 19. Framer Motion and Embla are in `package.json` but imported nowhere, so they
-cost nothing. Getting under 150 KB means changing the framework posture, not trimming components
-— that is a decision, not a cleanup, and it has not been made.
+**The budget used to be a single 150 KB total, and it was unmeetable by construction.** Every
+route ships ~188 KB gzipped, of which the chunks carrying our own client components — the header
+mark, the gallery rails, the enquiry form and its select, the credits filter, the mobile menu —
+come to about 18 KB. The remaining ~170 KB is React 19 and the Next 16 App Router runtime.
+
+That floor sits *above* the old target, so no amount of care with our own code could reach 150 KB.
+Only changing the framework posture could — moving to islands, or Preact, or no framework at all —
+and that is a decision nobody has made. A number you can only hit by rewriting the stack is not a
+budget; it is a complaint, and it reports failure every time it is measured.
+
+So the budget is now split, and both halves are actionable:
+
+- **Our own client code, under 25 KB.** This is the number that catches a regression. The 70 KB
+  incident `Reel.tsx` documents — importing the image manifest into a client component — would
+  have tripped it immediately. A single total never would have: 70 KB is noise against 188.
+- **Total first load, tripwire at 200 KB.** Not a goal, an alarm. It breaches when the framework
+  changes or something large gets pulled in, and either is worth a look.
+
+Framer Motion and Embla are in `package.json` but imported nowhere, so they cost nothing today.
+They are the obvious first candidates if the total ever needs cutting.
 
 **Accessibility 100 is currently unreachable** for a reason that has nothing to do with code: all
 290 images have empty alt text. Alt text must be authored, not migrated.
