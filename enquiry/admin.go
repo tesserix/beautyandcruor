@@ -25,6 +25,7 @@ package main
 // credits; it cannot rewrite the workflow that deploys them.
 
 import (
+	"bytes"
 	"crypto/hmac"
 	"crypto/sha256"
 	_ "embed"
@@ -219,7 +220,7 @@ func (a *adminHandler) putCredits(w http.ResponseWriter, r *http.Request) {
 
 	// Two-space indent and no trailing newline, matching the committed file, so
 	// a save that changes one field produces a one-field diff.
-	encoded, err := json.MarshalIndent(normaliseCredits(save.Rows), "", "  ")
+	encoded, err := encodeContent(normaliseCredits(save.Rows), false)
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "Could not encode the credits."})
 		return
@@ -336,4 +337,31 @@ func writeJSON(w http.ResponseWriter, status int, body any) {
 	w.Header().Set("Cache-Control", "no-store")
 	w.WriteHeader(status)
 	_ = json.NewEncoder(w).Encode(body)
+}
+
+// encodeContent renders a content file the way the rest of the repository
+// writes JSON.
+//
+// json.Marshal is not usable here, because it HTML-escapes &, < and > by
+// default — a sensible guard for JSON embedded in a page, and wrong for a file
+// on disk. A credit reading "Raghav Subbu & Ruchir Arun" came back as
+// "Raghav Subbu \u0026 Ruchir Arun": identical once parsed, and two lines of
+// diff on a save that changed nothing. The whole point of normalising is that
+// her one-field edit is the only thing in the commit.
+//
+// The encoder appends a newline; credits.json has none and curation.json has
+// one, so the caller says which it wants.
+func encodeContent(v any, trailingNewline bool) ([]byte, error) {
+	var buf bytes.Buffer
+	enc := json.NewEncoder(&buf)
+	enc.SetEscapeHTML(false)
+	enc.SetIndent("", "  ")
+	if err := enc.Encode(v); err != nil {
+		return nil, err
+	}
+	out := bytes.TrimRight(buf.Bytes(), "\n")
+	if trailingNewline {
+		out = append(out, '\n')
+	}
+	return out, nil
 }

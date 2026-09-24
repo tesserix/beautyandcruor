@@ -96,11 +96,16 @@ jobs:
           go-version-file: enquiry/go.mod
           cache-dependency-path: enquiry/go.sum
 
+      # CREDITS_FILE makes one test read the real committed credits rather than
+      # a fixture. Every fixture passed while the real file did not: the JSON
+      # escaping bug needed an ampersand and a curly apostrophe, and only her
+      # actual data had them. It skips in the image build, whose context is
+      # enquiry/ alone.
       - name: Test the enquiry sidecar
         run: |
           cd enquiry
           go vet ./...
-          go test ./...
+          CREDITS_FILE=../src/content/credits.json go test ./...
 
       - name: Typecheck
         run: npm run typecheck
