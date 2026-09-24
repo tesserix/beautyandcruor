@@ -66,6 +66,17 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ARG ASSET_BASE_URL="https://storage.googleapis.com/beautyandcruor-prod-assets-in"
 ENV NEXT_PUBLIC_ASSET_BASE_URL=$ASSET_BASE_URL
 
+# OpenPanel. The client id is public — it identifies the project to a script in
+# the browser — so it is baked in rather than mounted. No default: without one
+# the analytics component renders nothing, which is the correct behaviour for
+# any build that is not the deployed site.
+ARG OPENPANEL_CLIENT_ID=""
+ENV NEXT_PUBLIC_OPENPANEL_CLIENT_ID=$OPENPANEL_CLIENT_ID
+ARG OPENPANEL_API_URL="https://analytics.tesserix.app/api"
+ENV NEXT_PUBLIC_OPENPANEL_API_URL=$OPENPANEL_API_URL
+ARG OPENPANEL_SCRIPT_URL="https://analytics.tesserix.app/op1.js"
+ENV NEXT_PUBLIC_OPENPANEL_SCRIPT_URL=$OPENPANEL_SCRIPT_URL
+
 # Fail loudly and early. A missing manifest means every <Picture> would throw
 # mid-render, which is a confusing way to discover the same problem.
 RUN if [ ! -s src/generated/images.json ]; then \
