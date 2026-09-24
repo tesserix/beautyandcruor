@@ -45,10 +45,20 @@ export default function Home() {
             className="pointer-events-none absolute inset-x-0 z-[4] grid gap-3"
             style={{ bottom: "calc(120px + env(safe-area-inset-bottom))", paddingInline: "var(--gut)" }}
           >
-            <Logo className="h-[clamp(44px,14vw,72px)]" />
+            {/* The bar mark measures this and then takes its place, so the
+                two are never both on screen. Left here rather than removed:
+                with no script, or with reduced motion, this is the mark. */}
+            <Logo data-hero-mark className="h-[clamp(44px,14vw,72px)]" />
             <p className="lab" style={{ letterSpacing: "0.22em" }}>
               {SITE.artist} · Sydney / Mumbai
             </p>
+            {/* The prototype's cue, which the build had dropped: the opening
+                frame fills the viewport, so without it nothing says there is
+                anything underneath. */}
+            <span className="cue mt-1">
+              <i className="ln" aria-hidden="true" />
+              Swipe · Scroll
+            </span>
           </div>
         </section>
 

@@ -49,7 +49,7 @@ export function SiteFooter() {
           href={SITE.imdb}
           target="_blank"
           rel="noopener"
-          className="lab flex-1 min-w-[140px] border border-hair px-4 py-3 text-center text-chalk no-underline hover:border-chalk"
+          className="btn-out lab flex-1 min-w-[140px]"
         >
           IMDb ↗
         </a>
@@ -57,7 +57,7 @@ export function SiteFooter() {
           href={SITE.instagram}
           target="_blank"
           rel="noopener"
-          className="lab flex-1 min-w-[140px] border border-hair px-4 py-3 text-center text-chalk no-underline hover:border-chalk"
+          className="btn-out lab flex-1 min-w-[140px]"
         >
           Instagram ↗
         </a>

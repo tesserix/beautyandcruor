@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { SITE, DISCIPLINES } from "@/lib/site";
 import { Logo } from "./Logo";
@@ -11,12 +11,17 @@ import { MobileMenu } from "./MobileMenu";
  * control the site exists for. Enquire sits in the thumb arc on phones.
  *
  * A client component for one reason: the mark has to know where the page is.
- * `solidMark={false}` is used on surfaces whose opening frame carries the mark
- * at full size (the homepage). There the header mark stays out of the way and
- * fades in once that frame is behind you, so the two are never on screen
- * together — the behaviour c-immersive.src.html specified and the build then
- * froze into a static prop, which left the homepage with no header mark at all
- * at any scroll position.
+ *
+ * On a surface whose opening frame carries the mark at full size, the header
+ * mark *is* that mark: it starts transformed onto the opening frame's position
+ * at its size, and travels up into the bar as you scroll. One element the whole
+ * way, so it reads as the mark moving rather than as one fading out while a
+ * second fades in. The opening frame renders its own copy for the no-script and
+ * reduced-motion cases, and that copy is hidden the moment this takes over —
+ * see `[data-hero-mark]` in globals.css.
+ *
+ * `solidMark={false}` without a measurable opening mark falls back to the plain
+ * crossfade c-immersive specifies.
  */
 
 /** Matches the prototype's `deck.scrollTop > innerHeight * 0.55`. */
@@ -42,6 +47,64 @@ export function Chrome({
   // render agree and nothing flashes during hydration.
   const [past, setPast] = useState(solidMark);
   const [scrolled, setScrolled] = useState(false);
+  /** null until the opening mark has been measured, or when motion is off. */
+  const [travel, setTravel] = useState<{ dy: number; scale: number } | null>(null);
+  const markRef = useRef<HTMLAnchorElement>(null);
+  const progress = useRef(0);
+
+  /**
+   * Measure the opening mark against the bar mark once layout has settled.
+   *
+   * Both sit on the same gutter, so their left edges already agree and only
+   * the vertical offset and the size differ — which is why the transform below
+   * needs a left-centre origin and no horizontal term.
+   */
+  useEffect(() => {
+    if (solidMark) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const measure = () => {
+      const hero = document.querySelector<HTMLElement>("[data-hero-mark]");
+      const mark = markRef.current;
+      if (!hero || !mark) return;
+
+      /**
+       * Clear the transform before reading.
+       *
+       * getBoundingClientRect reports the *transformed* box, so measuring
+       * while the mark was already scaled compared a 72px-scaled mark against
+       * a 72px opening mark and concluded scale 1, offset 0 — the transform
+       * quietly solving itself away to nothing on the second pass. This reads
+       * the layout box, then the next scroll frame reapplies.
+       */
+      const previous = mark.style.transform;
+      mark.style.transform = "none";
+      const h = hero.getBoundingClientRect();
+      const m = mark.getBoundingClientRect();
+      mark.style.transform = previous;
+
+      // Both measure 0 until the fonts and the mask have painted.
+      if (!h.height || !m.height) return;
+      // h is in viewport coordinates at the current scroll; the bar is fixed.
+      // Normalise the opening mark to where it sits with the page at the top.
+      const heroCentreAtTop = h.top + window.scrollY + h.height / 2;
+      setTravel({
+        dy: heroCentreAtTop - (m.top + m.height / 2),
+        scale: h.height / m.height,
+      });
+      document.documentElement.dataset.markTravel = "";
+    };
+
+    measure();
+    const ro = new ResizeObserver(measure);
+    const hero = document.querySelector<HTMLElement>("[data-hero-mark]");
+    if (hero) ro.observe(hero);
+    ro.observe(document.documentElement);
+    return () => {
+      ro.disconnect();
+      delete document.documentElement.dataset.markTravel;
+    };
+  }, [solidMark]);
 
   useEffect(() => {
     let frame = 0;
@@ -50,6 +113,21 @@ export function Chrome({
       const y = window.scrollY;
       setScrolled(!plate && y > 8);
       if (!solidMark) setPast(y > window.innerHeight * REVEAL_AT);
+
+      // Written straight to the node rather than through state: this runs on
+      // every frame of a scroll, and a re-render per frame is how a smooth
+      // transform becomes a janky one.
+      const mark = markRef.current;
+      if (mark && travel) {
+        const p = Math.min(1, Math.max(0, y / (window.innerHeight * REVEAL_AT)));
+        progress.current = p;
+        const k = 1 - p;
+        mark.style.transform = `translateY(${travel.dy * k}px) scale(${
+          1 + (travel.scale - 1) * k
+        })`;
+      } else if (mark) {
+        mark.style.transform = "";
+      }
     };
     // Coalesce to one read per frame: scroll fires far faster than paint.
     const onScroll = () => {
@@ -64,7 +142,7 @@ export function Chrome({
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onScroll);
     };
-  }, [solidMark, plate]);
+  }, [solidMark, plate, travel]);
 
   return (
     <>
@@ -86,17 +164,25 @@ export function Chrome({
       >
         <Link
           href="/"
+          ref={markRef}
           className="pointer-events-auto"
           aria-label={`${SITE.name} — home`}
           /* aria-hidden while invisible: the same link is still reachable in
              the mobile menu, and an opacity-0 link is a focus trap for a
-             sighted keyboard user who cannot see where focus went. */
-          aria-hidden={past ? undefined : true}
-          tabIndex={past ? undefined : -1}
-          /* Opacity and nothing else, at .45s — the prototype's transition
-             verbatim. A translate here was mine, and it read as a different
-             move from the one that was signed off. */
-          style={{ opacity: past ? 1 : 0, transition: "opacity .45s ease" }}
+             sighted keyboard user who cannot see where focus went. While the
+             mark is travelling it is on screen the whole way, so it stays
+             reachable. */
+          aria-hidden={travel || past ? undefined : true}
+          tabIndex={travel || past ? undefined : -1}
+          style={{
+            opacity: travel ? 1 : past ? 1 : 0,
+            transformOrigin: "left center",
+            // No transition on transform: the scroll position drives it frame
+            // by frame, and easing a value that is already following the
+            // pointer only adds lag.
+            transition: travel ? "none" : "opacity .45s ease",
+            willChange: travel ? "transform" : undefined,
+          }}
         >
           <Logo className="h-[26px] md:h-[30px]" />
         </Link>

@@ -17,13 +17,20 @@ type Props = {
   className?: string;
   tone?: "current" | "brand";
   title?: string;
+  /** Marks the opening mark so <Chrome> can measure and then replace it. */
+  "data-hero-mark"?: boolean | "";
 };
 
-export function Logo({ className, tone = "current", title = "Beauty & Cruor" }: Props) {
+export function Logo({
+  className,
+  tone = "current",
+  title = "Beauty & Cruor",
+  ...rest
+}: Props) {
   if (tone === "brand") {
     return (
       // eslint-disable-next-line @next/next/no-img-element
-      <img src="/brand/logo.svg" alt={title} className={className} width={1067} height={327} />
+      <img src="/brand/logo.svg" alt={title} className={className} width={1067} height={327} {...rest} />
     );
   }
 
@@ -32,6 +39,7 @@ export function Logo({ className, tone = "current", title = "Beauty & Cruor" }: 
       role="img"
       aria-label={title}
       className={className}
+      {...rest}
       style={{
         display: "block",
         aspectRatio: "1067 / 327",
