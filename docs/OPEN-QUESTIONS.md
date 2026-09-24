@@ -91,7 +91,10 @@ preferred. Hers: questions 5 and 6.
   reader, worthless for image search, and the reason Lighthouse accessibility cannot reach 100.
   Draft from the imagery for her to correct.
 - **SEO and AI-crawler surface** — see the section below; several gaps are ours alone.
-- **JS budget.** 185 KB gzipped against a 150 KB target. Almost none of it is application code.
+- ~~**JS budget.** 185 KB gzipped against a 150 KB target.~~ The target was unmeetable by
+  construction — React 19 plus the Next 16 runtime is ~170 KB before any of our code loads, so
+  150 KB sat below the floor. Replaced with a split budget in the README: under 25 KB for our own
+  client code, which is the half that can catch a regression, and a 200 KB tripwire on the total.
 - **Favicon.** `/favicon.ico` 404s. Entangled with the logo question, since the mark is a wide
   script signature and illegible at 32px.
 - **Page weight.** Film & TV is 364 KB raw / 59 KB gzipped HTML, mostly srcset URLs across 86
@@ -146,11 +149,13 @@ at WordPress.
 
 **Still ours**
 
-- **JS budget.** 185 KB gzipped against a 150 KB target. Almost none of it is application code —
-  it is the App Router runtime plus React. Needs a decision, not a cleanup. See README.
-- **No favicon or app icon.** `/favicon.ico` 404s. Blocked in practice on the logo question
-  above: the mark is a wide script signature and illegible at 32px, so an icon is a brand
-  decision, not an export.
+- ~~**JS budget.**~~ Decided. The 150 KB target sat below the framework floor, so it was replaced
+  with a split budget — under 25 KB for our own client code, a 200 KB tripwire on the total. See
+  README.
+- ~~**No favicon or app icon.**~~ Shipped. Not an export of the mark, which is illegible at
+  32px, but the emblem composed from the logo's own paths — heart, leaves and stem in the brand
+  green, transparent. Matches the icon the WordPress site has always used, without the grey B its
+  crop carries.
 - Helm chart in `tesserix-k8s` following the `tesserix-home` pattern.
 - Re-capture the 1920 homepage properly — the split-slider defeats `fullPage` screenshots.
 - Decide whether to obtain the WXR export for the Testimonials CPT. Low value given the Portfolio
