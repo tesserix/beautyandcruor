@@ -44,10 +44,15 @@ function portraitSource() {
 
 const MARK_W = 420;
 const mark = readFileSync("public/brand/logo-mask.svg", "utf8");
+// Read the proportions off the mark instead of hard-coding them. They were
+// 1067x327 for the script signature; a redrawn mark with a different ratio
+// would otherwise be stretched onto every share card.
+const [, , markW, markH] = mark.match(/viewBox="([-\d.]+) ([-\d.]+) ([\d.]+) ([\d.]+)"/).slice(1).map(Number);
+const markRatio = markW / markH;
 // The mask is black-on-transparent at 1067x327; recolour to chalk and scale.
 const markChalk = mark
   .replace('fill="#000"', `fill="${CHALK}"`)
-  .replace("<svg ", `<svg width="${MARK_W}" height="${Math.round((MARK_W * 327) / 1067)}" `);
+  .replace("<svg ", `<svg width="${MARK_W}" height="${Math.round(MARK_W / markRatio)}" `);
 
 const PANEL = 560; // where the photograph starts
 
