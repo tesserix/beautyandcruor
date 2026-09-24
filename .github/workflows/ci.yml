@@ -27,7 +27,9 @@ env:
   IMAGE_NAME: beautyandcruor
 
 permissions:
-  contents: read
+  # write, so the build can fast-forward `deploy` once both images are pushed.
+  # Kargo watches that branch rather than main — see the step at the end.
+  contents: write
   packages: write
   security-events: write
   id-token: write
@@ -170,6 +172,31 @@ jobs:
       # `latest` is pushed from main only, and nothing reads it: the chart
       # pins main-<sha7> and Kargo rewrites that on promotion. It is kept for
       # ad-hoc `docker run` against the current main and for nothing else.
+
+      # Kargo promotes from this branch, never from main.
+      #
+      # It derives the image tag from the commit it finds — main-<sha7> — so a
+      # commit must not become visible to Kargo until both images carrying
+      # that tag exist. Watching main directly races the build: Kargo polls
+      # every 300s, the push takes two to three minutes, and a promotion in
+      # that window deploys a tag the registry does not have yet. The GAR
+      # pull-through mirror then negative-caches the 404 and the pods sit in
+      # ImagePullBackOff that does not recover on its own — devai hit exactly
+      # this and moved to a deploy branch for the same reason.
+      #
+      # It also solves the path filter. This workflow only runs when src/,
+      # scripts/, public/, nginx.conf, the Dockerfile or the manifests change,
+      # so a docs-only commit builds nothing and has no image. Such a commit
+      # never advances `deploy`, so Kargo never tries to deploy it.
+      #
+      # Fast-forward only. `deploy` tracks main and nothing else writes to it,
+      # so a rejected push means something unexpected happened and the build
+      # should say so rather than force past it.
+      - name: Advance the deploy branch
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          echo "advancing deploy to ${GITHUB_SHA}"
+          git push origin "${GITHUB_SHA}:refs/heads/deploy"
 
       - name: Security scan
         if: github.event_name != 'pull_request'
