@@ -11,18 +11,19 @@
  *
  * galleries.json holds manifest keys; alt.json is addressed by upload path,
  * because organize.mjs renumbers manifest keys and reuses the names it frees.
- * The manifest is what maps one to the other, so this check needs all three.
+ * The manifest is what maps one to the other, so this check needs all three —
+ * and it normalises with the same shared identity() the site resolves with,
+ * rather than a second opinion about what "the same upload" means.
  *
  * Runs in prebuild, so it runs in CI's container build as well. src/content
  * and src/generated both ship in the Docker context — unlike public/img.
  */
 import { readFileSync } from "node:fs";
+import { identity } from "../src/lib/identity.mjs";
 
 const galleries = JSON.parse(readFileSync("src/content/galleries.json", "utf8"));
 const alt = JSON.parse(readFileSync("src/content/alt.json", "utf8"));
 const manifest = JSON.parse(readFileSync("src/generated/images.json", "utf8"));
-
-const identity = (path) => path.replace(/\.[^.]+$/, "");
 
 /** manifest key -> stable upload identity, for every published image. */
 const published = new Map();
