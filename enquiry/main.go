@@ -42,6 +42,7 @@ import (
 	"net"
 	"net/http"
 	"net/mail"
+	"net/url"
 	"os"
 	"regexp"
 	"strings"
@@ -404,11 +405,19 @@ func mountAdmin(mux *http.ServeMux) {
 		verifier: v,
 		sessions: sessions{key: sessionKey()},
 		limiter:  newLimiter(loginAttempts, time.Hour),
+		// Where the pickers load thumbnails from. It must match the site's
+		// ASSET_BASE_URL build arg — public/img is excluded from the site
+		// image, so there is nothing same-origin to point at. The default is
+		// the same bucket the Dockerfile defaults to; both move together at
+		// the cutover, when the bucket is renamed to assets.beautyandcruor.com.
+		assetBase: strings.TrimRight(
+			envOr("ADMIN_ASSET_BASE_URL", "https://storage.googleapis.com/beautyandcruor-prod-assets-in"), "/"),
 		gh: &github{
 			token:  mustEnv("ADMIN_GITHUB_TOKEN"),
 			repo:   repo,
 			branch: envOr("ADMIN_GITHUB_BRANCH", "main"),
 			client: &http.Client{Timeout: githubTimeout},
+			base:   localAPIOverride(),
 		},
 	}
 	a.routes(mux)
@@ -448,4 +457,28 @@ func printPasswordHash() {
 		log.Fatalf("deriving: %v", err)
 	}
 	fmt.Println(encodeVerifier(v))
+}
+
+// localAPIOverride lets a test point the GitHub client at a stub.
+//
+// It accepts LOOPBACK ADDRESSES ONLY. The alternative — an unrestricted base
+// URL — is a single environment variable away from sending a token with write
+// access to this repository to someone else's server, and a knob that exists
+// for tests should not be able to do that even when set wrongly. Anything else
+// is refused loudly rather than ignored, so a typo is not mistaken for working.
+func localAPIOverride() string {
+	base := os.Getenv("ADMIN_GITHUB_API")
+	if base == "" {
+		return ""
+	}
+	u, err := url.Parse(base)
+	if err != nil {
+		log.Fatalf("enquiry: ADMIN_GITHUB_API is not a URL: %v", err)
+	}
+	host := u.Hostname()
+	if host != "127.0.0.1" && host != "::1" && host != "localhost" {
+		log.Fatalf("enquiry: ADMIN_GITHUB_API may only point at loopback, got %q", host)
+	}
+	log.Printf("enquiry: GitHub API overridden to %s — this is for testing", base)
+	return strings.TrimRight(base, "/")
 }

@@ -108,9 +108,26 @@ tesserix/beautyandcruor`. Remember that an ExternalSecret needs both an entry
 in the parent kustomization and a `kustomization.yaml` of its own, or
 `kustomize build` fails.
 
-**What she sees.** `https://<site>/admin`, one password, one screen. Editing a
-credit commits to `main`, which builds, advances `deploy`, and promotes — so a
-correction is live in a few minutes without anyone being asked.
+Optionally `ADMIN_ASSET_BASE_URL`, which must match the site's
+`ASSET_BASE_URL` build arg — the running-order pickers load thumbnails from the
+bucket, since `public/img` is excluded from the site image and there is nothing
+same-origin to point at. Both default to the same bucket and both move at the
+cutover.
+
+**What she sees.** `https://<site>/admin`, one password, two tabs.
+
+- **Credits** — the 27 rows, editable, with the `role` field none of them have.
+- **Running order** — what the homepage opens on, what each gallery leads with,
+  the plate behind each discipline title, and the About portrait.
+
+Either one commits to `main`, which builds, advances `deploy`, and promotes, so
+a change is live in a few minutes without anyone being asked.
+
+The pickers offer only images that are already in a gallery. The manifest holds
+68 more under `unpublished` — work the live WordPress site never showed — and
+`scripts/assets-sync.mjs` refuses to upload anything outside the cleared list,
+so choosing one would fail the build on the rights gate rather than publish it.
+Not offering it is the right place to enforce that.
 
 ## Not wired up yet
 

@@ -137,3 +137,21 @@ func TestRateLimitWindowExpires(t *testing.T) {
 		t.Fatal("submission blocked after the window had passed")
 	}
 }
+
+// The GitHub API override is a test affordance. It must not be usable to send
+// a token with write access to this repository anywhere but loopback.
+func TestGitHubAPIOverrideIsLoopbackOnly(t *testing.T) {
+	t.Setenv("ADMIN_GITHUB_API", "")
+	if got := localAPIOverride(); got != "" {
+		t.Errorf("unset override returned %q", got)
+	}
+	for _, ok := range []string{"http://127.0.0.1:9000", "http://localhost:9000/", "http://[::1]:9000"} {
+		t.Setenv("ADMIN_GITHUB_API", ok)
+		if got := localAPIOverride(); got == "" {
+			t.Errorf("%s was refused", ok)
+		}
+	}
+	// A non-loopback host calls log.Fatal, which exits the process, so it
+	// cannot be exercised in-process. The parse is what is asserted here; the
+	// refusal itself is a one-line host comparison directly above it.
+}
