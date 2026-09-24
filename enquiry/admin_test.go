@@ -200,6 +200,53 @@ func TestEncodingMatchesTheCommittedFormat(t *testing.T) {
 	}
 }
 
+// The encoder must not HTML-escape. Two real rows in credits.json carry an
+// ampersand and a curly apostrophe, and Go's default json.Marshal turns the
+// first into \u0026 — two lines of diff on a save that changed nothing.
+//
+// This is the test that was missing: the byte-identical fixture used plain
+// ASCII with no & in it, so it passed while the real file did not.
+func TestEncodingDoesNotEscapeRealCreditText(t *testing.T) {
+	rows := []credit{
+		{Title: "PUBG Originals", Director: "Raghav Subbu & Ruchir Arun", Production: "Content Factory", Year: "2019-2020", Location: "India"},
+		{Title: "ISSAC’S DREAM", Director: "ACM", Production: "", Year: "2023", Location: "India"},
+		{Title: "Angle < 90 > 45", Director: "D", Production: "P", Year: "2024", Location: "L"},
+	}
+	encoded, err := encodeContent(normaliseCredits(rows), false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := string(encoded)
+	for _, forbidden := range []string{`\u0026`, `\u003c`, `\u003e`, `\u2019`} {
+		if strings.Contains(got, forbidden) {
+			t.Errorf("output contains %s; it should carry the character literally:\n%s", forbidden, got)
+		}
+	}
+	for _, want := range []string{"Raghav Subbu & Ruchir Arun", "ISSAC’S DREAM", "Angle < 90 > 45"} {
+		if !strings.Contains(got, want) {
+			t.Errorf("output lost %q:\n%s", want, got)
+		}
+	}
+	if strings.HasSuffix(got, "\n") {
+		t.Error("credits.json has no trailing newline; the encoder added one")
+	}
+}
+
+// curation.json does end with a newline, and the same encoder has to honour
+// that or every save rewrites the last line.
+func TestCurationKeepsItsTrailingNewline(t *testing.T) {
+	encoded, err := encodeContent(curation{Hero: []string{"a/b & c"}, Leads: leadsMap{}, Covers: coversMap{}}, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.HasSuffix(string(encoded), "}\n") {
+		t.Errorf("want a single trailing newline, got %q", string(encoded)[len(encoded)-4:])
+	}
+	if strings.Contains(string(encoded), `\u0026`) {
+		t.Error("curation output was HTML-escaped too")
+	}
+}
+
 // An untouched row must not gain an empty "role" key.
 func TestRoleIsOmittedWhenEmpty(t *testing.T) {
 	encoded, err := json.Marshal(credit{Title: "T", Director: "D", Production: "P", Year: "2024", Location: "L"})

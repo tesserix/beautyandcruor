@@ -337,12 +337,14 @@ func (a *adminHandler) putSequence(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	encoded, err := json.MarshalIndent(next, "", "  ")
+	// Same encoder as credits, and for the same reason: no HTML escaping, so a
+	// save does not rewrite lines it did not change. This file ends with a
+	// newline where credits.json does not.
+	encoded, err := encodeContent(next, true)
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "Could not encode the running order."})
 		return
 	}
-	encoded = append(encoded, '\n') // the committed file ends with one
 
 	switch err := a.gh.write(curationPath, encoded, save.SHA, "Update the running order"); {
 	case err == nil:
