@@ -75,7 +75,11 @@ func main() {
 	if len(to) == 0 {
 		log.Fatal("enquiry: ENQUIRY_TO listed no addresses")
 	}
-	from := envOr("ENQUIRY_FROM", "Beauty & Cruor <enquiries@beautyandcruor.com>")
+	// tesserix.app is the domain verified on the platform's Resend account;
+	// beautyandcruor.com is not. It costs nothing: this mail goes to her inbox
+	// to say an enquiry arrived, and reply_to carries the producer's address,
+	// so the From is seen only by her and replying still reaches the sender.
+	from := envOr("ENQUIRY_FROM", "Beauty & Cruor <noreply@tesserix.app>")
 	addr := envOr("ENQUIRY_ADDR", "127.0.0.1:8081")
 
 	h := &handler{
