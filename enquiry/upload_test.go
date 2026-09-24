@@ -46,9 +46,19 @@ func TestSniffImage(t *testing.T) {
 func TestObjectName(t *testing.T) {
 	now := time.Date(2026, 9, 25, 14, 30, 5, 0, time.UTC)
 
-	got := objectName(now, "IMG_4654.HEIC", "heic")
-	if want := "uploads/2026/09/25T143005-IMG_4654.heic"; got != want {
+	got := objectName(now, "IMG_4654.HEIC", "heic", "sfx")
+	if want := "uploads/sfx/20260925T143005-IMG_4654.heic"; got != want {
 		t.Errorf("got %q, want %q", got, want)
+	}
+	// Gallery first, our structure — not WordPress's year/month.
+	for in, want := range map[string]string{
+		"Film & TV": "unsorted", "film": "film", "FILM-TELEVISION": "film",
+		"casting-sculpting": "casting", "editorial": "editorial",
+		"": "unsorted", "nonsense": "unsorted",
+	} {
+		if got := galleryFolder(in); got != want {
+			t.Errorf("galleryFolder(%q) = %q, want %q", in, got, want)
+		}
 	}
 	for name, in := range map[string]string{
 		"traversal":  "../../../etc/passwd",
@@ -61,11 +71,11 @@ func TestObjectName(t *testing.T) {
 		"very long":  strings.Repeat("x", 300) + ".jpg",
 		"semicolons": "a;rm -rf /.jpg",
 	} {
-		got := objectName(now, in, "jpeg")
-		if !strings.HasPrefix(got, "uploads/2026/09/") {
+		got := objectName(now, in, "jpeg", "sfx")
+		if !strings.HasPrefix(got, "uploads/sfx/") {
 			t.Errorf("%s: escaped the prefix: %q", name, got)
 		}
-		if strings.Contains(got, "..") || strings.Contains(strings.TrimPrefix(got, "uploads/2026/09/"), "/") {
+		if strings.Contains(got, "..") || strings.Contains(strings.TrimPrefix(got, "uploads/sfx/"), "/") {
 			t.Errorf("%s: contains a path separator or traversal: %q", name, got)
 		}
 		if len(got) > 200 {
