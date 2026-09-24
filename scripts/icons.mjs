@@ -1,70 +1,84 @@
 /**
- * Builds the favicon set from the logo itself. Run by hand, not at build time:
+ * Builds the favicon set from the logo's own emblem. Run by hand:
  *
  *   node scripts/icons.mjs
  *
- * The output is committed. It is derived from public/brand/logo-mask.svg, so
- * regenerating it in the container would work — but there is no reason to run
- * it on every build for a file that changes when the logo does and never
- * otherwise.
+ * The output is committed. It changes when the logo does and never otherwise,
+ * so there is no reason to run it on every build.
  *
- * WHY A CROP, NOT THE WHOLE MARK
+ * WHAT IT DRAWS
  *
- * The mark is 1067x327 — a 3.26:1 script signature. Fitted into a 32px square
- * the lettering is roughly four pixels tall and reads as a grey smear. What
- * survives at that size is the botanical emblem it opens with: a bold, nearly
- * square shape at 225x245, legible down to 16px.
+ * The heart loop, its leaves and the stem — in the mark's own green, on a
+ * transparent ground. This matches the icon the WordPress site has always
+ * used, which is what people recognise in a tab.
  *
- * The heart loop is deliberately left out. It interlocks with the B of
- * "Beauty", so every crop wide enough to include it also clips a letterform,
- * which reads as damage rather than as design. The leaves stand alone.
+ * It is composed from the mark's paths rather than cropped out of a render.
+ * logo-mask.svg keeps the emblem and the lettering as separate paths, so the
+ * emblem can be taken whole. Cropping cannot: the loop interlocks with the B
+ * of "Beauty", so every rectangle containing the loop also contains part of a
+ * letter. That is exactly what the WordPress icon suffers from — it is a crop,
+ * and a grey B sits inside the heart at every size. Composing from paths gives
+ * the same emblem with nothing else in it.
  *
- * An earlier version set an ampersand instead, on b-plaster's reasoning that
- * "the ampersand is the mark". That was a proposal for a direction this build
- * did not take, and using the artist's own mark is the better answer.
+ * Transparent rather than on a plate, so it sits on whatever the browser's tab
+ * strip happens to be.
  */
 import sharp from "sharp";
 import { readFileSync, writeFileSync } from "node:fs";
 
-const INK = "#07070A";
-const CHALK = "#F2EFEA";
+/** The mark's own green (--color-leaf), as the WordPress icon uses it. */
+const LEAF = "#7AC943";
 
 /**
- * The emblem's box within the 1067x327 mark, measured off the render.
+ * Path indices in logo-mask.svg.
  *
- * Chosen by rendering the candidates at a true 32px rather than judging them
- * at poster size. Wider crops pull in the heart loop, which interlocks with
- * the B of "Beauty": every rectangle big enough to hold the whole loop also
- * clips a letterform, and a clipped letter reads as damage. This takes the
- * three leaves and the stem, which stand on their own.
+ *   0  the heart loop, the outer leaves and the stem
+ *   2  the leaf standing inside the loop
+ *   9  a small accent on the stem
+ *
+ * Everything else is a letterform: 4 is "B", 7 "auty", 8 "&", 5 "Cruor".
  */
-const EMBLEM = { left: 55, top: 118, width: 200, height: 175 };
+const EMBLEM_PATHS = [0, 2, 9];
 
-/** Fraction of the icon the emblem occupies, leaving margin so it can breathe. */
-const INSET = 0.78;
+/** Fraction of the icon the emblem fills, leaving it room to breathe. */
+const INSET = 0.86;
 
-const mark = readFileSync("public/brand/logo-mask.svg", "utf8")
-  // The mask ships as black shapes; the mark is chalk on this site.
-  .replace('fill="#000"', `fill="${CHALK}"`)
-  .replace("<svg ", '<svg width="1067" height="327" ');
+const src = readFileSync("public/brand/logo-mask.svg", "utf8");
+const head = src.slice(0, src.indexOf(">", src.indexOf("<g")) + 1);
+const paths = src.match(/<path\b[^>]*?\/>|<path\b[\s\S]*?<\/path>/g) ?? [];
 
-const full = await sharp({
-  create: { width: 1067, height: 327, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } },
-})
-  .composite([{ input: Buffer.from(mark) }])
+if (paths.length < 10) {
+  throw new Error(
+    `scripts/icons.mjs: expected the 10 paths of logo-mask.svg, found ${paths.length}. ` +
+      "If the mark was redrawn, re-identify EMBLEM_PATHS before trusting this.",
+  );
+}
+
+const svg =
+  head
+    .replace("<svg ", '<svg width="1067" height="327" ')
+    .replace('fill="#000"', `fill="${LEAF}"`) +
+  EMBLEM_PATHS.map((i) => paths[i]).join("") +
+  "</g></svg>";
+
+// Rendered large and trimmed to its real ink, so the emblem's own bounds drive
+// the framing rather than the full mark's 1067x327 canvas.
+const emblem = await sharp(Buffer.from(svg), { density: 600 })
+  .resize(2134, 654, { fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 0 } })
   .png()
   .toBuffer();
+const trimmed = await sharp(emblem).trim().png().toBuffer();
 
-const emblem = await sharp(full).extract(EMBLEM).png().toBuffer();
-
-/** One square icon at the given size. */
+/** One square, transparent icon at the given size. */
 async function icon(size) {
   const inner = Math.round(size * INSET);
-  const fitted = await sharp(emblem)
+  const fitted = await sharp(trimmed)
     .resize(inner, inner, { fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 0 } })
     .png()
     .toBuffer();
-  return sharp({ create: { width: size, height: size, channels: 4, background: INK } })
+  return sharp({
+    create: { width: size, height: size, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } },
+  })
     .composite([{ input: fitted, gravity: "center" }])
     .png({ compressionLevel: 9 })
     .toBuffer();
@@ -73,7 +87,7 @@ async function icon(size) {
 /**
  * ICO wrapping a PNG. Every browser that still asks for /favicon.ico supports
  * PNG-in-ICO, so this is a 22-byte header around the 32px icon rather than a
- * bitmap encoder.
+ * bitmap encoder — and PNG is what carries the transparency.
  */
 function ico(png, size) {
   const header = Buffer.alloc(6);
