@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 
 /**
  * The filterable credit list.
@@ -38,32 +38,52 @@ export type Chip = { type: string; label: string; count: number };
 
 const ALL = "__all__";
 
-export function CreditsFilter({ rows, chips }: { rows: CreditRow[]; chips: Chip[] }) {
-  const [active, setActive] = useState<string>(ALL);
+/**
+ * The filter lives in the URL, so "here are her television credits" is a link
+ * someone can paste to a producer rather than an instruction to click a chip
+ * after arriving.
+ *
+ * The URL is the state — there is no useState mirroring it. The page is
+ * prerendered at build time with no query string, so the server snapshot is
+ * always ALL and the markup React hydrates against is the markup that was
+ * built. Reading the real query string is what useSyncExternalStore is for:
+ * it swaps to the client snapshot after hydration in one pass, where an
+ * effect calling setState would render the unfiltered list first and then
+ * immediately render it again.
+ *
+ * replaceState rather than push, so the back button leaves the page instead of
+ * walking back through every chip. It fires no event of its own, hence the
+ * explicit one — without it the store has no way to know the URL moved.
+ */
+const FILTER_CHANGED = "credits:filter";
 
-  /**
-   * The filter lives in the URL, so "here are her television credits" is a
-   * link someone can paste to a producer rather than an instruction to click
-   * a chip after arriving.
-   *
-   * Read after mount, not during render: the markup is prerendered at build
-   * time with no query string, so touching location during render would
-   * disagree with the server output. Written with replaceState rather than
-   * push so the back button leaves the page instead of walking the filters.
-   */
-  useEffect(() => {
-    const t = new URLSearchParams(window.location.search).get("type");
-    if (t && chips.some((c) => c.type === t)) setActive(t);
-    // Chips are derived from the dataset and stable for the page's lifetime.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+function subscribe(onChange: () => void) {
+  window.addEventListener("popstate", onChange);
+  window.addEventListener(FILTER_CHANGED, onChange);
+  return () => {
+    window.removeEventListener("popstate", onChange);
+    window.removeEventListener(FILTER_CHANGED, onChange);
+  };
+}
+
+/** Primitive, so useSyncExternalStore's Object.is check settles immediately. */
+const readFilter = (): string =>
+  new URLSearchParams(window.location.search).get("type") ?? ALL;
+
+const prerenderedFilter = (): string => ALL;
+
+export function CreditsFilter({ rows, chips }: { rows: CreditRow[]; chips: Chip[] }) {
+  const fromUrl = useSyncExternalStore(subscribe, readFilter, prerenderedFilter);
+  // A hand-edited or stale ?type= names a filter that no longer exists. Show
+  // everything rather than an empty list with no chip lit.
+  const active = fromUrl === ALL || chips.some((c) => c.type === fromUrl) ? fromUrl : ALL;
 
   const select = (type: string) => {
-    setActive(type);
     const url = new URL(window.location.href);
     if (type === ALL) url.searchParams.delete("type");
     else url.searchParams.set("type", type);
     window.history.replaceState(null, "", url);
+    window.dispatchEvent(new Event(FILTER_CHANGED));
   };
 
   const shown = active === ALL ? rows : rows.filter((r) => r.type === active);
