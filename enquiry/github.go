@@ -34,9 +34,12 @@ import (
 )
 
 const (
-	githubAPI      = "https://api.github.com"
-	githubTimeout  = 20 * time.Second
-	maxContentSize = 512 << 10 // any of our content files is orders of magnitude under this
+	githubAPI     = "https://api.github.com"
+	githubTimeout = 20 * time.Second
+	// The generated image manifest is the big one at ~350KB. The contents API
+	// itself stops serving files over 1MB, so this is the smaller ceiling and
+	// the one worth reporting against.
+	maxContentSize = 900 << 10
 )
 
 // The only files this service may ever write. Adding one is a code change,
@@ -101,6 +104,20 @@ func (g *github) read(path string) ([]byte, string, error) {
 	if !writablePaths[path] {
 		return nil, "", fmt.Errorf("refusing to read %q: not a content file", path)
 	}
+	return g.fetch(path)
+}
+
+// readOnly fetches a file the editor needs to show but must never write — the
+// generated manifest and the gallery membership. Kept as a separate entry
+// point so that widening what can be read cannot widen what can be written.
+func (g *github) readOnly(path string) ([]byte, string, error) {
+	if !readablePaths[path] {
+		return nil, "", fmt.Errorf("refusing to read %q: not a readable file", path)
+	}
+	return g.fetch(path)
+}
+
+func (g *github) fetch(path string) ([]byte, string, error) {
 	resp, err := g.request(http.MethodGet,
 		fmt.Sprintf("/repos/%s/contents/%s?ref=%s", g.repo, path, g.branch), nil)
 	if err != nil {

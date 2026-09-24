@@ -49,6 +49,33 @@
   .login { max-width: 360px; }
   .login button { width: 100%; margin-top: 16px; }
   [hidden] { display: none !important; }
+
+  .tabs { display: flex; gap: 8px; margin-bottom: 22px; }
+  .tabs button[aria-selected="true"] { background: var(--chalk); color: var(--ink); border-color: var(--chalk); font-weight: 600; }
+  h2 { font-size: 17px; margin: 30px 0 4px; font-weight: 600; }
+  h2:first-of-type { margin-top: 8px; }
+  .hint { color: var(--ash); font-size: 13px; margin: 0 0 12px; }
+  .strip { display: flex; gap: 8px; overflow-x: auto; padding: 4px 0 10px; min-height: 96px; }
+  .strip:empty::after { content: "Nothing chosen yet — pick from below."; color: var(--ash); font-size: 13px; }
+  .tile {
+    position: relative; flex: 0 0 auto; width: 92px; border-radius: 8px; overflow: hidden;
+    border: 1px solid var(--hair); background: var(--ink-2); cursor: pointer; padding: 0;
+  }
+  .tile img { display: block; width: 100%; height: 92px; object-fit: cover; }
+  .tile.on { border-color: var(--leaf); box-shadow: 0 0 0 1px var(--leaf); }
+  .tile .pos {
+    position: absolute; inset-inline-start: 4px; top: 4px; background: rgba(7,7,10,.85);
+    color: var(--chalk); font-size: 11px; border-radius: 4px; padding: 1px 5px;
+  }
+  .tile .drop {
+    position: absolute; inset-inline-end: 4px; top: 4px; background: rgba(7,7,10,.85);
+    border: 0; color: var(--chalk); border-radius: 4px; min-height: 22px; padding: 0 6px; font-size: 13px; cursor: pointer;
+  }
+  .nudge { display: flex; gap: 4px; justify-content: center; padding: 4px 0; }
+  .nudge button { min-height: 28px; padding: 0 8px; font-size: 12px; }
+  .picker { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 8px; margin-top: 8px; }
+  details { border: 1px solid var(--hair); border-radius: 10px; padding: 12px 14px; margin-bottom: 14px; }
+  summary { cursor: pointer; font-size: 13px; color: var(--ash); }
 </style>
 
 <main>
@@ -64,6 +91,11 @@
 </section>
 
 <!-- editor -->
+<div id="tabs" class="tabs" hidden>
+  <button type="button" id="tab-credits" role="tab" aria-selected="true" aria-controls="editor">Credits</button>
+  <button type="button" id="tab-sequence" role="tab" aria-selected="false" aria-controls="sequence">Running order</button>
+</div>
+
 <section id="editor" hidden>
   <h1>Credits</h1>
   <p class="sub">
@@ -73,6 +105,16 @@
   <div id="message" class="msg" hidden></div>
   <div id="rows"></div>
   <button id="add" type="button">Add a credit</button>
+</section>
+
+<section id="sequence" hidden>
+  <h1>Running order</h1>
+  <p class="sub">
+    What the homepage opens on, and what each gallery leads with. Which images
+    are in a gallery is decided elsewhere — this is the order they appear in.
+  </p>
+  <div id="seq-message" class="msg" hidden></div>
+  <div id="seq-body"></div>
 </section>
 </main>
 
@@ -213,6 +255,7 @@
   });
 
   $("save").addEventListener("click", async () => {
+    if (tab === "sequence") { saveSequence(); return; }
     clearMessage();
     $("save").disabled = true;
     $("state").textContent = "Saving…";
@@ -238,6 +281,253 @@
       $("save").disabled = false;
     }
   });
+
+  // --- running order -------------------------------------------------------
+  //
+  // The client works entirely in identities — the stable address of an upload.
+  // It never sees or sends a file path: the server decides how each one is
+  // spelled in curation.json so that an unchanged entry keeps the spelling it
+  // already had, and her first reorder does not rewrite every line.
+
+  const GALLERY_LABEL = {
+    sfx: "SFX & Prosthetics", casting: "Casting & Sculpting",
+    film: "Film & Television", editorial: "Editorial & Fashion",
+  };
+  const COVER_SLUG = {
+    "sfx-prosthetics": "sfx", "casting-sculpting": "casting",
+    "film-television": "film", "editorial-fashion": "editorial",
+  };
+
+  let seq = null;       // { sha, hero, leads, covers, artist, galleries, byId }
+  let seqLoaded = false;
+
+  function seqSay(text, isError) {
+    const el = $("seq-message");
+    el.textContent = text;
+    el.className = "msg " + (isError ? "err" : "ok");
+    el.hidden = false;
+  }
+
+  function tile(id, { position, onDrop, onNudge, selected, onPick } = {}) {
+    const img = seq.byId[id];
+    const el = document.createElement("div");
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "tile" + (selected ? " on" : "");
+    b.title = id;
+    b.setAttribute("aria-label", id + (selected ? " (chosen)" : ""));
+    if (selected) b.setAttribute("aria-pressed", "true");
+    const picture = document.createElement("img");
+    picture.loading = "lazy";
+    picture.alt = "";
+    picture.src = img ? img.src : "";
+    b.append(picture);
+    if (position) {
+      const p = document.createElement("span");
+      p.className = "pos";
+      p.textContent = position;
+      b.append(p);
+    }
+    if (onDrop) {
+      const x = document.createElement("button");
+      x.type = "button"; x.className = "drop"; x.textContent = "×";
+      x.setAttribute("aria-label", "Remove");
+      x.addEventListener("click", (e) => { e.stopPropagation(); onDrop(); });
+      b.append(x);
+    }
+    if (onPick) b.addEventListener("click", onPick);
+    el.append(b);
+    if (onNudge) {
+      const nudge = document.createElement("div");
+      nudge.className = "nudge";
+      const left = document.createElement("button");
+      left.type = "button"; left.textContent = "←";
+      left.setAttribute("aria-label", "Move earlier");
+      left.addEventListener("click", () => onNudge(-1));
+      const right = document.createElement("button");
+      right.type = "button"; right.textContent = "→";
+      right.setAttribute("aria-label", "Move later");
+      right.addEventListener("click", () => onNudge(1));
+      nudge.append(left, right);
+      el.append(nudge);
+    }
+    return el;
+  }
+
+  function orderedSection(title, hint, chosen, pool, onChange) {
+    const wrap = document.createElement("div");
+    const h = document.createElement("h2");
+    h.textContent = title;
+    const p = document.createElement("p");
+    p.className = "hint";
+    p.textContent = hint;
+    const strip = document.createElement("div");
+    strip.className = "strip";
+    chosen.forEach((id, i) => {
+      strip.append(tile(id, {
+        position: `${i + 1}`,
+        onDrop: () => { chosen.splice(i, 1); onChange(); },
+        onNudge: (d) => {
+          const j = i + d;
+          if (j < 0 || j >= chosen.length) return;
+          [chosen[i], chosen[j]] = [chosen[j], chosen[i]];
+          onChange();
+        },
+      }));
+    });
+    const details = document.createElement("details");
+    const summary = document.createElement("summary");
+    summary.textContent = `Choose from ${pool.length} images`;
+    const picker = document.createElement("div");
+    picker.className = "picker";
+    for (const t of pool) {
+      picker.append(tile(t.id, {
+        selected: chosen.includes(t.id),
+        onPick: () => {
+          const at = chosen.indexOf(t.id);
+          at >= 0 ? chosen.splice(at, 1) : chosen.push(t.id);
+          onChange();
+        },
+      }));
+    }
+    details.append(summary, picker);
+    wrap.append(h, p, strip, details);
+    return wrap;
+  }
+
+  function singleSection(title, hint, current, pool, onPick) {
+    const wrap = document.createElement("div");
+    const h = document.createElement("h2");
+    h.textContent = title;
+    const p = document.createElement("p");
+    p.className = "hint";
+    p.textContent = hint;
+    const strip = document.createElement("div");
+    strip.className = "strip";
+    if (current) strip.append(tile(current, {}));
+    const details = document.createElement("details");
+    const summary = document.createElement("summary");
+    summary.textContent = `Choose from ${pool.length} images`;
+    const picker = document.createElement("div");
+    picker.className = "picker";
+    for (const t of pool) {
+      picker.append(tile(t.id, { selected: t.id === current, onPick: () => onPick(t.id) }));
+    }
+    details.append(summary, picker);
+    wrap.append(h, p, strip, details);
+    return wrap;
+  }
+
+  function renderSequence() {
+    const body = $("seq-body");
+    const redraw = () => { renderSequence(); markSeqDirty(); };
+    const all = Object.values(seq.byId);
+    const parts = [
+      orderedSection(
+        "The homepage opening",
+        "The first thing a producer sees. Strongest character work, in this order.",
+        seq.hero, all, redraw,
+      ),
+    ];
+    for (const [name, label] of Object.entries(GALLERY_LABEL)) {
+      const pool = seq.galleries[name] || [];
+      seq.leads[name] = seq.leads[name] || [];
+      parts.push(orderedSection(
+        `${label} — leads with`,
+        "These move to the front of the gallery, in this order. The rest follow.",
+        seq.leads[name], pool, redraw,
+      ));
+    }
+    for (const [slug, gallery] of Object.entries(COVER_SLUG)) {
+      parts.push(singleSection(
+        `${GALLERY_LABEL[gallery]} — homepage plate`,
+        "The single image behind this discipline's title on the homepage.",
+        seq.covers[slug] || "", seq.galleries[gallery] || [],
+        (id) => { seq.covers[slug] = seq.covers[slug] === id ? "" : id; redraw(); },
+      ));
+    }
+    parts.push(singleSection(
+      "Portrait on the About page",
+      "The photograph beside her biography.",
+      seq.artist || "", all,
+      (id) => { seq.artist = seq.artist === id ? "" : id; redraw(); },
+    ));
+    body.replaceChildren(...parts);
+  }
+
+  function markSeqDirty() {
+    dirty = true;
+    $("save").disabled = false;
+    $("state").textContent = "Unsaved changes";
+  }
+
+  async function loadSequence() {
+    if (seqLoaded) return;
+    try {
+      const res = await fetch("/admin/sequence", { headers: { Accept: "application/json" } });
+      if (res.status === 401) { location.href = "/admin"; return; }
+      const data = await res.json();
+      if (!res.ok) { seqSay(data.error || "Could not load the running order.", true); return; }
+      seq = data;
+      seqLoaded = true;
+      renderSequence();
+      $("state").textContent = `${Object.keys(seq.byId).length} images`;
+    } catch {
+      seqSay("Could not reach the server.", true);
+    }
+  }
+
+  async function saveSequence() {
+    $("save").disabled = true;
+    $("state").textContent = "Saving…";
+    try {
+      const res = await fetch("/admin/sequence", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": CSRF },
+        body: JSON.stringify({
+          sha: seq.sha, hero: seq.hero, leads: seq.leads,
+          covers: seq.covers, artist: seq.artist,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        dirty = false;
+        seqSay("Saved. It will be live in a few minutes.", false);
+        $("state").textContent = "Saved";
+        seqLoaded = false;
+        await loadSequence();
+        return;
+      }
+      seqSay(data.error || "Could not save.", true);
+      $("save").disabled = false;
+      $("state").textContent = "Unsaved changes";
+    } catch {
+      seqSay("Could not reach the server. Nothing was saved.", true);
+      $("save").disabled = false;
+    }
+  }
+
+  // --- tabs ----------------------------------------------------------------
+
+  let tab = "credits";
+
+  function show(which) {
+    if (dirty && !confirm("You have unsaved changes. Leave them and switch?")) return;
+    tab = which;
+    dirty = false;
+    $("save").disabled = true;
+    $("editor").hidden = which !== "credits";
+    $("sequence").hidden = which !== "sequence";
+    $("tab-credits").setAttribute("aria-selected", String(which === "credits"));
+    $("tab-sequence").setAttribute("aria-selected", String(which === "sequence"));
+    which === "sequence" ? loadSequence() : load();
+  }
+
+  if (STATE === "editor") {
+    $("tabs").hidden = false;
+    $("tab-credits").addEventListener("click", () => show("credits"));
+    $("tab-sequence").addEventListener("click", () => show("sequence"));
+  }
 
   addEventListener("beforeunload", (e) => { if (dirty) e.preventDefault(); });
 </script>

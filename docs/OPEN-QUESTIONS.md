@@ -175,8 +175,9 @@ the cutover.
   - ~~Credits~~ — done. `/admin`, one password, commits `credits.json`. It carries a `role`
     field, which is the answer to question 1 arriving one credit at a time rather than as one
     large questionnaire reply.
-  - **Sequence** — next. `curation.json` now takes effect at build time, so an edit to it ships;
-    the remaining work is a UI with thumbnails.
+  - ~~Sequence~~ — done. A second tab: the homepage opening, each gallery's leads, the
+    discipline plates and the About portrait, chosen from thumbnails. It writes `curation.json`,
+    which reaches the site now that ordering happens at build time.
   - **Image upload** — after that, as a job rather than a request: the derivative ladder is
     minutes of CPU per photograph and cannot run inside an HTTP handler.
 

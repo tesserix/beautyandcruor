@@ -70,6 +70,11 @@ type adminHandler struct {
 	sessions sessions
 	gh       *github
 	limiter  *limiter
+	// Where the image derivatives are served from. The pickers need absolute
+	// URLs: public/img is excluded from the site image, so there is nothing
+	// same-origin to point at.
+	assetBase string
+	index     indexCache
 }
 
 func (a *adminHandler) routes(mux *http.ServeMux) {
@@ -79,6 +84,8 @@ func (a *adminHandler) routes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /admin/logout", a.logout)
 	mux.HandleFunc("GET /admin/credits", a.getCredits)
 	mux.HandleFunc("PUT /admin/credits", a.putCredits)
+	mux.HandleFunc("GET /admin/sequence", a.getSequence)
+	mux.HandleFunc("PUT /admin/sequence", a.putSequence)
 }
 
 // --- session plumbing -------------------------------------------------------
