@@ -61,11 +61,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # `npm run lint` is NOT run. eslint fails at config load on this repo
-      # with a circular-reference error in eslint-config-next, reproducible on
-      # a clean checkout and unrelated to any source file — it would fail every
-      # build for a reason no PR can fix. Typecheck covers the same ground for
-      # a TypeScript codebase.
+      # Lint runs again. It was disabled because eslint died at config load
+      # with a circular-reference error in eslint-config-next — every build,
+      # on a clean checkout, for a reason no PR could fix. The cause was
+      # eslint.config.mjs routing an already-flat config through FlatCompat;
+      # see that file. Typecheck alone was never the same gate: the first
+      # lint run after the fix found a real React bug it cannot see.
+      - name: Lint
+        run: npm run lint
+
       # Pinned rather than left to the runner's default: go.mod asks for 1.25
       # and a runner image bump should not silently change the toolchain that
       # gates the spam rules.
