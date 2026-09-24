@@ -14,7 +14,7 @@
     "assets": "node scripts/assets-sync.mjs",
     "assets:upload": "node scripts/assets-sync.mjs --upload",
     "organize": "node scripts/organize.mjs",
-    "prebuild": "node scripts/og.mjs && node scripts/llms.mjs",
+    "prebuild": "node scripts/alt-check.mjs && node scripts/og.mjs && node scripts/llms.mjs",
     "seo:assets": "node scripts/og.mjs && node scripts/llms.mjs"
   },
   "dependencies": {

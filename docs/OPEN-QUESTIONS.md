@@ -26,9 +26,11 @@ Nothing here is a design decision. These are facts only she has.
 
 ## Important, not blocking
 
-- **Alt text for 290 images.** All empty. Lighthouse accessibility 100 is unreachable without
-  them, and they cannot be migrated — they have to be written. Can be drafted from the imagery
-  for her to correct.
+- **Alt text — drafted, needs her correction.** All 210 published images now carry authored alt
+  text in `src/content/alt.json`, written from the imagery. It says only what is visible and names
+  no production, title or actor, because those are still questions 2 and 9. What it cannot know is
+  what the work actually *was* — "a performer in a red bridal sari" may be a specific character in
+  a specific show. Her pass over it is what turns a description into a credit.
 - **Crew capability.** She works solo and can assemble a team. A producer costing a
   multi-appliance day needs a number, per city, and notice required. *(The crew named in the old
   appliance posts is Rahul's, not hers.)*
@@ -87,9 +89,11 @@ preferred. Hers: questions 5 and 6.
 
 *Phase 2 — what we can do without her.*
 
-- **Alt text.** Currently positional: `"SFX & Prosthetics, work 11 of 52"`. Useless to a screen
-  reader, worthless for image search, and the reason Lighthouse accessibility cannot reach 100.
-  Draft from the imagery for her to correct.
+- ~~**Alt text.**~~ Drafted. Was positional — `"SFX & Prosthetics, work 11 of 52"` — which is
+  useless to a screen reader and worthless for image search. Now authored per image in
+  `src/content/alt.json`, read through `altFor()`, with the positional string kept only as the
+  fallback for an image added since. `scripts/alt-check.mjs` fails the build if a published image
+  has no entry, so the fallback cannot quietly come back. Still wants her corrections.
 - **SEO and AI-crawler surface** — see the section below; several gaps are ours alone.
 - ~~**JS budget.** 185 KB gzipped against a 150 KB target.~~ The target was unmeetable by
   construction — React 19 plus the Next 16 runtime is ~170 KB before any of our code loads, so
@@ -132,8 +136,8 @@ two `LocalBusiness` schemas, per-page titles, descriptions and canonicals.
    question 1 for roles, but the scaffolding can be built now.
 2. **No `og:image`.** Every share of this site — WhatsApp, Slack, LinkedIn, a producer forwarding
    it — renders as a bare text card. For a visual portfolio that is a straightforward loss.
-3. **Positional alt text.** Same item as Phase 2; it is both an accessibility and an image-search
-   failure.
+3. ~~**Positional alt text.**~~ Closed with the Phase 2 item above — 210 authored descriptions,
+   gated by a build check.
 4. **`breadcrumbSchema` is written but never used.** No page emits it.
 5. **`llms.txt` does not exist.** An emerging convention for telling AI crawlers what a site is
    and what matters on it. Cheap, and well suited to a site whose value is a credits list.
@@ -141,11 +145,23 @@ two `LocalBusiness` schemas, per-page titles, descriptions and canonicals.
    zone is set to allow Search and Agent crawlers and **block Training** — robots.txt should say
    the same thing, or the two signals disagree.
 
-**A trap while the site is on the staging host:** `robots.txt`, `sitemap.xml` and every canonical
-point at `https://beautyandcruor.com` — the old WordPress site — because `SITE.url` is the
-production domain. The staging host is fully crawlable and advertises canonicals for a different
-site. Add `noindex` for the staging host until the cutover, or accept that anything indexed points
-at WordPress.
+~~**A trap while the site is on the staging host:**~~ Closed. `robots.txt`, `sitemap.xml` and
+every canonical point at `https://beautyandcruor.com` — the old WordPress site — because
+`SITE.url` is the production domain, and the staging host was fully crawlable while advertising
+canonicals for a site we do not control.
+
+nginx now serves `X-Robots-Tag: noindex, nofollow` on every host except `beautyandcruor.com` and
+`www.beautyandcruor.com`. Two things follow from doing it there rather than in the build:
+
+- **The cutover needs no rebuild and no follow-up edit.** The same image stops sending the header
+  the moment it answers on the production name. Nothing to remember, nothing to undo.
+- **It is not `Disallow: /`.** A disallowed URL is never fetched, so the `noindex` is never read,
+  and the URL can still be indexed from an external link. Letting the crawler in to be told
+  `noindex` is the only instruction that actually removes a page.
+
+Not covered: the image derivatives, which are served from `storage.googleapis.com` and are
+therefore outside this nginx entirely. They move behind `assets.beautyandcruor.com` at step 4 of
+the cutover.
 
 **Still ours**
 
@@ -204,4 +220,5 @@ Rollback at any point is putting `kellen`/`zariyah` back at Hostinger. The old z
 edited, only routed away from.
 
 **Drop the staging host afterwards:** the `beautyandcruor` entry in the inline `frontendApps`
-block of `argocd/prod/infrastructure/istio-auth-policies.yaml`, and the `noindex` if it was added.
+block of `argocd/prod/infrastructure/istio-auth-policies.yaml`. The staging `noindex` needs no
+action — it is keyed on the host, so it stops applying by itself.

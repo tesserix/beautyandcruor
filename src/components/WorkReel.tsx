@@ -1,5 +1,6 @@
 import { Reel, ReelFrame } from "./Reel";
 import { Picture } from "./Picture";
+import { altFor } from "@/lib/alt";
 
 /**
  * Server component. Resolves images from the build-time manifest and passes
@@ -21,9 +22,9 @@ export function WorkReel({
         <ReelFrame key={key}>
           <Picture
             imageKey={key}
-            /* TODO(client): real titles pending. Positional alt describes
-               position rather than inventing content. */
-            alt={`${label}, work ${i + 1} of ${imageKeys.length}`}
+            /* Authored per image in src/content/alt.json. The positional
+               string is the fallback for an image added since that draft. */
+            alt={altFor(key, `${label}, work ${i + 1} of ${imageKeys.length}`)}
             size="gallery"
             priority={priorityFirst && i === 0}
             imgClassName="h-full w-full object-cover"
