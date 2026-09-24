@@ -482,3 +482,49 @@ func TestConcurrentEditIsReported(t *testing.T) {
 		t.Errorf("the conflict message does not tell her what to do: %s", rec.Body)
 	}
 }
+
+// A rejected password has to say so where it can be seen, and a plain visit to
+// the form's POST target must not claim a failure that never happened.
+func TestSignInFeedback(t *testing.T) {
+	a := testAdmin(t)
+	mux := http.NewServeMux()
+	a.routes(mux)
+
+	// Wrong password: 401, and the page carries the failure flag.
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/admin/login", strings.NewReader("password=nope"))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	mux.ServeHTTP(rec, req)
+	if rec.Code != http.StatusUnauthorized {
+		t.Errorf("wrong password: got %d, want 401", rec.Code)
+	}
+	if !strings.Contains(rec.Body.String(), `const FAILED = "1" === "1"`) {
+		t.Error("the rejected page does not tell the client it was rejected")
+	}
+	// The element it is shown in must live in the login section, not the
+	// editor section, which stays hidden until you are signed in.
+	body := rec.Body.String()
+	loginStart := strings.Index(body, `<section id="login"`)
+	editorStart := strings.Index(body, `<section id="editor"`)
+	errAt := strings.Index(body, `id="login-error"`)
+	if loginStart < 0 || editorStart < 0 || errAt < 0 {
+		t.Fatal("page structure changed; this test needs updating")
+	}
+	if !(errAt > loginStart && errAt < editorStart) {
+		t.Error("the sign-in error is not inside the login section, so it will not paint")
+	}
+
+	// A fresh page must not claim a failure.
+	rec = httptest.NewRecorder()
+	mux.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/admin", nil))
+	if strings.Contains(rec.Body.String(), `const FAILED = "1" === "1"`) {
+		t.Error("an untouched page reports a failed sign-in")
+	}
+
+	// GET on the POST target is a bookmark, not an attempt: send it to the page.
+	rec = httptest.NewRecorder()
+	mux.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/admin/login", nil))
+	if rec.Code != http.StatusSeeOther || rec.Header().Get("Location") != "/admin" {
+		t.Errorf("GET /admin/login: got %d -> %q, want 303 -> /admin", rec.Code, rec.Header().Get("Location"))
+	}
+}
