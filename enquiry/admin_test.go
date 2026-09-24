@@ -528,3 +528,42 @@ func TestSignInFeedback(t *testing.T) {
 		t.Errorf("GET /admin/login: got %d -> %q, want 303 -> /admin", rec.Code, rec.Header().Get("Location"))
 	}
 }
+
+// A field the form does not show must still survive a save. `type` is set
+// only where the site's guess at the format is wrong, and it is not editable
+// — so if the struct did not carry it, the first time she fixed a typo the
+// credit would quietly reclassify itself.
+func TestUneditableFieldsSurviveASave(t *testing.T) {
+	const committed = `[
+  {
+    "title": "Ola Cabs",
+    "director": "",
+    "production": "",
+    "year": "2021",
+    "location": "India",
+    "role": "Makeup Artist",
+    "type": "Commercial"
+  }
+]`
+	var rows []credit
+	if err := json.Unmarshal([]byte(committed), &rows); err != nil {
+		t.Fatal(err)
+	}
+	if rows[0].Type != "Commercial" {
+		t.Fatalf("type was not read back: %+v", rows[0])
+	}
+	// Edit something the form does own, as she would.
+	rows[0].Director = "A Director"
+	encoded, err := encodeContent(normaliseCredits(rows), false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(encoded), `"type": "Commercial"`) {
+		t.Errorf("a save dropped the type:\n%s", encoded)
+	}
+	// And a row without one does not gain an empty key.
+	plain, _ := encodeContent(normaliseCredits([]credit{{Title: "T", Director: "D", Production: "P", Year: "2024", Location: "L"}}), false)
+	if strings.Contains(string(plain), "type") {
+		t.Errorf("an empty type was written:\n%s", plain)
+	}
+}

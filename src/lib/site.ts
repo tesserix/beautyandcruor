@@ -6,20 +6,25 @@
 export const SITE = {
   url: "https://beautyandcruor.com",
   name: "Beauty & Cruor",
-  /** TODO(client): "Parimiti" or "Parimitii" — Instagram and her own post credit disagree. */
+  /** Settled by her: Parimiti, one i. */
   artist: "Parimiti",
   tagline: "Prosthetics, SFX, hair and makeup for film and television",
   instagram: "https://www.instagram.com/_parimiti_sfx_and_prosthetics_/",
   instagramHandle: "@_parimiti_sfx_and_prosthetics_",
   imdb: "https://www.imdb.com/name/nm12573944/",
   /**
-   * TODO(client): the live site publishes two different addresses
-   * (info@beautyandcruor.com and info@beautycruor.com). One may be bouncing.
-   * Left null deliberately rather than guessing.
+   * Her own inbox, and the answer to which of the two published addresses
+   * works: neither. beautycruor.com has no MX record at all, and info@ on
+   * beautyandcruor.com does not exist, so everything sent to the address on
+   * the old site went nowhere.
    */
-  email: null as string | null,
-  /** TODO(client): a phone or WhatsApp number — producers call, they don't fill forms. */
-  phone: null as string | null,
+  email: "parimiti03@gmail.com",
+  /**
+   * WhatsApp, which is how she asked to be reached. Nobody on a production
+   * books through a web form, and the site published no number at all.
+   */
+  phone: "+61 406 215 170",
+  phoneHref: "https://wa.me/61406215170",
 } as const;
 
 /**

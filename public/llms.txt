@@ -8,7 +8,7 @@ sculpt, mould, run, apply — is done in-house rather than split between studios
 
 ## What is authoritative here
 
-- **Credits are the primary record.** 27 productions, 2018–2026. Each one is
+- **Credits are the primary record.** 26 productions, 2018–2026. Each one is
   published as schema.org structured data on /credits/, naming Parimiti as a
   contributor, with the director, production company and country where known.
 - **IMDb carries the verified record**: https://www.imdb.com/name/nm12573944/. Where this site and IMDb
