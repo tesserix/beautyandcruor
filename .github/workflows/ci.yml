@@ -98,11 +98,29 @@ jobs:
         run: |
           FULL_IMAGE="${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}"
           ENQUIRY_IMAGE="${FULL_IMAGE}-enquiry"
+          # The tag has to say which branch it came from.
+          #
+          # This was `main-<sha7>` for every ref, so a push to feat/** or
+          # hotfix/** published an image tagged as if it were main. That was
+          # harmless while a human bumped the tag by hand and read the sha.
+          # It stopped being harmless the moment Kargo started promoting
+          # automatically: its warehouse selects the newest build matching
+          # `^main-[a-f0-9]{7,12}$`, so an unmerged branch build could be
+          # picked up and deployed to production.
+          #
+          # Branch names carry slashes, which a Docker tag cannot, so they
+          # are flattened to hyphens. The result cannot collide with the
+          # main- form because a sha7 is hex and a branch prefix is not.
           if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
             BUILD_TAG="${GITHUB_REF#refs/tags/}"
-          else
+          elif [[ "${{ github.ref }}" == refs/heads/main ]]; then
             BUILD_TAG="main-${GITHUB_SHA::7}"
+          else
+            BRANCH="${GITHUB_REF#refs/heads/}"
+            SLUG="$(printf '%s' "$BRANCH" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-+|-+$//g' | cut -c1-40)"
+            BUILD_TAG="${SLUG}-${GITHUB_SHA::7}"
           fi
+          echo "Building ${BUILD_TAG} from ${GITHUB_REF}"
           echo "tag=${BUILD_TAG}" >> $GITHUB_OUTPUT
           echo "full_image=${FULL_IMAGE}" >> $GITHUB_OUTPUT
           echo "build_image=${FULL_IMAGE}:${BUILD_TAG}" >> $GITHUB_OUTPUT
@@ -124,10 +142,14 @@ jobs:
           docker build --platform linux/amd64 \
             --build-arg OPENPANEL_CLIENT_ID="${{ vars.OPENPANEL_CLIENT_ID }}" \
             -t ${{ steps.meta.outputs.build_image }} \
-            -t ${{ steps.meta.outputs.full_image }}:latest \
             .
           docker push ${{ steps.meta.outputs.build_image }}
-          docker push ${{ steps.meta.outputs.full_image }}:latest
+          # `latest` only ever means main. A branch build moving it pointed
+          # the floating tag at unmerged code.
+          if [[ "${{ github.ref }}" == refs/heads/main ]]; then
+            docker tag ${{ steps.meta.outputs.build_image }} ${{ steps.meta.outputs.full_image }}:latest
+            docker push ${{ steps.meta.outputs.full_image }}:latest
+          fi
 
       # The enquiry sidecar. A separate image because it is a separate process
       # — the site container is nginx serving files and nothing else. Its
@@ -138,16 +160,16 @@ jobs:
         run: |
           docker build --platform linux/amd64 \
             -t ${{ steps.meta.outputs.enquiry_image }} \
-            -t ${{ steps.meta.outputs.enquiry_repo }}:latest \
             ./enquiry
           docker push ${{ steps.meta.outputs.enquiry_image }}
-          docker push ${{ steps.meta.outputs.enquiry_repo }}:latest
+          if [[ "${{ github.ref }}" == refs/heads/main ]]; then
+            docker tag ${{ steps.meta.outputs.enquiry_image }} ${{ steps.meta.outputs.enquiry_repo }}:latest
+            docker push ${{ steps.meta.outputs.enquiry_repo }}:latest
+          fi
 
-      # `latest` is pushed alongside the pinned tag because this app has no
-      # Kargo Project yet. The blog's chart is promoted by Kargo writing
-      # helm.parameters.image.tag; until an equivalent exists here, the chart
-      # pins image.tag: latest with pullPolicy: Always. Pin to main-<sha7> and
-      # drop the latest push once promotion is wired up.
+      # `latest` is pushed from main only, and nothing reads it: the chart
+      # pins main-<sha7> and Kargo rewrites that on promotion. It is kept for
+      # ad-hoc `docker run` against the current main and for nothing else.
 
       - name: Security scan
         if: github.event_name != 'pull_request'
