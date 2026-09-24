@@ -8,7 +8,13 @@ export type Credit = {
   location: string;
   /** TODO(client): her role/department per credit. A producer reads this first. */
   role?: string;
-  /** Inferred from the title, not sourced. Replace once the client confirms. */
+  /**
+   * Inferred from the title unless the row states one.
+   *
+   * An explicit `type` in credits.json wins, because the guess reads the
+   * title text and a brand name carries no format word: "Ola Cabs" is a
+   * commercial and looked like a generic production until she said so.
+   */
   type: CreditType;
   /** "Lucky" carries "In Progress" in the director column of the source data. */
   inProgress: boolean;
@@ -21,11 +27,10 @@ export type CreditType = "Commercial" | "Feature" | "Series" | "Poster" | "Produ
  * format column. "Beco Commercial" and "Yaariyan ... Feature Film" say what
  * they are; most titles do not, and those fall to "Production".
  *
- * TODO(client): two entries are genuinely ambiguous — "Ola Cabs" and
- * "Sugar box" are brands with no format word, so they may be commercials
- * sitting in the Production bucket. Both are already listed in
- * docs/OPEN-QUESTIONS.md. Until they are confirmed the credits page says in
- * plain sight that formats are unconfirmed, rather than quietly asserting them.
+ * TODO(client): "Sugar box" is still ambiguous — a brand with no format word,
+ * so it may be a commercial sitting in the Production bucket. "Ola Cabs" had
+ * the same problem and is now stated outright in the row, which is the escape
+ * hatch for any other the guess gets wrong.
  */
 function inferType(title: string): CreditType {
   const t = title.toLowerCase();
@@ -64,7 +69,7 @@ export function getCredits(): Credit[] {
     return {
       ...c,
       director: inProgress ? "" : c.director,
-      type: inferType(c.title),
+      type: (c as { type?: CreditType }).type ?? inferType(c.title),
       inProgress,
     };
   });

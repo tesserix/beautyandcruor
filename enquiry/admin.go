@@ -64,6 +64,12 @@ type credit struct {
 	Year       string `json:"year"`
 	Location   string `json:"location"`
 	Role       string `json:"role,omitempty"`
+	// Set only where the site's guess is wrong — it reads the format off the
+	// title, and a brand name carries no format word. It is not editable in
+	// the form, but it MUST be carried here: a field missing from this struct
+	// is silently dropped on save, so the first time she fixed a typo the
+	// site would quietly reclassify the credit.
+	Type string `json:"type,omitempty"`
 }
 
 type adminHandler struct {
@@ -283,6 +289,7 @@ func normaliseCredits(rows []credit) []credit {
 			Year:       strings.TrimSpace(r.Year),
 			Location:   strings.TrimSpace(r.Location),
 			Role:       strings.TrimSpace(r.Role),
+			Type:       strings.TrimSpace(r.Type),
 		}
 	}
 	return out

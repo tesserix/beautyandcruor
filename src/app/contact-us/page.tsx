@@ -26,8 +26,27 @@ export default function Contact() {
           Production bookings, prosthetic commissions and editorial.
         </p>
 
-        {/* TODO(client): a phone number belongs here, above the form.
-            Nobody on a production books through a web form. */}
+        {/* Above the form, deliberately.
+            A producer costing a shoot wants to ask one question and get an
+            answer, and nobody on a production books through a web form. She
+            asked to be reached on WhatsApp, so that is the first thing here
+            and the form is the fallback rather than the only way in. */}
+        <div className="mt-7 flex flex-wrap gap-3">
+          <a
+            href={SITE.phoneHref}
+            target="_blank"
+            rel="noopener"
+            className="btn-out lab min-h-[48px] inline-flex items-center px-5"
+          >
+            WhatsApp {SITE.phone} ↗
+          </a>
+          <a
+            href={`mailto:${SITE.email}`}
+            className="btn-out lab min-h-[48px] inline-flex items-center px-5"
+          >
+            {SITE.email}
+          </a>
+        </div>
 
         <div className="mt-8 grid gap-10 md:grid-cols-[minmax(0,1fr)_minmax(0,0.75fr)] md:gap-16">
           <EnquiryForm />
