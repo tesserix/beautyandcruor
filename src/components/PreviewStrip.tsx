@@ -1,5 +1,6 @@
 import { Picture } from "./Picture";
 import { Rail } from "./Rail";
+import { altFor } from "@/lib/alt";
 
 /**
  * A discipline's best work on the homepage: a horizontal strip of several
@@ -34,8 +35,9 @@ export function PreviewStrip({
               end of the travel. */}
           <Picture
             imageKey={key}
-            /* TODO(client): real titles pending — see OPEN-QUESTIONS #9. */
-            alt={`${label}, ${i + 1} of ${imageKeys.length}`}
+            /* See WorkReel: authored in src/content/alt.json, positional
+               only as a fallback. */
+            alt={altFor(key, `${label}, ${i + 1} of ${imageKeys.length}`)}
             size="gallery"
             imgClassName="drift h-full w-full object-cover"
             aspectRatio="auto"

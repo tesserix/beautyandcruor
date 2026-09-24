@@ -34,7 +34,10 @@ export default function About() {
           {portrait && (
             <Picture
               imageKey={portrait}
-              alt={`${SITE.artist} in the studio`}
+              /* Not altFor(): this one wants her name, which the shared map
+                 deliberately leaves out — the spelling is still open
+                 (OPEN-QUESTIONS #11) and lives in SITE.artist. */
+              alt={`${SITE.artist} on the AACTA Awards photo wall`}
               size="portrait"
               priority
               className="settle block w-full md:order-2 md:sticky md:top-[calc(var(--hud)+28px)]"
