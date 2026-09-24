@@ -103,12 +103,13 @@
     "role": "Makeup Artist"
   },
   {
-    "title": "Mad max",
-    "director": "Mad max films",
-    "production": "Village roadshows",
+    "title": "Furiosa: A Mad Max Saga",
+    "director": "George Miller",
+    "production": "Village Roadshow Pictures",
     "year": "2022",
     "location": "Australia",
-    "role": "Assistant Prosthetic Makeup Artist"
+    "role": "Assistant Prosthetic Makeup Artist (uncredited)",
+    "type": "Feature"
   },
   {
     "title": "Thief",

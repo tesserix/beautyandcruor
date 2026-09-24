@@ -13,7 +13,7 @@ Nothing here is a design decision. These are facts only she has.
 | # | Question | Why it blocks |
 |---|---|---|
 | 1 | **Her role on each of the 27 credits** | A producer reads role before title. Not one credit has one. Biggest single gap in the dataset. |
-| 2 | **Real title of the 2022 Village Roadshow credit** | Listed as "Mad max". Consistent with *Furiosa*, but that is an inference and will not be published unverified against a Warner Bros. title. |
+| ~~2~~ | ~~**Real title of the 2022 Village Roadshow credit**~~ | Closed. *Furiosa: A Mad Max Saga* — it shot June–October 2022 in regional NSW for Village Roadshow Pictures, and no other Mad Max production was filming. Her name is **not** in the film's public crew list, which is ordinary for an assistant on a production that size, so the row says "(uncredited)". That is the industry's own convention and it is what keeps the claim checkable against IMDb, which producers treat as the record. |
 | 3 | **Which 6–8 credits lead** | Chronological sorting puts five baby-product commercials first. |
 | 4 | **Johnson's Baby: company and year** | Credits table says Mothership Production / 2025. Her own Instagram says DDB Mudra + Directors Cut / 2026. |
 | 5 | **Which email address works** | The live site publishes both `info@beautyandcruor.com` and `info@beautycruor.com`. If the wrong one is live, enquiries may have been bouncing. **Worth checking today, independent of the rebuild.** |
