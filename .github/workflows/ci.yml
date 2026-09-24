@@ -1,18 +1,35 @@
 name: CI
 
+# An IGNORE list, not an allow list, and the difference matters.
+#
+# This was an allow list naming the build inputs, and it silently stopped
+# deploying whatever it forgot. `enquiry/**` was never on it, so the sidecar —
+# its own image, built by this very workflow — could be changed and merged
+# without anything being built. The credits editor shipped only because it
+# happened to touch nginx.conf; the running-order editor merged and went
+# nowhere. Nothing failed. There was simply no run, so `deploy` never advanced
+# and Kargo had nothing to promote.
+#
+# next.config.ts, tsconfig.json, postcss.config.mjs, eslint.config.mjs and
+# .dockerignore were missing too, all of them able to change what is built.
+#
+# Inverted, the failure mode flips from "silently ships nothing" to "builds
+# when it need not", and a new source directory is covered the day it appears
+# rather than the day someone notices. Only things that cannot affect either
+# image are listed here.
+#
+# The point of filtering at all is unchanged: a docs-only commit builds no
+# image, so it must not advance `deploy` to a sha that has none.
 on:
   push:
     branches: [main, 'feat/**', 'feature/**', 'bugfix/**', 'hotfix/**']
-    paths:
-      - 'src/**'
-      - 'scripts/**'
-      - 'public/**'
-      - 'capture/live-images.json'
-      - 'nginx.conf'
-      - 'Dockerfile'
-      - 'package.json'
-      - 'package-lock.json'
-      - '.github/workflows/ci.yml'
+    paths-ignore:
+      - 'docs/**'
+      - 'deliverables/**'
+      - 'design/**'
+      - 'capture/audit/**'
+      - '**/*.md'
+      - '.gitignore'
   pull_request:
     branches: [main]
   workflow_dispatch:
