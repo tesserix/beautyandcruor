@@ -420,8 +420,15 @@ func mountAdmin(mux *http.ServeMux) {
 			base:   localAPIOverride(),
 		},
 	}
+	a.uploads = uploadsFromEnv(&http.Client{Timeout: 60 * time.Second})
 	a.routes(mux)
 	log.Printf("enquiry: credits editor on /admin, committing to %s@%s", a.gh.repo, a.gh.branch)
+	if a.uploads != nil {
+		log.Printf("enquiry: image upload on, originals to gs://%s (max %d MB)",
+			a.uploads.bucket, a.uploads.maxBytes>>20)
+	} else {
+		log.Print("enquiry: image upload off — ADMIN_ORIGINALS_BUCKET unset")
+	}
 }
 
 // sessionKey returns the HMAC key for session cookies.

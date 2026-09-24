@@ -45,9 +45,10 @@ const (
 // The only files this service may ever write. Adding one is a code change,
 // reviewed, not a configuration value someone can widen by accident.
 var writablePaths = map[string]bool{
-	"src/content/credits.json":  true,
-	"src/content/curation.json": true,
-	"src/content/alt.json":      true,
+	"src/content/credits.json":         true,
+	"src/content/curation.json":        true,
+	"src/content/alt.json":             true,
+	"src/content/pending-uploads.json": true,
 }
 
 // errConflict means the file moved under us — someone committed between the
