@@ -109,6 +109,162 @@
   .picker { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 8px; margin-top: 8px; }
   details { border: 1px solid var(--hair); border-radius: 10px; padding: 12px 14px; margin-bottom: 14px; }
   summary { cursor: pointer; font-size: 13px; color: var(--ash); }
+/* ---- Invoice ---------------------------------------------------------
+   A form, and the document under it that redraws as she types. "Save as
+   PDF" is the browser's own print dialogue: no request is made, and only
+   the invoice number is stored anywhere (see invoice.go).
+
+   Set in the site's own faces, served from the binary (see fonts.go), and
+   built the way the site builds a page: hairline rules, wide-tracked mono
+   labels, and Eczar carrying the things that matter. The first version was
+   a boxed table with a filled header and a red bar across the total, which
+   is a template's idea of an invoice and looks nothing like the site.
+
+   The band at the top is what lets the real mark appear at all: the
+   artwork is cream and red on transparency, drawn for ink, so on white
+   paper the cream disappears. */
+@font-face {
+  font-family: "Eczar Admin"; src: url("/admin/fonts/eczar.woff2") format("woff2");
+  font-weight: 400 800; font-display: swap;
+}
+@font-face {
+  font-family: "Plex Admin"; src: url("/admin/fonts/plex-mono.woff2") format("woff2");
+  font-weight: 500; font-display: swap;
+}
+/* Parisienne. Stands in for a signature until she uploads one, and steps
+   aside the moment she does. */
+@font-face {
+  font-family: "Sign Admin"; src: url("/admin/fonts/signature.woff2") format("woff2");
+  font-weight: 400; font-display: swap;
+}
+:root {
+  --inv-ink: #07070a; --inv-chalk: #f2efea; --inv-cruor: #b3111d;
+  --inv-ash: #8c8780; --inv-hair: #e2ddd6;
+  --inv-display: "Eczar Admin", Georgia, "Times New Roman", serif;
+  --inv-mono: "Plex Admin", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --inv-sign: "Sign Admin", "Snell Roundhand", "Segoe Script", cursive;
+}
+/* A4 less the 12mm print margins. The document is a column that fills the
+   page, so the bank block and the signature sit on the floor of it the way
+   they would on a letterhead, and the slack falls in the middle instead of
+   leaving a third of the sheet blank under the footer. */
+#invoice .paper {
+  background: #fff; color: var(--inv-ink); border-radius: 4px;
+  margin-top: 22px; overflow: hidden;
+  font: 13px/1.6 var(--inv-mono);
+  min-height: 273mm; display: flex; flex-direction: column;
+}
+.inv-band {
+  background: var(--inv-ink); padding: 28px 40px; display: flex;
+  align-items: center; justify-content: space-between; gap: 28px; flex-wrap: wrap;
+  /* The one place the accent belongs: a hairline of cruor closing the band. */
+  border-bottom: 2px solid var(--inv-cruor);
+}
+.inv-title { text-align: right; }
+.inv-title .ref {
+  font: 500 10px/1.6 var(--inv-mono); letter-spacing: .16em;
+  text-transform: uppercase; color: #8e8a84; margin-top: 9px;
+}
+.inv-title .ref i { font-style: normal; padding: 0 7px; }
+.inv-lockup { display: grid; gap: 9px; justify-items: start; }
+.inv-lockup .mark { height: 50px; width: auto; display: block; }
+.inv-lockup .word { height: 18px; width: auto; display: block; }
+.inv-band h2 {
+  font: 500 31px/1 var(--inv-display); letter-spacing: .34em;
+  margin: 0 -.34em 0 0; text-transform: uppercase; color: var(--inv-chalk);
+}
+.inv-body { padding: 32px 40px 34px; flex: 1; display: flex; flex-direction: column; }
+
+/* The site's label: mono, small, wide, ash. */
+.inv-k {
+  font: 500 9.5px/1.6 var(--inv-mono); letter-spacing: .2em;
+  text-transform: uppercase; color: var(--inv-ash); display: block; margin-bottom: 3px;
+}
+.inv-v { font: 500 17px/1.3 var(--inv-display); }
+.inv-meta { display: flex; justify-content: space-between; gap: 40px; align-items: flex-start; }
+.inv-meta .to { max-width: 54%; }
+.inv-meta .to .inv-v { font-size: 16px; }
+.inv-meta .gst { font: 500 11px/1.6 var(--inv-mono); color: var(--inv-ash); margin-top: 3px; }
+/* Stacked, not side by side. Three columns across the meta row left the
+   event about 120px wide and broke "Comic Con" across two lines. */
+.inv-job { display: grid; gap: 12px; text-align: right; }
+.inv-job .inv-v { font-size: 15px; }
+
+/* Rules, not boxes. */
+#invoice table { width: 100%; border-collapse: collapse; margin-top: 26px; }
+#invoice th {
+  font: 500 9.5px/1.6 var(--inv-mono); letter-spacing: .2em; text-transform: uppercase;
+  color: var(--inv-ash); font-weight: 500; text-align: left;
+  padding: 0 10px 9px; border-bottom: 1px solid var(--inv-ink);
+}
+#invoice th.n, #invoice td.n { text-align: right; }
+#invoice td { padding: 11px 10px; border-bottom: 1px solid var(--inv-hair); vertical-align: baseline; }
+#invoice td.desc { font: 500 15px/1.4 var(--inv-display); }
+#invoice td.num { font: 500 11px/1.6 var(--inv-mono); color: var(--inv-ash); }
+#invoice td.n { font: 500 13px/1.5 var(--inv-mono); white-space: nowrap; }
+
+/* The total is the number they are looking for, so it is the largest thing
+   on the page rather than a coloured bar across it. */
+#invoice tr.total td { border: 0; padding: 16px 10px 0; }
+#invoice tr.total .lbl {
+  font: 500 9.5px/1.6 var(--inv-mono); letter-spacing: .2em;
+  text-transform: uppercase; color: var(--inv-ash);
+}
+/* nowrap, or the rupee sign breaks onto a line of its own above the
+   number, which is how the first render came out. */
+#invoice tr.total .amt {
+  font: 600 27px/1 var(--inv-display); color: var(--inv-cruor); white-space: nowrap;
+}
+
+/* Two rows, not one. Sharing a row with the signature left the address
+   column about 180px wide, which wrapped "Madh Island" from its postcode;
+   the signature now sits under the bank block where there is room for both. */
+.inv-foot {
+  display: grid; grid-template-columns: 1.15fr 1fr; gap: 14px 36px;
+  margin-top: auto; padding-top: 20px; border-top: 1px solid var(--inv-hair);
+}
+.inv-foot pre { margin: 0; font: 500 10.5px/1.8 var(--inv-mono); white-space: pre-wrap; color: #3a3a40; }
+.inv-terms {
+  margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--inv-hair);
+  font: 500 10.5px/1.6 var(--inv-mono); letter-spacing: .04em; color: var(--inv-ash);
+}
+/* min-width so the signing rule is a rule and not just the width of
+   whatever was uploaded — a compact mark collapsed it to 80px. */
+.inv-foot .sign {
+  grid-column: 2; justify-self: end; text-align: center;
+  margin-top: 6px; min-width: 210px;
+}
+.inv-foot .sign img { max-width: 196px; max-height: 82px; display: block; margin: 0 auto 3px; }
+/* nowrap: a signature that breaks across two lines is not one. The
+   rule sizes itself to the name rather than the name to the rule. */
+.inv-foot .sign .scribble {
+  font: 400 29px/1.1 var(--inv-sign); padding: 0 14px 3px; white-space: nowrap;
+}
+.inv-foot .sign .rule { border-top: 1px solid var(--inv-ink); margin: 0 0 6px; }
+.inv-foot .sign .who {
+  font: 500 9.5px/1.7 var(--inv-mono); letter-spacing: .2em;
+  text-transform: uppercase; color: var(--inv-ash);
+}
+
+.item { display: grid; gap: 10px; grid-template-columns: 1fr; align-items: end; }
+@media (min-width: 760px) { .item { grid-template-columns: minmax(0,1fr) 90px 140px 44px; } }
+.mine summary { cursor: pointer; color: var(--ash); padding: 10px 0; }
+.mine[open] summary { margin-bottom: 14px; }
+.inv-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 18px; }
+
+/* Print is the export. Everything that is not the document is chrome. */
+@media print {
+  @page { margin: 12mm; }
+  body { background: #fff; padding: 0; }
+  body > *:not(main), main > *:not(#invoice), #invoice > *:not(.paper),
+  .tabs, #bar { display: none !important; }
+  #invoice .paper { margin: 0; border-radius: 0; }
+  /* The band and the rules are the document, not decoration: without this
+     the mark prints as nothing on white. */
+  #invoice .inv-band, #invoice th, #invoice tr.total .amt {
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+}
 </style>
 
 <main>
@@ -133,6 +289,7 @@
   <button type="button" id="tab-credits" role="tab" aria-selected="true" aria-controls="editor">Credits</button>
   <button type="button" id="tab-sequence" role="tab" aria-selected="false" aria-controls="sequence">Running order</button>
   <button type="button" id="tab-images" role="tab" aria-selected="false" aria-controls="images" hidden>Add images</button>
+    <button type="button" id="tab-invoice" role="tab" aria-selected="false" aria-controls="invoice">Invoice</button>
 </div>
 
 <section id="editor" hidden>
@@ -146,6 +303,111 @@
        means scrolling the whole list to reach it. -->
   <button id="add" type="button">Add a credit</button>
   <div id="rows"></div>
+</section>
+
+<section id="invoice" hidden>
+  <h1>Invoice</h1>
+  <p class="sub">
+    Fill this in and the document below redraws. "Save as PDF" opens the browser's
+    own print dialogue — choose "Save as PDF" there and send it yourself. Nothing
+    on this tab is uploaded or kept on the site.
+  </p>
+
+  <div class="grid" style="margin-bottom:14px">
+    <div class="c-title"><label for="inv-to">Issued to</label>
+      <input id="inv-to" placeholder="Brands Arcadium Consulting Private Limited"></div>
+    <div class="c-role"><label for="inv-togst">Their GSTIN <span style="text-transform:none">(optional)</span></label>
+      <input id="inv-togst" placeholder="27AAMCB6198H24"></div>
+    <div class="c-director"><label for="inv-no">Invoice no.</label>
+      <input id="inv-no" placeholder="7101598"></div>
+    <div class="c-production"><label for="inv-date">Date issued</label>
+      <input id="inv-date" type="date"></div>
+    <div class="c-director"><label for="inv-event">Event name</label>
+      <input id="inv-event" placeholder="Comic Con"></div>
+    <div class="c-production"><label for="inv-where">Event location</label>
+      <input id="inv-where" placeholder="Jio World Convention Centre"></div>
+  </div>
+
+  <button id="inv-add" type="button">Add a line</button>
+  <div id="inv-items" style="margin-top:12px"></div>
+
+  <details class="mine">
+    <summary>My details, bank and terms — remembered in this browser only</summary>
+    <div class="grid">
+      <div class="c-title"><label for="my-name">Name</label><input id="my-name"></div>
+      <div class="c-role"><label for="my-contact">Contact no.</label><input id="my-contact"></div>
+      <div class="c-title"><label for="my-address">Address</label><input id="my-address"></div>
+      <div class="c-role"><label for="my-email">Email</label><input id="my-email"></div>
+      <div class="c-director"><label for="my-bank">Bank name</label><input id="my-bank"></div>
+      <div class="c-production"><label for="my-acname">Account name</label><input id="my-acname"></div>
+      <div class="c-year"><label for="my-acno">Account no.</label><input id="my-acno"></div>
+      <div class="c-year"><label for="my-ifsc">IFSC code</label><input id="my-ifsc"></div>
+      <div class="c-year"><label for="my-pan">PAN no.</label><input id="my-pan"></div>
+      <div class="c-role"><label for="my-terms">Payment terms</label><input id="my-terms"></div>
+      <div class="c-title"><label for="my-sign">Signature image <span style="text-transform:none">(optional, stays in this browser)</span></label>
+        <input id="my-sign" type="file" accept="image/png,image/jpeg,image/webp"></div>
+    </div>
+  </details>
+
+  <div class="paper" id="inv-doc">
+    <div class="inv-band">
+      <div class="inv-lockup">
+        <img class="mark" src="/brand/monogram.png" alt="">
+        <img class="word" src="/brand/wordmark.png" alt="Beauty &amp; Cruor">
+      </div>
+      <!-- The number and the date belong to the document, so they sit with
+           its title rather than being the first thing under the band. -->
+      <div class="inv-title">
+        <h2>Invoice</h2>
+        <div class="ref"><span id="d-no"></span><i id="d-sep" hidden>&middot;</i><span id="d-date"></span></div>
+      </div>
+    </div>
+    <div class="inv-body">
+    <div class="inv-meta">
+      <div class="to">
+        <span class="inv-k">Issued to</span>
+        <span class="inv-v" id="d-to"></span>
+        <div class="gst" id="d-togst"></div>
+      </div>
+      <!-- The job, not the payment: this belongs with the client rather than
+           buried in the block at the foot. -->
+      <div class="inv-job" id="d-job" hidden>
+        <div><span class="inv-k">Event</span><span class="inv-v" id="d-event"></span></div>
+        <div><span class="inv-k">Location</span><span class="inv-v" id="d-where"></span></div>
+      </div>
+    </div>
+    <table>
+      <thead><tr>
+        <th style="width:44px">No</th><th>Description</th>
+        <th class="n" style="width:56px">Qty</th>
+        <th class="n" style="width:110px">Price</th>
+        <th class="n" style="width:120px">Subtotal</th>
+      </tr></thead>
+      <tbody id="d-rows"></tbody>
+      <tbody><tr class="total">
+        <td colspan="4" class="n"><span class="lbl">Grand total</span></td>
+        <td class="n"><span class="amt" id="d-total"></span></td>
+      </tr></tbody>
+    </table>
+    <div class="inv-foot">
+      <pre id="d-from"></pre>
+      <pre id="d-bank"></pre>
+      <div class="sign">
+        <img id="d-sign" alt="" hidden>
+        <div class="scribble" id="d-scribble"></div>
+        <div class="rule"></div>
+        <div class="who" id="d-who">Signed</div>
+      </div>
+    </div>
+    <div class="inv-terms" id="d-terms"></div>
+    </div>
+  </div>
+
+  <div class="inv-actions">
+    <button class="primary" id="inv-print" type="button">Save as PDF</button>
+    <button id="inv-next" type="button">Take the next number</button>
+    <span id="inv-msg" class="sub" style="margin:0"></span>
+  </div>
 </section>
 
 <section id="images" hidden>
@@ -702,6 +964,239 @@
 
   // --- tabs ----------------------------------------------------------------
 
+
+  /* ---- Invoice --------------------------------------------------------
+     Entirely this page. No fetch, no save, no server: "Save as PDF" is
+     window.print() against the @media print rules above, and the browser
+     writes the file.
+
+     MY details are remembered, the CLIENT's are not — and they are
+     remembered HERE, in localStorage, not in the repository. This
+     repository is public: a PAN and a bank account committed to it would
+     be permanent and world-readable. The client, the amounts and the
+     invoice itself are never stored at all; they exist in the PDF she
+     saves and nowhere else. */
+  const MINE_KEY = "bac.invoice.mine.v1";
+  const MINE = ["name","contact","address","email","bank","acname","acno","ifsc","pan","terms"];
+
+  /* Deliberately empty.
+   *
+   * Her name, address, phone, bank and PAN were prefilled here from the
+   * invoice she already sends, which put her home address and personal
+   * number into a public repository — the exact thing this design avoids by
+   * keeping them in localStorage. The page is embedded in the sidecar binary
+   * and served from the pod, but the source of it is public, so a default is
+   * a publication.
+   *
+   * She types them once, on the first invoice, and the browser keeps them.
+   * Only the payment terms are seeded, because they say nothing about her.
+   */
+  const MINE_DEFAULT = {
+    name: "", contact: "", address: "", email: "",
+    bank: "", acname: "", acno: "", ifsc: "", pan: "",
+    terms: "50% advance and 50% 7 days after event day",
+    sign: "",
+  };
+
+  let signData = "";
+  let items = [];
+
+  function mineLoad() {
+    let saved = {};
+    try { saved = JSON.parse(localStorage.getItem(MINE_KEY) || "{}"); } catch {}
+    return { ...MINE_DEFAULT, ...saved };
+  }
+  function mineSave() {
+    const out = { sign: signData };
+    for (const k of MINE) out[k] = $("my-" + k).value;
+    try { localStorage.setItem(MINE_KEY, JSON.stringify(out)); } catch {}
+  }
+
+  /* Indian digit grouping: 14,000 but 1,14,000. Intl gets this right and
+     every browser this admin runs in has it, so it is not hand-rolled. */
+  const money = (n) =>
+    "₹ " + new Intl.NumberFormat("en-IN", { maximumFractionDigits: 2 }).format(Math.abs(n));
+  /* Advances are entered as a negative price, the way her own invoice nets
+     them off, so the minus has to survive into the document. */
+  const signedMoney = (n) => (n < 0 ? "− " + money(n) : money(n));
+
+  function itemRow(it, i) {
+    const d = document.createElement("div");
+    d.className = "item row";
+    d.innerHTML =
+      '<div><label>Description</label><input class="i-desc"></div>' +
+      '<div><label>Qty</label><input class="i-qty" type="number" step="1"></div>' +
+      '<div><label>Price</label><input class="i-price" type="number" step="0.01"></div>' +
+      '<div><button type="button" class="tiny i-del" aria-label="Remove this line">×</button></div>';
+    d.querySelector(".i-desc").value = it.desc;
+    d.querySelector(".i-qty").value = it.qty;
+    d.querySelector(".i-price").value = it.price;
+    d.querySelector(".i-desc").addEventListener("input", (e) => { items[i].desc = e.target.value; drawInvoice(); });
+    d.querySelector(".i-qty").addEventListener("input", (e) => { items[i].qty = e.target.value; drawInvoice(); });
+    d.querySelector(".i-price").addEventListener("input", (e) => { items[i].price = e.target.value; drawInvoice(); });
+    d.querySelector(".i-del").addEventListener("click", () => { items.splice(i, 1); renderItems(); drawInvoice(); });
+    return d;
+  }
+  function renderItems() {
+    const box = $("inv-items");
+    box.textContent = "";
+    items.forEach((it, i) => box.appendChild(itemRow(it, i)));
+  }
+
+  /* "9th May, 2026", as on her own invoice. */
+  function prettyDate(v) {
+    if (!v) return "";
+    const d = new Date(v + "T00:00:00");
+    if (isNaN(d)) return v;
+    const n = d.getDate();
+    const th = n % 10 === 1 && n !== 11 ? "st" : n % 10 === 2 && n !== 12 ? "nd"
+             : n % 10 === 3 && n !== 13 ? "rd" : "th";
+    return n + th + " " + d.toLocaleString("en-GB", { month: "long" }) + ", " + d.getFullYear();
+  }
+
+  function drawInvoice() {
+    const no = $("inv-no").value ? "#" + $("inv-no").value : "";
+    const when = prettyDate($("inv-date").value);
+    $("d-no").textContent = no;
+    $("d-date").textContent = when;
+    // The separator only earns its place when both sides of it exist.
+    $("d-sep").hidden = !(no && when);
+    $("d-to").textContent = $("inv-to").value;
+    $("d-togst").textContent = $("inv-togst").value ? "GSTIN " + $("inv-togst").value : "";
+
+    const body = $("d-rows");
+    body.textContent = "";
+    let total = 0;
+    items.forEach((it, i) => {
+      const qty = Number(it.qty) || 0;
+      const price = Number(it.price) || 0;
+      const sub = qty * price;
+      total += sub;
+      const cells = [
+        { text: String(i + 1), cls: "num" },
+        { text: it.desc, cls: "desc" },
+        { text: it.qty === "" ? "" : String(qty), cls: "n" },
+        { text: it.price === "" ? "" : signedMoney(price), cls: "n" },
+        { text: it.price === "" ? "" : signedMoney(sub), cls: "n" },
+      ];
+      const tr = document.createElement("tr");
+      for (const c of cells) {
+        const td = document.createElement("td");
+        td.className = c.cls;
+        td.textContent = c.text;
+        tr.appendChild(td);
+      }
+      body.appendChild(tr);
+    });
+    $("d-total").textContent = items.length ? money(total) : "";
+
+    // The job sits with the invoice details above; who to pay and how sits
+    // at the foot. They used to be one column, which wrapped.
+    const ev = $("inv-event").value, wh = $("inv-where").value;
+    $("d-job").hidden = !(ev || wh);
+    $("d-event").textContent = ev;
+    $("d-where").textContent = wh;
+
+    const m = {};
+    for (const k of MINE) m[k] = $("my-" + k).value;
+
+    const from = [];
+    if (m.name) from.push("Name : " + m.name);
+    if (m.address) from.push("Address : " + m.address);
+    if (m.contact) from.push("Contact No : " + m.contact);
+    if (m.email) from.push("Email : " + m.email);
+    $("d-from").textContent = from.join("\n");
+
+    const bank = [];
+    if (m.bank) bank.push("Bank Name : " + m.bank);
+    if (m.acname) bank.push("Account Name : " + m.acname);
+    if (m.acno) bank.push("Account No : " + m.acno);
+    if (m.ifsc) bank.push("IFSC Code : " + m.ifsc);
+    if (m.pan) bank.push("PAN No : " + m.pan);
+    $("d-bank").textContent = bank.join("\n");
+
+    $("d-terms").textContent = m.terms ? "Payment terms: " + m.terms : "";
+
+    /* Her name in a script face stands in for a signature, and steps aside
+       the moment she uploads a real one — two signatures over one rule would
+       look like a mistake. */
+    const img = $("d-sign");
+    img.hidden = !signData;
+    if (signData) img.src = signData;
+    const scribble = $("d-scribble");
+    scribble.textContent = signData ? "" : m.name || "";
+    scribble.hidden = !!signData;
+    /* Her name under the rule rather than the word "Signed", which said
+       nothing a reader could not already see. Falls back to the word while
+       she has not filled her details in. */
+    $("d-who").textContent = m.name || "Signed";
+  }
+
+  function invoiceInit() {
+    if (invoiceInit.done) return;
+    invoiceInit.done = true;
+    const mine = mineLoad();
+    for (const k of MINE) $("my-" + k).value = mine[k] ?? "";
+    signData = mine.sign || "";
+
+    for (const id of ["inv-to","inv-togst","inv-no","inv-date","inv-event","inv-where"])
+      $(id).addEventListener("input", drawInvoice);
+    for (const k of MINE)
+      $("my-" + k).addEventListener("input", () => { mineSave(); drawInvoice(); });
+
+    $("my-sign").addEventListener("change", (e) => {
+      const f = e.target.files && e.target.files[0];
+      if (!f) return;
+      // A signature, not a photograph. localStorage is small and shared
+      // with everything else this origin keeps.
+      if (f.size > 400 * 1024) {
+        alert("That image is too large. A signature under 400KB, please.");
+        e.target.value = "";
+        return;
+      }
+      const r = new FileReader();
+      r.onload = () => { signData = String(r.result); mineSave(); drawInvoice(); };
+      r.readAsDataURL(f);
+    });
+    $("inv-add").addEventListener("click", () => {
+      items.push({ desc: "", qty: "1", price: "" });
+      renderItems();
+      drawInvoice();
+    });
+    $("inv-print").addEventListener("click", () => window.print());
+
+    /* The counter is the one part of this tab that touches the server, and
+       the only part that is stored. It is a POST because it consumes a
+       number: see invoice.go for why a skipped number is preferable to a
+       repeated one. If it fails she can type a number and carry on, so the
+       failure is a message and not a blocked screen. */
+    $("inv-next").addEventListener("click", async () => {
+      const btn = $("inv-next");
+      const msg = $("inv-msg");
+      btn.disabled = true;
+      msg.textContent = "";
+      try {
+        const res = await fetch("/admin/invoice-number", {
+          method: "POST",
+          headers: { "X-CSRF-Token": CSRF },
+        });
+        const body = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(body.error || "That did not work.");
+        $("inv-no").value = String(body.number);
+        drawInvoice();
+      } catch (err) {
+        msg.textContent = String(err.message || err);
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    if (!$("inv-date").value) $("inv-date").value = new Date().toISOString().slice(0, 10);
+    items = [{ desc: "", qty: "1", price: "" }];
+    renderItems();
+    drawInvoice();
+  }
+
   let tab = "credits";
 
   function show(which) {
@@ -712,13 +1207,18 @@
     $("editor").hidden = which !== "credits";
     $("sequence").hidden = which !== "sequence";
     $("images").hidden = which !== "images";
+    $("invoice").hidden = which !== "invoice";
     $("tab-credits").setAttribute("aria-selected", String(which === "credits"));
     $("tab-sequence").setAttribute("aria-selected", String(which === "sequence"));
     if (UPLOADS_ON) $("tab-images").setAttribute("aria-selected", String(which === "images"));
+    $("tab-invoice").setAttribute("aria-selected", String(which === "invoice"));
     // Uploading is its own thing: nothing to save, so the bar's Save button
     // has no meaning here.
-    $("save").hidden = which === "images";
+    // Nothing to save on either: uploading posts as it goes, and the
+    // invoice never leaves the browser.
+    $("save").hidden = which === "images" || which === "invoice";
     if (which === "sequence") loadSequence();
+    else if (which === "invoice") invoiceInit();
     else if (which === "credits") load();
   }
 
@@ -726,6 +1226,7 @@
     $("tabs").hidden = false;
     $("tab-credits").addEventListener("click", () => show("credits"));
     $("tab-sequence").addEventListener("click", () => show("sequence"));
+    $("tab-invoice").addEventListener("click", () => show("invoice"));
     if (UPLOADS_ON) {
       $("tab-images").hidden = false;
       $("tab-images").addEventListener("click", () => show("images"));
