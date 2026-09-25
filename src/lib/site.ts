@@ -46,7 +46,21 @@ export const LOCATIONS = [
   { city: "Mumbai", region: "Maharashtra", country: "IN", countryName: "India" },
 ] as const;
 
-/** The four disciplines, in the client's stated priority order. */
+/**
+ * The four disciplines, in the client's stated priority order.
+ *
+ * `notice` is a standing line for a discipline whose work needs saying out
+ * loud before it is looked at — not a gate. Asked whether the graphic work
+ * should carry a warning or sit behind an industry login, Parimiti said yes to
+ * a warning, picturing Instagram's tap-to-reveal. A whole-site interstitial is
+ * not that: it would sit in front of the page that gets her hired, hurt the
+ * hero's LCP, and read as inexperience to the directors and production
+ * designers who are looking for exactly this work.
+ *
+ * It is also the wrong page. 25 of the 27 genuinely graphic images are in SFX;
+ * film has one, editorial one, casting none. So the line goes where the work
+ * is, and only there.
+ */
 export const DISCIPLINES = [
   {
     slug: "sfx-prosthetics",
@@ -54,6 +68,7 @@ export const DISCIPLINES = [
     short: "SFX",
     blurb:
       "Trauma, burns, creature builds and age work for film, television and stage. Appliances sculpted, moulded and run in-house.",
+    notice: "Realistic wounds and blood",
   },
   {
     slug: "casting-sculpting",
@@ -76,7 +91,7 @@ export const DISCIPLINES = [
   },
 ] as const;
 
-export type Discipline = (typeof DISCIPLINES)[number];
+export type Discipline = (typeof DISCIPLINES)[number] & { notice?: string };
 
 /**
  * Every URL the old site exposed that must keep resolving. Used by sitemap.ts
