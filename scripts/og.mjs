@@ -14,7 +14,7 @@
  *   node scripts/og.mjs
  */
 import sharp from "sharp";
-import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { existsSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 
 const W = 1200;
@@ -42,17 +42,23 @@ function portraitSource() {
   return join(PORTRAIT_DIR, files.sort((a, b) => widthOf(b) - widthOf(a))[0]);
 }
 
-const MARK_W = 420;
-const mark = readFileSync("public/brand/logo-mask.svg", "utf8");
-// Read the proportions off the mark instead of hard-coding them. They were
-// 1067x327 for the script signature; a redrawn mark with a different ratio
-// would otherwise be stretched onto every share card.
-const [, , markW, markH] = mark.match(/viewBox="([-\d.]+) ([-\d.]+) ([\d.]+) ([\d.]+)"/).slice(1).map(Number);
-const markRatio = markW / markH;
-// The mask is black-on-transparent at 1067x327; recolour to chalk and scale.
-const markChalk = mark
-  .replace('fill="#000"', `fill="${CHALK}"`)
-  .replace("<svg ", `<svg width="${MARK_W}" height="${Math.round(MARK_W / markRatio)}" `);
+const MARK_W = 300;
+
+/**
+ * The card carries the lockup as an image now, not a recoloured mask.
+ *
+ * It used to read the mark's viewBox and recolour its fill, which only worked
+ * while the mark was one colour and geometry. It is cream and red artwork on a
+ * transparent ground, so there is nothing to recolour — the card's ground is
+ * already ink, which is the ground it was drawn for.
+ */
+const markFile = "brand/lockup.png";
+const markMeta = await sharp(markFile).metadata();
+const markRatio = markMeta.width / markMeta.height;
+const markImage = await sharp(markFile)
+  .resize({ width: MARK_W, withoutEnlargement: true })
+  .png()
+  .toBuffer();
 
 const PANEL = 560; // where the photograph starts
 
@@ -87,18 +93,20 @@ if (src) {
   layers.push({ input: fade, left: PANEL, top: 0 });
 }
 
-layers.push({ input: Buffer.from(markChalk), left: 72, top: 150 });
+layers.push({ input: markImage, left: 72, top: 150 });
 
-// Two lines of supporting type. System faces only: librsvg has no access to
+// Supporting type under the mark. System faces only: librsvg has no access to
 // the Google fonts the site loads at runtime, and a missing family renders as
 // a fallback anyway — so the brand voice is carried by the mark above.
+//
+// "Prosthetics, SFX, hair and makeup" used to lead here. The mark now sets
+// MAKEUP · SFX · PROSTHETICS in its own tagline, so that line said the same
+// thing twice on one card.
 const caption = Buffer.from(
   `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}">
-     <text x="72" y="330" fill="${CHALK}" font-family="Georgia, 'Times New Roman', serif"
-           font-size="34">Prosthetics, SFX, hair and makeup</text>
-     <text x="72" y="382" fill="${ASH}" font-family="Georgia, 'Times New Roman', serif"
-           font-size="26">for film and television</text>
-     <text x="72" y="470" fill="${ASH}" font-family="'Courier New', monospace"
+     <text x="72" y="452" fill="${CHALK}" font-family="Georgia, 'Times New Roman', serif"
+           font-size="32">for film and television</text>
+     <text x="72" y="516" fill="${ASH}" font-family="'Courier New', monospace"
            font-size="19" letter-spacing="4">SYDNEY · MUMBAI</text>
    </svg>`,
 );
@@ -111,5 +119,6 @@ await sharp({
   .jpeg({ quality: 86, progressive: true, chromaSubsampling: "4:4:4" })
   .toFile(OUT);
 
-const { size } = await sharp(OUT).metadata();
-console.log(`wrote ${OUT} — ${W}x${H}, ${Math.round((size ?? 0) / 1024)}KB`);
+// statSync, not metadata().size — that field is only populated when sharp is
+// handed a buffer, so reading it back from the path always reported 0KB.
+console.log(`wrote ${OUT} — ${W}x${H}, ${Math.round(statSync(OUT).size / 1024)}KB`);

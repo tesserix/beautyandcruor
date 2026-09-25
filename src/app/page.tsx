@@ -48,7 +48,19 @@ export default function Home() {
             {/* The bar mark measures this and then takes its place, so the
                 two are never both on screen. Left here rather than removed:
                 with no script, or with reduced motion, this is the mark. */}
-            <Logo data-hero-mark className="h-[clamp(44px,14vw,72px)]" />
+            {/* The monogram and the wordmark are stacked rather than drawn
+                from the single lockup file, because only the monogram may
+                travel: <Chrome> scales the bar's own mark up into this spot,
+                and that reads as one object only while both are the same
+                artwork. The wordmark fades instead. Widths are tied so the
+                pair keeps the proportions the lockup was drawn in. */}
+            <div
+              className="grid justify-items-start gap-[0.45em]"
+              style={{ width: "clamp(128px,33vw,190px)" }}
+            >
+              <Logo data-hero-mark variant="mark" className="w-[75%]" />
+              <Logo data-hero-wordmark variant="wordmark" className="w-full" />
+            </div>
             <p className="lab" style={{ letterSpacing: "0.22em" }}>
               {SITE.artist} · Sydney / Mumbai
             </p>
