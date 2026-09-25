@@ -119,6 +119,21 @@ func uploadAdmin(t *testing.T, stored *[][2]string, maxBytes int64) (*adminHandl
 	// Point the uploader at the stub by rewriting the URL template is not
 	// possible without a field, so the stub is addressed through a transport.
 	a.uploads.client = &http.Client{Transport: rewriteHost{gcs.URL, gcs.Client().Transport}}
+
+	// A successful upload also records itself in pending-uploads.json, so the
+	// GitHub side has to answer too. Without this the handler reaches a nil
+	// client and panics — which is what happens when only the failure paths
+	// are ever tested.
+	gh := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet {
+			http.Error(w, `{"message":"Not Found"}`, http.StatusNotFound) // first upload creates it
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]any{"commit": map[string]string{"sha": "new"}})
+	}))
+	t.Cleanup(gh.Close)
+	a.gh = &github{token: "t", repo: "owner/name", branch: "main", client: gh.Client(), base: gh.URL}
+
 	mux := http.NewServeMux()
 	a.routes(mux)
 	return a, mux
@@ -277,5 +292,43 @@ func TestAcceptedFormatsAreOnesThePipelineProcesses(t *testing.T) {
 		if skipped[m.name] {
 			t.Errorf("%s is accepted at upload but skipped by the image pipeline", m.name)
 		}
+	}
+}
+
+// A photograph with no description cannot be published: alt-check.mjs fails
+// the build for a published image without one. Accepting it would store a file
+// that can never become an image on the site — the same dead end HEIC was.
+func TestUploadRequiresGalleryAndDescription(t *testing.T) {
+	for name, fields := range map[string]map[string]string{
+		"no gallery":             {"alt": "A prosthetic burn across one cheek"},
+		"unknown gallery":        {"gallery": "nonsense", "alt": "A prosthetic burn"},
+		"no description":         {"gallery": "sfx"},
+		"blank description":      {"gallery": "sfx", "alt": "   "},
+		"description too long":   {"gallery": "sfx", "alt": strings.Repeat("x", maxAltLen+1)},
+		"newline in description": {"gallery": "sfx", "alt": "one\ntwo"},
+	} {
+		var stored [][2]string
+		a, mux := uploadAdmin(t, &stored, 25<<20)
+		rec := httptest.NewRecorder()
+		mux.ServeHTTP(rec, uploadRequest(a, "image", "a.jpg", jpegBytes(64), fields))
+		if rec.Code != http.StatusBadRequest {
+			t.Errorf("%s: got %d, want 400 (%s)", name, rec.Code, rec.Body)
+		}
+		if len(stored) != 0 {
+			t.Errorf("%s: reached the bucket anyway", name)
+		}
+	}
+
+	// And the good case still works, with the gallery normalised.
+	var stored [][2]string
+	a, mux := uploadAdmin(t, &stored, 25<<20)
+	rec := httptest.NewRecorder()
+	mux.ServeHTTP(rec, uploadRequest(a, "image", "burn.jpg", jpegBytes(64),
+		map[string]string{"gallery": "SFX", "alt": "A prosthetic burn across one cheek"}))
+	if rec.Code != http.StatusOK && rec.Code != http.StatusAccepted {
+		t.Fatalf("a complete upload was refused: %d %s", rec.Code, rec.Body)
+	}
+	if len(stored) != 1 || !strings.HasPrefix(stored[0][0], "uploads/sfx/") {
+		t.Errorf("stored at %q, want uploads/sfx/…", stored[0][0])
 	}
 }

@@ -102,6 +102,10 @@
   }
   .nudge { display: flex; gap: 4px; justify-content: center; padding: 4px 0; }
   .nudge button { min-height: 28px; padding: 0 8px; font-size: 12px; }
+  .qrow { display: flex; gap: 12px; align-items: flex-end; border: 1px solid var(--hair); border-radius: 10px; padding: 12px; margin-bottom: 10px; background: #0b0b10; }
+  .qrow img { width: 72px; height: 72px; object-fit: cover; border-radius: 6px; flex: 0 0 auto; background: var(--ink-2); }
+  .qrow .f { flex: 1; min-width: 0; }
+  .qrow .name { font-size: 12px; color: var(--ash); margin-bottom: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .picker { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 8px; margin-top: 8px; }
   details { border: 1px solid var(--hair); border-radius: 10px; padding: 12px 14px; margin-bottom: 14px; }
   summary { cursor: pointer; font-size: 13px; color: var(--ash); }
@@ -155,12 +159,12 @@
   <div class="row">
     <div class="grid">
       <div class="c-title">
-        <label for="img-file">Photograph</label>
-        <input id="img-file" type="file" accept="image/*" multiple>
+        <label for="img-file">Photographs</label>
+        <input id="img-file" type="file" accept="image/jpeg,image/png,image/webp,image/avif" multiple>
       </div>
       <div class="c-role">
-        <label for="img-gallery">Which work is this? (optional)</label>
-        <input id="img-gallery" list="galleries" placeholder="SFX, casting, film, editorial">
+        <label for="img-gallery">Which work is this?</label>
+        <input id="img-gallery" list="galleries" placeholder="SFX, casting, film or editorial">
         <datalist id="galleries">
           <option value="sfx"></option><option value="casting"></option>
           <option value="film"></option><option value="editorial"></option>
@@ -172,6 +176,11 @@
       <button id="img-upload" class="primary" type="button" disabled>Upload</button>
     </div>
   </div>
+
+  <!-- One row per chosen file. Describing the photograph is not optional: a
+       published image without a description fails the build, and this is the
+       only moment anyone is looking at the picture. -->
+  <div id="img-queue"></div>
   <div id="img-done"></div>
 </section>
 
@@ -597,15 +606,62 @@
   }
 
   if (UPLOADS_ON) {
-    $("img-file").addEventListener("change", () => {
-      const n = $("img-file").files.length;
-      $("img-upload").disabled = n === 0;
-      $("img-status").textContent = n ? `${n} file${n === 1 ? "" : "s"} chosen.` : "JPEG, PNG, HEIC, WebP or AVIF.";
-    });
+    // A row per file, with the picture beside the box you describe it in.
+    // Describing it later, from a filename, is how alt text ends up saying
+    // "IMG_4654".
+    function queueRows() {
+      const files = [...$("img-file").files];
+      $("img-queue").replaceChildren(...files.map((file) => {
+        const row = document.createElement("div");
+        row.className = "qrow";
+        const img = document.createElement("img");
+        img.alt = "";
+        img.src = URL.createObjectURL(file);
+        img.addEventListener("load", () => URL.revokeObjectURL(img.src), { once: true });
+        const f = document.createElement("div");
+        f.className = "f";
+        const name = document.createElement("div");
+        name.className = "name";
+        name.textContent = `${file.name} — ${(file.size / 1048576).toFixed(1)} MB`;
+        const label = document.createElement("label");
+        const id = "alt-" + Math.random().toString(36).slice(2, 8);
+        label.setAttribute("for", id);
+        label.textContent = "What is in this photograph?";
+        const alt = document.createElement("input");
+        alt.id = id;
+        alt.dataset.alt = file.name;
+        alt.placeholder = "A prosthetic burn across one cheek, blistered and wet";
+        alt.addEventListener("input", refresh);
+        f.append(name, label, alt);
+        row.append(img, f);
+        return row;
+      }));
+      refresh();
+    }
+
+    function altFields() { return [...$("img-queue").querySelectorAll("input[data-alt]")]; }
+
+    function refresh() {
+      const files = [...$("img-file").files];
+      const described = altFields().filter((i) => i.value.trim()).length;
+      const gallery = $("img-gallery").value.trim();
+      $("img-upload").disabled = files.length === 0 || described < files.length || !gallery;
+      $("img-status").textContent = !files.length
+        ? "JPEG, PNG, WebP or AVIF."
+        : !gallery
+        ? "Say which work this is."
+        : described < files.length
+        ? `${files.length - described} still to describe.`
+        : `${files.length} ready.`;
+    }
+
+    $("img-file").addEventListener("change", queueRows);
+    $("img-gallery").addEventListener("input", refresh);
 
     $("img-upload").addEventListener("click", async () => {
       const files = [...$("img-file").files];
       if (!files.length) return;
+      const alts = Object.fromEntries(altFields().map((i) => [i.dataset.alt, i.value.trim()]));
       $("img-upload").disabled = true;
       $("img-message").hidden = true;
       let done = 0;
@@ -614,6 +670,7 @@
         const form = new FormData();
         form.append("image", file);
         form.append("gallery", $("img-gallery").value.trim());
+        form.append("alt", alts[file.name] || "");
         try {
           const res = await fetch("/admin/images", {
             method: "POST", headers: { "X-CSRF-Token": CSRF }, body: form,
@@ -637,8 +694,9 @@
         }
       }
       imgSay(`${done} image${done === 1 ? "" : "s"} uploaded. They will appear once the sizes are generated.`, false);
-      $("img-status").textContent = "JPEG, PNG, HEIC, WebP or AVIF.";
+      $("img-status").textContent = "JPEG, PNG, WebP or AVIF.";
       $("img-file").value = "";
+      $("img-queue").replaceChildren();
     });
   }
 

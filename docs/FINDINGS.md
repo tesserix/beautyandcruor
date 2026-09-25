@@ -319,3 +319,66 @@ shipped but never rendered.
 an estimated Lighthouse mobile score around 66. This is a constraint of the prototype format
 (artifact CSP blocks external images), **not** of the production design — `scripts/images.mjs`
 already emits real files with a proper srcset ladder. The production build must not inline.
+
+### The rights gate can clear more than it was told to
+
+`scripts/assets-sync.mjs` refuses to publish any image the live WordPress site
+never showed and nobody has explicitly cleared. It matches on an *identity* —
+WordPress serves one upload under several names, so `x.jpg`, `x-scaled.jpg`
+and `x-1024x768.jpg` all have to resolve to the same thing.
+
+That function also strips `-edited` and `-edited-N`, and those are not aliases
+of one upload. They are separate photographs:
+
+```
+2023/04/IMG_1077-edited.jpg     ┐
+2023/04/IMG_1077-edited-1.jpg   ├─ three images, one identity
+2023/04/IMG_1077-edited-2.jpg   ┘
+```
+
+Nothing is wrong today. All three are `unpublished/`, in no gallery, so the
+gate never evaluates them; and the one real match it needs — the crawl's
+`2022/09/IMG_1077-scaled.jpg` to `casting/casting-004` — is correct and comes
+from the `-scaled` rule, not this one.
+
+The hazard is latent and points the wrong way. **Clearing any one of those
+three would silently clear the other two**, and over-matching in a gate whose
+whole purpose is Q7/Q8 — photographs of other people whose releases are
+unresolved — is the failure it exists to prevent.
+
+Worth noting too that the crawl contains **no** `-edited` names at all, so the
+rule currently buys nothing and costs a collision. Removing it looks safe, but
+it is a change to how publication is decided and deserves its own reasoning
+rather than riding along with something else.
+
+It is also a third copy of `identity()`. `src/lib/identity.mjs` is shared
+between `organize.mjs` and the site; this one is separate and has diverged —
+which is exactly how the curated film leads were silently unresolvable before.
+
+## A bare `catch {}` turned a missing import into "no images"
+
+Extracting the derivative ladder into `scripts/lib/ladder.mjs` moved `sharp`
+out of `scripts/images.mjs`, but `pickSample()` still called it. The call sat
+inside `catch {}`, so the `ReferenceError` was swallowed once per file and the
+run reported `0 images` — then wrote that empty manifest over the real one.
+
+Two things were wrong and both are fixed:
+
+- The `catch` now rethrows `ReferenceError` and `TypeError`. It was there to
+  skip an unreadable image, and a programming error is not that.
+- `images.mjs` refuses to replace a populated manifest with an empty one. The
+  library does not vanish; an empty result means the walk read nothing, and
+  the manifest costs fifteen minutes to regenerate.
+
+## `--sample` wrote the real manifest
+
+`npm run images:sample` derives a dozen representative images to check encoder
+settings. It wrote `src/generated/images.json` — the same file the full run
+produces — so a sample replaced 280 entries with 12. It now writes
+`images.sample.json`, which is gitignored.
+
+Worth saying plainly, because it cost two recoveries in one session: `npm run
+images` is `images.mjs && organize.mjs`. Running `images.mjs` alone is not half
+the job, it is a different job — it emits keys derived from source paths
+(`2022/04/Copy-of-…`), and `organize.mjs` is what renames them to `sfx/sfx-001`
+and moves the derivatives to match. Run the pair or neither.

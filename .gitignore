@@ -37,3 +37,6 @@ next-env.d.ts
 
 # The sidecar binary, if built in place.
 /enquiry/enquiry
+
+# A --sample run derives a dozen images to eyeball encoder settings.
+src/generated/images.sample.json

@@ -61,6 +61,7 @@ const (
 
 	defaultMaxUpload = 25 << 20
 	maxUploadsPerDay = 200
+	maxAltLen        = 300
 )
 
 // pendingUpload is one row of pending-uploads.json: what arrived, where it
@@ -314,8 +315,36 @@ func (a *adminHandler) postImage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Both of these are required, and the server has to say so rather than
+	// trusting the form. Without a gallery there is nowhere to publish it;
+	// without a description it cannot be published at all, because
+	// scripts/alt-check.mjs fails the build for a published image with no alt
+	// text. Storing one that can never be derived is the dead end HEIC was.
+	gallery := strings.TrimSpace(r.FormValue("gallery"))
+	alt := strings.TrimSpace(r.FormValue("alt"))
+	if galleryFolder(gallery) == "unsorted" {
+		writeJSON(w, http.StatusBadRequest, map[string]string{
+			"error": "Say which work this is: SFX, casting, film or editorial."})
+		return
+	}
+	if alt == "" {
+		writeJSON(w, http.StatusBadRequest, map[string]string{
+			"error": "Describe what is in the photograph. It is what a screen reader reads out, and an image cannot be published without it."})
+		return
+	}
+	if len([]rune(alt)) > maxAltLen {
+		writeJSON(w, http.StatusBadRequest, map[string]string{
+			"error": fmt.Sprintf("That description is %d characters; keep it under %d.", len([]rune(alt)), maxAltLen)})
+		return
+	}
+	if hasControlChar(alt) {
+		writeJSON(w, http.StatusBadRequest, map[string]string{
+			"error": "The description contains a line break or control character."})
+		return
+	}
+
 	now := time.Now()
-	object := objectName(now, header.Filename, kind, r.FormValue("gallery"))
+	object := objectName(now, header.Filename, kind, gallery)
 	if err := a.uploads.put(object, body, "image/"+kind); err != nil {
 		log.Printf("admin: storing upload: %v", err)
 		writeJSON(w, http.StatusBadGateway, map[string]string{"error": "The upload did not save. Nothing was stored."})
@@ -325,8 +354,8 @@ func (a *adminHandler) postImage(w http.ResponseWriter, r *http.Request) {
 	entry := pendingUpload{
 		Object:   object,
 		Original: header.Filename,
-		Gallery:  strings.TrimSpace(r.FormValue("gallery")),
-		Alt:      strings.TrimSpace(r.FormValue("alt")),
+		Gallery:  galleryFolder(gallery),
+		Alt:      alt,
 		Bytes:    len(body),
 		Uploaded: now.UTC().Format(time.RFC3339),
 	}
