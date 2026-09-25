@@ -185,6 +185,11 @@
 .inv-meta .to { max-width: 54%; }
 .inv-meta .to .inv-v { font-size: 16px; }
 .inv-meta .gst { font: 500 11px/1.6 var(--inv-mono); color: var(--inv-ash); margin-top: 3px; }
+/* The billing address, when they need one on it. Set below the name in the
+   body register rather than the label one: it is content, not a caption. */
+.inv-meta .toaddr {
+  font: 500 11.5px/1.65 var(--inv-mono); color: #3a3a40; margin-top: 5px;
+}
 /* Stacked, not side by side. Three columns across the meta row left the
    event about 120px wide and broke "Comic Con" across two lines. */
 .inv-job { display: grid; gap: 12px; text-align: right; }
@@ -318,6 +323,8 @@
       <input id="inv-to" placeholder="Brands Arcadium Consulting Private Limited"></div>
     <div class="c-role"><label for="inv-togst">Their GSTIN <span style="text-transform:none">(optional)</span></label>
       <input id="inv-togst" placeholder="27AAMCB6198H24"></div>
+    <div class="c-title"><label for="inv-toaddr">Their address <span style="text-transform:none">(optional)</span></label>
+      <input id="inv-toaddr" placeholder="Unit 4, Lower Parel, Mumbai 400013"></div>
     <div class="c-director"><label for="inv-no">Invoice no.</label>
       <input id="inv-no" placeholder="7101598"></div>
     <div class="c-production"><label for="inv-date">Date issued</label>
@@ -367,6 +374,7 @@
       <div class="to">
         <span class="inv-k">Issued to</span>
         <span class="inv-v" id="d-to"></span>
+        <div class="toaddr" id="d-toaddr"></div>
         <div class="gst" id="d-togst"></div>
       </div>
       <!-- The job, not the payment: this belongs with the client rather than
@@ -1062,6 +1070,9 @@
     // The separator only earns its place when both sides of it exist.
     $("d-sep").hidden = !(no && when);
     $("d-to").textContent = $("inv-to").value;
+    const toAddr = $("inv-toaddr").value;
+    $("d-toaddr").textContent = toAddr;
+    $("d-toaddr").hidden = !toAddr;
     $("d-togst").textContent = $("inv-togst").value ? "GSTIN " + $("inv-togst").value : "";
 
     const body = $("d-rows");
@@ -1139,7 +1150,7 @@
     for (const k of MINE) $("my-" + k).value = mine[k] ?? "";
     signData = mine.sign || "";
 
-    for (const id of ["inv-to","inv-togst","inv-no","inv-date","inv-event","inv-where"])
+    for (const id of ["inv-to","inv-toaddr","inv-togst","inv-no","inv-date","inv-event","inv-where"])
       $(id).addEventListener("input", drawInvoice);
     for (const k of MINE)
       $("my-" + k).addEventListener("input", () => { mineSave(); drawInvoice(); });
