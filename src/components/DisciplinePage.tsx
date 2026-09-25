@@ -39,6 +39,13 @@ export function DisciplinePage({ discipline }: { discipline: Discipline }) {
             >
               {discipline.title}
             </p>
+            {/* Said plainly, alongside the work rather than in front of it.
+                See `notice` in @/lib/site for why this is not a gate. */}
+            {discipline.notice && (
+              /* text-chalk, not text-ash-img: a notice that cannot be read
+                 over the photograph it is warning about is decoration. */
+              <p className="lab mt-2 text-chalk">{discipline.notice}</p>
+            )}
           </div>
         </section>
 
