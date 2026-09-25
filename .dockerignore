@@ -4,6 +4,18 @@ out
 .git
 .github
 
+# The sidecar is a separate image built from ./enquiry with its own
+# Dockerfile, so the site build has never needed this directory — it was just
+# being copied in and ignored. It stopped being harmless when the invoice
+# builder added .woff2 files under enquiry/fonts: the Turbopack build began
+# failing to resolve next/font's own google-font shim, twenty times over, on
+# the commit that added them and on every commit after. Nothing in src/
+# changed and the same build passes locally, cold and with NODE_ENV=production.
+#
+# The mechanism is not proven. Keeping the directory out of the context is
+# right on its own terms, and it is the only variable that changed.
+enquiry/
+
 # Reference capture — hundreds of MB, not needed to build
 capture/
 design/
