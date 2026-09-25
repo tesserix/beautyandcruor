@@ -564,9 +564,20 @@ That is the whole of the argument. It does not extend to anything else:
   decision above is why the existing set passes, not a reason to stop checking.
 - **Photographer copyright is a separate question from model consent**, and was
   asked as one. Nineteen of the published images come from professional bodies
-  (`SDIM…`, `1Y4A…`); whoever shot them owns them by default, and a takedown
-  request does not care which country anyone is in. Worth one question to her —
-  who shot these — and a line of email permission if any were hired. Not blocking.
+  (`SDIM…`, `1Y4A…`). Asked who shot them, she said a **hired photographer**.
+
+  That is better than the default it first looked like. Indian copyright law
+  treats a photograph made at another's instance for valuable consideration as
+  owned by the party who commissioned it, absent agreement otherwise — the
+  opposite of the UK and US default, where the photographer keeps it. If those
+  shoots were commissioned and paid for in India, ownership plausibly already
+  sits with her.
+
+  Not treated as settled here, because it turns on facts nobody has confirmed:
+  whether she paid, where, and whether anything was signed. None of it blocks
+  publication — the images were already public on her own site — and a single
+  line of email from the photographer confirming she may use them would close
+  it for good. Worth doing while she is still in contact with them.
 - **New uploads do not inherit this.** `scripts/derive-uploads.mjs` adds every
   upload to the cleared list, which records *her* consent to publish, not the
   subject's. Releases from here on are what make that honest.
