@@ -1,0 +1,100 @@
+# Turns an uploaded photograph into images the site can serve.
+#
+# She uploads through /admin. The sidecar puts the original in the assets
+# bucket under uploads/ and appends a line to pending-uploads.json — that
+# commit is what triggers this. Nothing is on the site yet, because the site
+# serves only derivatives and producing them needs libvips and minutes of CPU.
+#
+# This derives them, uploads them, writes the manifest, gallery, cleared list
+# and alt text, empties the pending list, and commits. That commit runs CI,
+# which builds and deploys. The photograph appears a few minutes later.
+#
+# Separate from ci.yml on purpose. It needs GCS credentials and several minutes
+# of encoding, and neither belongs in the workflow that runs on every push.
+name: Derive uploads
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/content/pending-uploads.json'
+  workflow_dispatch:
+
+concurrency:
+  # Never two at once: both would write the manifest and the second would lose.
+  group: derive-uploads
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  id-token: write   # for Workload Identity Federation; no long-lived key exists
+
+jobs:
+  derive:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Federated, not a key. The service account behind this can read
+      # uploads/ and create objects under img/ on one bucket, by IAM condition,
+      # and holds no project-level role. Only this repository may assume it.
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          project_id: tesseracthub-480811
+          workload_identity_provider: projects/849928263410/locations/global/workloadIdentityPools/github-pool/providers/github-provider
+          service_account: bac-ci-images@tesseracthub-480811.iam.gserviceaccount.com
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Derive
+        id: derive
+        run: node scripts/derive-uploads.mjs
+
+      # The script clears the pending list even when it derived nothing,
+      # because every refusal it makes is permanent — an upload with no
+      # gallery stays without one, a HEIC stays undecodable, a duplicate stays
+      # a duplicate. Leaving the row would only replay the same refusal. So a
+      # skip-only run still has a change to commit, and the reason travels in
+      # the commit message where it outlives the workflow log.
+      - name: Commit the result
+        env:
+          SUMMARY: ${{ steps.derive.outputs.summary }}
+        run: |
+          # --porcelain, not `git diff --quiet`. pending-uploads.json may not
+          # exist yet — the sidecar creates it on the first upload — and a diff
+          # of tracked files cannot see a new one, so the commit would be
+          # skipped exactly when there was something to commit.
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "nothing derived; nothing to commit"
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/generated/images.json src/content/galleries.json \
+                  src/content/cleared-images.json src/content/alt.json \
+                  src/content/pending-uploads.json
+          # A heredoc rather than -m: SUMMARY is interpolated shell, and a
+          # here-document keeps quoting sane if a filename ever contains one.
+          git commit -F - <<EOF
+          Publish uploaded images
+
+          ${SUMMARY:-no change}
+
+          Derived from the originals in the bucket by
+          .github/workflows/derive-uploads.yml. The ladder is the same code
+          scripts/images.mjs uses, so these are byte-identical to the rest of
+          the library.
+          EOF
+          # A plain push is fine here, unlike the deploy-branch advance in
+          # ci.yml. That one pushed an arbitrary sha to a ref whose history the
+          # shallow clone did not have; this commit's parent IS the checked-out
+          # commit, so the push is a fast-forward git can see for itself.
+          git push origin HEAD:main
