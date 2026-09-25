@@ -47,6 +47,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"path"
 	"regexp"
 	"strconv"
@@ -56,8 +57,13 @@ import (
 
 const (
 	metadataTokenURL = "http://169.254.169.254/computeMetadata/v1/instance/service-accounts/default/token"
-	gcsUploadURL     = "https://storage.googleapis.com/upload/storage/v1/b/%s/o?uploadType=media&name=%s"
-	pendingPath      = "src/content/pending-uploads.json"
+	// The XML API, not the JSON one. A JSON simple upload cannot store
+	// Cache-Control, and an original must never be edge-cached: it is deleted
+	// as soon as it has been derived, and a cached copy would outlive the
+	// delete by the whole max-age in a bucket the public can read.
+	// Both need only storage.objects.create.
+	gcsUploadURL = "https://storage.googleapis.com/%s/%s"
+	pendingPath  = "src/content/pending-uploads.json"
 
 	defaultMaxUpload = 25 << 20
 	maxUploadsPerDay = 200
@@ -244,13 +250,15 @@ func (u *uploads) put(object string, body []byte, contentType string) error {
 	if err != nil {
 		return err
 	}
-	req, err := http.NewRequest(http.MethodPost,
-		fmt.Sprintf(gcsUploadURL, u.bucket, urlEscape(object)), bytes.NewReader(body))
+	req, err := http.NewRequest(http.MethodPut,
+		fmt.Sprintf(gcsUploadURL, u.bucket, objectPath(object)), bytes.NewReader(body))
 	if err != nil {
 		return err
 	}
 	req.Header.Set("Authorization", "Bearer "+token)
 	req.Header.Set("Content-Type", contentType)
+	// Never cached, anywhere. See gcsUploadURL.
+	req.Header.Set("Cache-Control", "no-store, max-age=0")
 	req.ContentLength = int64(len(body))
 
 	resp, err := u.client.Do(req)
@@ -264,8 +272,17 @@ func (u *uploads) put(object string, body []byte, contentType string) error {
 	return nil
 }
 
-func urlEscape(s string) string {
-	return strings.ReplaceAll(strings.ReplaceAll(s, "%", "%25"), "/", "%2F")
+// objectPath escapes an object name for use as a URL PATH, which is what the
+// XML API takes. Each segment is escaped but the separators are not: escaping
+// "/" as %2F here would create an object literally named "uploads%2Fsfx%2F…".
+// That is why this is not urlEscape, which is correct only for a query
+// parameter.
+func objectPath(object string) string {
+	parts := strings.Split(object, "/")
+	for i, p := range parts {
+		parts[i] = url.PathEscape(p)
+	}
+	return strings.Join(parts, "/")
 }
 
 // --- handler ----------------------------------------------------------------
