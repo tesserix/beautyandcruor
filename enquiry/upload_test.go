@@ -27,7 +27,7 @@ func TestSniffImage(t *testing.T) {
 		"jpeg":        {[]byte{0xFF, 0xD8, 0xFF, 0xE0, 0, 0}, "jpeg"},
 		"png":         {[]byte{0x89, 'P', 'N', 'G', 0x0D, 0x0A, 0x1A, 0x0A}, "png"},
 		"webp":        {append([]byte("RIFF\x00\x00\x00\x00"), []byte("WEBPVP8 ")...), "webp"},
-		"heic":        {append([]byte{0, 0, 0, 0x18}, []byte("ftypheic")...), "heic"},
+		"heic":        {append([]byte{0, 0, 0, 0x18}, []byte("ftypheic")...), ""},
 		"avif":        {append([]byte{0, 0, 0, 0x18}, []byte("ftypavif")...), "avif"},
 		"pdf":         {[]byte("%PDF-1.7\n%..."), ""},
 		"mp4":         {append([]byte{0, 0, 0, 0x18}, []byte("ftypmp42")...), ""},
@@ -230,5 +230,52 @@ func TestPendingEntryShape(t *testing.T) {
 	// Optional fields stay out when unset, so the file reads as what it is.
 	if strings.Contains(string(encoded), `"gallery"`) || strings.Contains(string(encoded), `"alt"`) {
 		t.Errorf("empty optional fields were written:\n%s", encoded)
+	}
+}
+
+// An iPhone shoots HEIC by default, and the pipeline cannot decode it — sharp
+// reads the header and then fails on the pixels, because the libvips build has
+// no HEVC decoder. Storing one would mean an upload that succeeds and an image
+// that never appears.
+//
+// So it has to be refused, and refused with something useful: falling through
+// to "that is not a photograph" would be both wrong and unhelpful to someone
+// holding a photograph.
+func TestHeicIsRefusedWithAdvice(t *testing.T) {
+	heic := append([]byte{0, 0, 0, 0x18}, []byte("ftypheic")...)
+	if got := sniffImage(heic); got != "" {
+		t.Errorf("HEIC was accepted as %q; the pipeline cannot decode it", got)
+	}
+	name, advice := sniffUndecodable(heic)
+	if name != "HEIC" {
+		t.Errorf("HEIC was not recognised: %q", name)
+	}
+	if !strings.Contains(advice, "Most Compatible") {
+		t.Errorf("the advice does not say how to fix it: %q", advice)
+	}
+
+	var stored [][2]string
+	a, mux := uploadAdmin(t, &stored, 25<<20)
+	rec := httptest.NewRecorder()
+	mux.ServeHTTP(rec, uploadRequest(a, "image", "IMG_8226.HEIC", heic, nil))
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("got %d, want 400", rec.Code)
+	}
+	if !strings.Contains(rec.Body.String(), "HEIC") {
+		t.Errorf("the message does not name the format: %s", rec.Body)
+	}
+	if len(stored) != 0 {
+		t.Errorf("a file the pipeline cannot use reached the bucket: %v", stored)
+	}
+}
+
+// Everything still accepted must be something scripts/images.mjs will actually
+// process — its SKIP_EXT is the other half of this contract.
+func TestAcceptedFormatsAreOnesThePipelineProcesses(t *testing.T) {
+	skipped := map[string]bool{"heic": true, "heif": true, "gif": true, "svg": true}
+	for _, m := range imageMagic {
+		if skipped[m.name] {
+			t.Errorf("%s is accepted at upload but skipped by the image pipeline", m.name)
+		}
 	}
 }

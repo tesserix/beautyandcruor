@@ -84,8 +84,28 @@ type uploads struct {
 
 // Magic bytes, because a Content-Type header is whatever the client typed. The
 // point is not to catch a determined attacker — the endpoint is behind a
-// password — but to stop a PDF or a video being stored as though the pipeline
-// could ever turn it into a photograph.
+// password — but to stop a file being stored that nothing downstream can use.
+//
+// # WHY HEIC IS NOT HERE, THOUGH AN iPHONE SHOOTS IT BY DEFAULT
+//
+// The pipeline cannot read it. sharp reports the format and the dimensions —
+// metadata works — and then fails on the pixels with "bad seek", because the
+// libvips build has libheif but no HEVC decoder; HEVC is patent-encumbered and
+// routinely left out. scripts/images.mjs has skipped .heic and .heif from the
+// start for the same reason, and the two HEIC files in the recovered library
+// were converted to JPEG by hand before they ever reached it.
+//
+// Accepting one would store a file that can never become an image on the site:
+// the upload would succeed, and nothing would ever appear. A refusal that says
+// what to do is better than a silent dead end.
+//
+// In practice iOS usually transcodes to JPEG when a photo is chosen through a
+// file input, so this should rarely be seen. "Usually" is not a reason to
+// leave the trapdoor open.
+//
+// To support it properly the derive step needs a decoder — ImageMagick built
+// against libheif, or heif-convert — and someone has to verify that on the
+// runner rather than assume it.
 var imageMagic = []struct {
 	name   string
 	prefix []byte
@@ -94,9 +114,32 @@ var imageMagic = []struct {
 	{"jpeg", []byte{0xFF, 0xD8, 0xFF}, 0},
 	{"png", []byte{0x89, 'P', 'N', 'G', 0x0D, 0x0A, 0x1A, 0x0A}, 0},
 	{"webp", []byte("WEBP"), 8},
-	{"heic", []byte("ftyphei"), 4},
-	{"heif", []byte("ftypmif"), 4},
 	{"avif", []byte("ftypavif"), 4},
+}
+
+// Recognised, and refused with a reason. Without this an iPhone photograph
+// would fall through to "that is not a photograph", which is both wrong and
+// unhelpful.
+var undecodable = []struct {
+	name   string
+	prefix []byte
+	at     int
+	advice string
+}{
+	{"HEIC", []byte("ftyphei"), 4, "iPhone photos are HEIC unless you change a setting. In Settings → Camera → Formats, choose “Most Compatible”, or send the photo to yourself first — that converts it to JPEG."},
+	{"HEIF", []byte("ftypmif"), 4, "That is a HEIF file. Save or export it as JPEG and upload that."},
+}
+
+// sniffUndecodable names a format we recognise but cannot process, with
+// something useful to do about it.
+func sniffUndecodable(head []byte) (string, string) {
+	for _, m := range undecodable {
+		end := m.at + len(m.prefix)
+		if len(head) >= end && bytes.Equal(head[m.at:end], m.prefix) {
+			return m.name, m.advice
+		}
+	}
+	return "", ""
 }
 
 func sniffImage(head []byte) string {
@@ -260,8 +303,14 @@ func (a *adminHandler) postImage(w http.ResponseWriter, r *http.Request) {
 	}
 	kind := sniffImage(body)
 	if kind == "" {
+		if name, advice := sniffUndecodable(body); name != "" {
+			log.Printf("admin: refused a %s upload from %s", name, clientIP(r))
+			writeJSON(w, http.StatusBadRequest, map[string]string{
+				"error": fmt.Sprintf("%s images cannot be published yet. %s", name, advice)})
+			return
+		}
 		writeJSON(w, http.StatusBadRequest, map[string]string{
-			"error": "That is not a photograph. JPEG, PNG, WebP, HEIC and AVIF are accepted."})
+			"error": "That is not a photograph. JPEG, PNG, WebP and AVIF are accepted."})
 		return
 	}
 
