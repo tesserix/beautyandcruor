@@ -19,7 +19,7 @@ Nothing here is a design decision. These are facts only she has.
 | 5 | **Which email address works** | The live site publishes both `info@beautyandcruor.com` and `info@beautycruor.com`. If the wrong one is live, enquiries may have been bouncing. **Worth checking today, independent of the rebuild.** |
 | 6 | **A phone or WhatsApp number** | Nobody on a production books through a web form. |
 | 7 | **Images that must not be published** | BTS, phone snapshots and photos of other people are mixed into the library. |
-| 8 | **Model and photographer releases** | Publishing a named actor's real face beside the character is a rights question. Constrains which credits can carry a sequence. |
+| 8 | ~~**Model and photographer releases**~~ | **Closed — see D19.** She has none and chose to publish anyway; every published image was already live on her own site, so this is republication. The 19 professional-camera images were shot by a hired photographer; under Indian law a paid commission plausibly vests ownership in her, but unconfirmed. Non-blocking. |
 | 9 | **Real titles and dates for the work shown** | Current captions ("Burn appliance", "Creature sculpt") are ours, written from looking at the images. |
 | 10 | **Does she still make and sell appliances?** | The Rahul Creations collaboration has ended. Decides whether the site needs a shop section. |
 | 11 | **Parimiti or Parimitii** | Instagram display name says one, her own post credit says the other. Needs settling before it goes on a masthead. |

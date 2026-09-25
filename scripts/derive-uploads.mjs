@@ -186,7 +186,17 @@ for (const entry of pending) {
   const id = identity(entry.object);
   alt[id] = entry.alt.trim();
   if (Array.isArray(cleared.cleared) && !cleared.cleared.includes(entry.object)) {
-    // Her uploading her own work IS the consent the rights gate asks for.
+    /**
+     * This records HER consent to publish, which is not the same as the
+     * subject's.
+     *
+     * The gate exists because the recovered library mixes portfolio work with
+     * photographs of other people (docs/OPEN-QUESTIONS.md Q7, Q8), and an
+     * upload through /admin carries no evidence about anyone in the frame. It
+     * is cleared because she chose to upload it, and D19 records that she
+     * publishes without releases for existing work and is getting them for new
+     * shoots. If that changes, this line is where the check belongs.
+     */
     cleared.cleared.push(entry.object);
   }
   done.push({

@@ -540,3 +540,46 @@ credits, not the workflow that deploys them.
 Session auth is one shared password, as agreed: PBKDF2-SHA256 from the standard
 library, so `go.sum` is still empty and the image is still `scratch` plus one
 binary.
+
+---
+
+## D19 — Publish the recovered library without releases. Paperwork from here on.
+
+Parimiti has no model or photographer releases for any existing work, and considers
+insurance and compliance a low priority in the Indian market. Asked whether to hold
+the launch for them, she said to go ahead and get the paperwork for future shoots.
+
+Taken, on grounds that make it a narrower decision than it first looks: **every image
+the site publishes was already public on her own WordPress site.** All 210 of the
+published keys match `capture/live-images.json`, the crawl of what the live site
+actually rendered, and `src/content/cleared-images.json` holds zero manual
+clearances. Nothing is being disclosed that she had not already disclosed herself,
+under her own name, for years. This is republication at the same domain, not a new
+audience.
+
+That is the whole of the argument. It does not extend to anything else:
+
+- **The gate stays.** `scripts/assets-sync.mjs` still refuses to upload any image
+  without either prior-publication evidence or an explicit clearance entry. The
+  decision above is why the existing set passes, not a reason to stop checking.
+- **Photographer copyright is a separate question from model consent**, and was
+  asked as one. Nineteen of the published images come from professional bodies
+  (`SDIM…`, `1Y4A…`). Asked who shot them, she said a **hired photographer**.
+
+  That is better than the default it first looked like. Indian copyright law
+  treats a photograph made at another's instance for valuable consideration as
+  owned by the party who commissioned it, absent agreement otherwise — the
+  opposite of the UK and US default, where the photographer keeps it. If those
+  shoots were commissioned and paid for in India, ownership plausibly already
+  sits with her.
+
+  Not treated as settled here, because it turns on facts nobody has confirmed:
+  whether she paid, where, and whether anything was signed. None of it blocks
+  publication — the images were already public on her own site — and a single
+  line of email from the photographer confirming she may use them would close
+  it for good. Worth doing while she is still in contact with them.
+- **New uploads do not inherit this.** `scripts/derive-uploads.mjs` adds every
+  upload to the cleared list, which records *her* consent to publish, not the
+  subject's. Releases from here on are what make that honest.
+
+Q8 in docs/OPEN-QUESTIONS.md is answered by this and can be closed.
