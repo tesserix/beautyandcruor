@@ -1,9 +1,32 @@
 import type { Metadata, Viewport } from "next";
-import { Eczar, Archivo, IBM_Plex_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import { SITE, ASSET_ORIGIN } from "@/lib/site";
 import { JsonLd, personSchema, localBusinessSchemas } from "@/lib/jsonld";
 import { Analytics } from "@/components/Analytics";
 import "./globals.css";
+
+/**
+ * The three faces, self-hosted rather than fetched.
+ *
+ * These were next/font/google, which downloads the font files during `next
+ * build`. That put a network call to Google on the critical path of every
+ * container build, and it failed often enough to matter: the same commit
+ * built on a branch and failed on main minutes later, reporting
+ *
+ *   Module not found: Can't resolve '@vercel/turbopack-next/internal/font/google/font'
+ *
+ * with a varying number of errors and NextFontGoogleFontFileReplacer in the
+ * trace — a failed fetch surfacing as a resolution error, which reads like a
+ * dependency problem and is not one.
+ *
+ * The files in src/fonts are the Latin subsets next/font itself generated,
+ * lifted from a build that worked. Same bytes, same subsetting; the only
+ * thing that changes is that the build no longer asks the internet for them.
+ * All three are SIL Open Font License, so shipping them is expressly allowed.
+ *
+ * Eczar and Archivo are variable and cover their whole weight range from one
+ * file; IBM Plex Mono ships a file per weight, so both are declared.
+ */
 
 /**
  * Display face. Chosen on review recommendation: a cut, heavy serif reads
@@ -11,24 +34,28 @@ import "./globals.css";
  * neutral grotesque reads as a template. Its Devanagari companion also covers a
  * Hindi credits line later if wanted.
  */
-const eczar = Eczar({
-  subsets: ["latin"],
-  weight: ["500", "600", "700", "800"],
+const eczar = localFont({
+  src: "../fonts/eczar.woff2",
+  weight: "500 800",
+  style: "normal",
   variable: "--font-eczar",
   display: "swap",
 });
 
-const archivo = Archivo({
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
+const archivo = localFont({
+  src: "../fonts/archivo.woff2",
+  weight: "400 600",
+  style: "normal",
   variable: "--font-archivo",
   display: "swap",
 });
 
 /** The "credit" register: counters, captions, metadata, nav labels. */
-const plexMono = IBM_Plex_Mono({
-  subsets: ["latin"],
-  weight: ["400", "500"],
+const plexMono = localFont({
+  src: [
+    { path: "../fonts/plex-mono-400.woff2", weight: "400", style: "normal" },
+    { path: "../fonts/plex-mono-500.woff2", weight: "500", style: "normal" },
+  ],
   variable: "--font-plex-mono",
   display: "swap",
 });

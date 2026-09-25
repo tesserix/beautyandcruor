@@ -4,16 +4,16 @@ out
 .git
 .github
 
-# The sidecar is a separate image built from ./enquiry with its own
-# Dockerfile, so the site build has never needed this directory — it was just
-# being copied in and ignored. It stopped being harmless when the invoice
-# builder added .woff2 files under enquiry/fonts: the Turbopack build began
-# failing to resolve next/font's own google-font shim, twenty times over, on
-# the commit that added them and on every commit after. Nothing in src/
-# changed and the same build passes locally, cold and with NODE_ENV=production.
+# The sidecar is a separate image, built from ./enquiry with its own
+# Dockerfile. The site build copied this directory in and never used it.
 #
-# The mechanism is not proven. Keeping the directory out of the context is
-# right on its own terms, and it is the only variable that changed.
+# An earlier version of this comment blamed the .woff2 files under
+# enquiry/fonts for the Turbopack font failures in CI. That was wrong. The
+# same content passed on a branch and failed on main minutes later, and the
+# real cause was next/font/google fetching from the network during the build
+# — see src/app/layout.tsx, which no longer does. Keeping the directory out
+# of a context that has no use for it is still right; it just never fixed
+# anything.
 enquiry/
 
 # Reference capture — hundreds of MB, not needed to build
