@@ -7,6 +7,12 @@ COPY *.go ./
 # context. Without this the build fails at compile time rather than shipping a
 # service with no page behind /admin.
 COPY admin.html ./
+# Same reason, and the same failure mode: fonts.go embeds these, so a missing
+# directory is a compile error — "pattern fonts/*.woff2: no matching files
+# found" — not a silently unstyled invoice. This context is copied file by
+# file rather than wholesale, so anything new that is embedded has to be
+# added here too.
+COPY fonts/ ./fonts/
 RUN go test ./... \
     && CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /enquiry .
 
