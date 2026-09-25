@@ -59,7 +59,9 @@ export function Chrome({
    *
    * Both sit on the same gutter, so their left edges already agree and only
    * the vertical offset and the size differ — which is why the transform below
-   * needs a left-centre origin and no horizontal term.
+   * needs a left-centre origin and no horizontal term. That holds because the
+   * opening frame shows the monogram as its own element, not as part of the
+   * lockup: the bar is scaling up the very same file.
    */
   useEffect(() => {
     if (solidMark) return;
@@ -82,8 +84,9 @@ export function Chrome({
       const h = hero.getBoundingClientRect();
       const m = slot.getBoundingClientRect();
 
-      // Both measure 0 until the fonts and the mask have painted.
+      // Both measure 0 until the images have loaded and painted.
       if (!h.height || !m.height) return;
+
       // h is in viewport coordinates at the current scroll; the bar is fixed.
       // Normalise the opening mark to where it sits with the page at the top.
       const heroCentreAtTop = h.top + window.scrollY + h.height / 2;
@@ -117,6 +120,14 @@ export function Chrome({
       // Written straight to the node rather than through state: this runs on
       // every frame of a scroll, and a re-render per frame is how a smooth
       // transform becomes a janky one.
+      /**
+       * The opening wordmark fades as the monogram leaves it. Not a CSS rule
+       * keyed off data-mark-travel: that flag is set the moment the measure
+       * succeeds, which would blank the wordmark before the page had been
+       * scrolled at all. It follows the same progress the travel does.
+       */
+      const word = document.querySelector<HTMLElement>("[data-hero-wordmark]");
+
       const mark = markRef.current;
       if (mark && travel) {
         const p = Math.min(1, Math.max(0, y / (window.innerHeight * REVEAL_AT)));
@@ -137,8 +148,12 @@ export function Chrome({
          */
         const scale = 1 + (travel.barH / travel.heroH - 1) * p;
         mark.style.transform = `translateY(calc(-50% + ${travel.dy * k}px)) scale(${scale})`;
+        // Gone by the time the mark is a third of the way up, so the two are
+        // not both legible at once.
+        if (word) word.style.opacity = String(Math.max(0, 1 - p * 3));
       } else if (mark) {
         mark.style.transform = "";
+        if (word) word.style.opacity = "";
       }
     };
     // Coalesce to one read per frame: scroll fires far faster than paint.
@@ -177,7 +192,7 @@ export function Chrome({
         <Link
           href="/"
           ref={slotRef}
-          className="pointer-events-auto relative block h-[26px] w-[98px] md:h-[30px] md:w-[113px]"
+          className="pointer-events-auto relative block h-[26px] w-[33px] md:h-[30px] md:w-[38px]"
           aria-label={`${SITE.name} — home`}
           /* aria-hidden while invisible: the same link is still reachable in
              the mobile menu, and an opacity-0 link is a focus trap for a
@@ -192,6 +207,7 @@ export function Chrome({
           }}
         >
           <Logo
+            variant="mark"
             ref={markRef}
             /* The height classes are the unmeasured default — and the size
                measure() reads to work out the reduction. Without them the

@@ -1,68 +1,57 @@
 /**
- * Builds the favicon set from the brand monogram. Run by hand:
+ * Builds the favicon set from the brand icon.
  *
- *   node scripts/icons.mjs
- *
- * The output is committed. It changes when the mark does and never otherwise,
- * so there is no reason to run it on every build.
- *
- * WHAT IT DRAWS
- *
- * A "B", set in Archivo at the same weight as the wordmark, in the mark's
- * green on a transparent ground.
- *
- * It used to compose the heart, leaves and stem out of three numbered paths of
- * the old script logo — index 0, 2 and 9 — because cropping could not isolate
- * the emblem: the loop interlocks with the B of "Beauty", so every rectangle
- * containing it also contained part of a letter.
- *
- * That whole problem is gone. The monogram is its own file, so there is
- * nothing to index into and nothing to break when the mark is redrawn.
+ * The icon is its own artwork, not the logo shrunk. That is not duplication:
+ * the lockup is cream and red over a transparent ground with a wordmark under
+ * it, and none of that survives 32 pixels — the wordmark becomes a smear, the
+ * red sweep drops to 2.99:1 against the plate, and the hair strands fall below
+ * one pixel and vanish. The icon is the same BC monogram redrawn flat, two
+ * colours, on its own plate, which is what a favicon has to be.
  *
  * A wordmark cannot be a favicon — "BEAUTY & CRUOR" at 32px is a smear — so
- * the identity needs two marks, and this is the small one. Rendered at 32 it
- * is the clearest of the options tried: a B has a strong vertical and a
- * counter that survives the pixel grid, where "BC" crowds and "B&C" turns to
- * mush.
+ * the icon has never been the lockup and is not now.
  *
- * Transparent rather than on a plate, so it sits on whatever the browser's tab
- * strip happens to be.
+ * WHY THE CORNERS ARE RE-CUT
+ *
+ * The source arrives with its rounded plate sitting on opaque white, so the
+ * corners are white pixels rather than transparency. Left alone the icon shows
+ * white triangles on a dark tab strip. The corners are cut here as real alpha
+ * instead of trusting the file.
+ *
+ *   node scripts/icons.mjs
  */
 import sharp from "sharp";
 import { readFileSync, writeFileSync } from "node:fs";
 
-/** The mark's own green (--color-leaf). */
-const LEAF = "#7AC943";
+/** Corner radius as a fraction of the icon, matching the source artwork. */
+const RADIUS = 0.22;
 
-/** Fraction of the icon the monogram fills, leaving it room to breathe. */
-const INSET = 0.8;
+const source = "brand/icon.png";
 
-const src = readFileSync("public/brand/monogram.svg", "utf8");
-const [, , vw, vh] = src.match(/viewBox="([-\d.]+) ([-\d.]+) ([\d.]+) ([\d.]+)"/).slice(1).map(Number);
-
-// Rendered large, then trimmed to its real ink so the glyph's own bounds drive
-// the framing rather than the side bearings the font happens to carry.
-const rendered = await sharp(
-  Buffer.from(src.replace('fill="#000"', `fill="${LEAF}"`).replace("<svg ", `<svg width="${Math.round(1024 * (vw / vh))}" height="1024" `)),
-  { density: 384 },
-)
-  .png()
-  .toBuffer();
-const trimmed = await sharp(rendered).trim().png().toBuffer();
-
-/** One square, transparent icon at the given size. */
-async function icon(size) {
-  const inner = Math.round(size * INSET);
-  const fitted = await sharp(trimmed)
-    .resize(inner, inner, { fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 0 } })
+// Squared and the rounded corners cut as real transparency. resize(cover)
+// rather than trim(): the plate already fills the frame, and trimming a
+// near-black plate against white is a threshold guess waiting to go wrong.
+const base = await (async () => {
+  const meta = await sharp(source).metadata();
+  const side = Math.min(meta.width, meta.height);
+  const square = await sharp(source)
+    .resize(side, side, { fit: "cover", position: "centre" })
     .png()
     .toBuffer();
-  return sharp({
-    create: { width: size, height: size, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } },
-  })
-    .composite([{ input: fitted, gravity: "center" }])
-    .png({ compressionLevel: 9 })
-    .toBuffer();
+  const mask = Buffer.from(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${side}" height="${side}">` +
+      `<rect width="${side}" height="${side}" rx="${Math.round(side * RADIUS)}" ry="${Math.round(side * RADIUS)}" fill="#fff"/></svg>`,
+  );
+  return sharp(square).composite([{ input: mask, blend: "dest-in" }]).png().toBuffer();
+})();
+
+/**
+ * One square icon at the given size. Full bleed: the artwork carries its own
+ * plate, so insetting it would float a small dark square inside a transparent
+ * one rather than filling the tab's slot.
+ */
+async function icon(size) {
+  return sharp(base).resize(size, size).png({ compressionLevel: 9 }).toBuffer();
 }
 
 /**
