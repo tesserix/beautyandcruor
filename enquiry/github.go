@@ -49,6 +49,7 @@ var writablePaths = map[string]bool{
 	"src/content/curation.json":        true,
 	"src/content/alt.json":             true,
 	"src/content/pending-uploads.json": true,
+	"src/content/invoice-seq.json":     true,
 }
 
 // errConflict means the file moved under us — someone committed between the

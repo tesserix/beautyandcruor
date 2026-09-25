@@ -103,6 +103,10 @@ func (a *adminHandler) routes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /admin/sequence", a.getSequence)
 	mux.HandleFunc("PUT /admin/sequence", a.putSequence)
 	mux.HandleFunc("POST /admin/images", a.postImage)
+	mux.HandleFunc("POST /admin/invoice-number", a.postInvoiceNumber)
+	// Unauthenticated on purpose: two open-licensed font files, and the
+	// login page is behind the same origin anyway.
+	mux.HandleFunc("GET /admin/fonts/", serveFont)
 }
 
 // --- session plumbing -------------------------------------------------------

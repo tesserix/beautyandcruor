@@ -227,6 +227,13 @@ func TestUploadIsRefusedWithoutASession(t *testing.T) {
 
 // pending-uploads.json must be writable, and nothing else must have been
 // opened up along with it.
+//
+// The count is the point. The sidecar holds a token with contents:write on the
+// whole repository, and writablePaths is the only thing standing between a
+// stolen session and the workflow that deploys the site. Growing it should
+// take a deliberate edit here, with a reason — which is how invoice-seq.json
+// was added: the invoice builder is otherwise entirely in the browser, and the
+// counter is the one thing that cannot live in one.
 func TestPendingListIsWritableAndNothingElseIs(t *testing.T) {
 	if !writablePaths[pendingPath] {
 		t.Errorf("%s is not writable; uploads cannot be recorded", pendingPath)
@@ -236,7 +243,7 @@ func TestPendingListIsWritableAndNothingElseIs(t *testing.T) {
 			t.Errorf("%s became writable", forbidden)
 		}
 	}
-	if len(writablePaths) != 4 {
+	if len(writablePaths) != 5 {
 		keys := make([]string, 0, len(writablePaths))
 		for k := range writablePaths {
 			keys = append(keys, k)
