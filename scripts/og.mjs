@@ -42,24 +42,6 @@ function portraitSource() {
   return join(PORTRAIT_DIR, files.sort((a, b) => widthOf(b) - widthOf(a))[0]);
 }
 
-const MARK_W = 300;
-
-/**
- * The card carries the lockup as an image now, not a recoloured mask.
- *
- * It used to read the mark's viewBox and recolour its fill, which only worked
- * while the mark was one colour and geometry. It is cream and red artwork on a
- * transparent ground, so there is nothing to recolour — the card's ground is
- * already ink, which is the ground it was drawn for.
- */
-const markFile = "brand/lockup.png";
-const markMeta = await sharp(markFile).metadata();
-const markRatio = markMeta.width / markMeta.height;
-const markImage = await sharp(markFile)
-  .resize({ width: MARK_W, withoutEnlargement: true })
-  .png()
-  .toBuffer();
-
 const PANEL = 560; // where the photograph starts
 
 const src = portraitSource();
@@ -71,6 +53,46 @@ if (!src && existsSync(OUT)) {
   console.log(`${OUT} exists and no portrait source is present — keeping it`);
   process.exit(0);
 }
+
+const MARK_W = 300;
+
+/**
+ * Loaded here, below the early exit, and not at the top of the file.
+ *
+ * brand/lockup.png is deliberately outside public/ — no page references it —
+ * and .dockerignore drops brand/*.png, so it does not exist in the container
+ * build. That is fine, because capture/ is dropped too: with no portrait
+ * source the script keeps the committed card and exits above. Reading the mark
+ * before that point failed the image build on a file it was never going to
+ * use.
+ *
+ * The card carries the lockup as an image now, not a recoloured mask.
+ *
+ * It used to read the mark's viewBox and recolour its fill, which only worked
+ * while the mark was one colour and geometry. It is cream and red artwork on a
+ * transparent ground, so there is nothing to recolour — the card's ground is
+ * already ink, which is the ground it was drawn for.
+ */
+const markFile = "brand/lockup.png";
+if (!existsSync(markFile)) {
+  // Only reachable when there IS a portrait to composite, which means this is
+  // not the container build. Say which file and why it is not where the rest
+  // of the brand assets are, rather than letting sharp report a bare path.
+  console.error(
+    `${markFile} is missing.\n` +
+      "It is kept outside public/ because no page references it — only this " +
+      "card reads it — and .dockerignore drops brand/*.png, so the container " +
+      "build never has it and exits above instead. Run `npm run brand` to " +
+      "regenerate it from brand/lockup-source, or restore it from git.",
+  );
+  process.exit(1);
+}
+const markMeta = await sharp(markFile).metadata();
+const markRatio = markMeta.width / markMeta.height;
+const markImage = await sharp(markFile)
+  .resize({ width: MARK_W, withoutEnlargement: true })
+  .png()
+  .toBuffer();
 
 const layers = [];
 if (src) {
