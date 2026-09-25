@@ -382,3 +382,38 @@ images` is `images.mjs && organize.mjs`. Running `images.mjs` alone is not half
 the job, it is a different job — it emits keys derived from source paths
 (`2022/04/Copy-of-…`), and `organize.mjs` is what renames them to `sfx/sfx-001`
 and moves the derivatives to match. Run the pair or neither.
+
+## One bucket cannot have a private prefix
+
+The assets bucket is the CDN origin, so `allUsers` holds
+`roles/storage.legacyObjectReader` on it. Uploaded originals went to
+`uploads/` in the same bucket, which made every original she uploads
+anonymously readable to anyone who knows its name — full resolution,
+unprocessed, while model and photographer releases are unresolved. Listing is
+refused (401), so the only protection was that object names contain a
+timestamp.
+
+The obvious fix does not exist. GCS rejects an IAM condition on an `allUsers`
+binding outright — `Conditions are not allowed on public resources` — and
+uniform bucket-level access rules out object ACLs. Within one bucket it is
+all-public or all-private; there is no public `img/` beside a private
+`uploads/`.
+
+So the original is deleted once its derivatives are verified fetchable. The
+site only ever serves derivatives, so nothing needs it afterwards. Two details
+that matter:
+
+- **Verify before deleting, per image.** A derivative that is not actually
+  fetchable means the original is still the only copy. `derive-uploads.mjs`
+  HEADs every object it uploaded and keeps the original if any is missing.
+- **The original must not be cacheable.** Deleting an object does not purge
+  Google's edge cache: a deleted original kept answering 200 for the remainder
+  of its `max-age`, which was an hour. The sidecar now stores originals with
+  `Cache-Control: no-store`, which meant moving the upload from the JSON API to
+  the XML API — a JSON simple upload cannot set it. Both need only
+  `storage.objects.create`.
+
+The escaping differs between the two APIs and the difference is silent. The
+JSON API takes the object name as a query parameter, where `/` must be `%2F`;
+the XML API takes it as a path, where escaping the separator creates an object
+genuinely named `uploads%2Fsfx%2F…` that nothing will ever find again.

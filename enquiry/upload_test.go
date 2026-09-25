@@ -105,8 +105,24 @@ func uploadAdmin(t *testing.T, stored *[][2]string, maxBytes int64) (*adminHandl
 		if got := r.Header.Get("Authorization"); got != "Bearer test-token" {
 			t.Errorf("no bearer token on the upload: %q", got)
 		}
+		if r.Method != http.MethodPut {
+			t.Errorf("upload method = %s, want PUT (the XML API)", r.Method)
+		}
+		// An original must never be edge-cached: it is deleted as soon as it
+		// has been derived, and a cached copy would outlive the delete in a
+		// bucket the public can read.
+		if got := r.Header.Get("Cache-Control"); got != "no-store, max-age=0" {
+			t.Errorf("Cache-Control = %q, want no-store", got)
+		}
 		body, _ := io.ReadAll(r.Body)
-		*stored = append(*stored, [2]string{r.URL.Query().Get("name"), string(body)})
+		// The XML API carries the object name in the path, and the separators
+		// must survive: an object named "uploads%2Fsfx%2F…" is not the same
+		// object, and nothing downstream would ever find it.
+		name := strings.TrimPrefix(r.URL.Path, "/test-bucket/")
+		if strings.Contains(name, "%2F") || strings.Contains(name, "%2f") {
+			t.Errorf("object path has escaped separators: %q", r.URL.Path)
+		}
+		*stored = append(*stored, [2]string{name, string(body)})
 		fmt.Fprint(w, "{}")
 	}))
 	t.Cleanup(gcs.Close)
@@ -330,5 +346,20 @@ func TestUploadRequiresGalleryAndDescription(t *testing.T) {
 	}
 	if len(stored) != 1 || !strings.HasPrefix(stored[0][0], "uploads/sfx/") {
 		t.Errorf("stored at %q, want uploads/sfx/…", stored[0][0])
+	}
+}
+
+func TestObjectPathEscapesSegmentsNotSeparators(t *testing.T) {
+	// The XML API takes the object name as a path. urlEscape is correct for a
+	// query parameter and wrong here; this is the difference.
+	for _, c := range []struct{ in, want string }{
+		{"uploads/film/plain.jpg", "uploads/film/plain.jpg"},
+		{"uploads/sfx/20260925T020000-a b.jpg", "uploads/sfx/20260925T020000-a%20b.jpg"},
+		{"uploads/sfx/100%-real.jpg", "uploads/sfx/100%25-real.jpg"},
+		{"uploads/sfx/a?b#c.jpg", "uploads/sfx/a%3Fb%23c.jpg"},
+	} {
+		if got := objectPath(c.in); got != c.want {
+			t.Errorf("objectPath(%q) = %q, want %q", c.in, got, c.want)
+		}
 	}
 }

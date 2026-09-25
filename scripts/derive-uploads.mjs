@@ -18,6 +18,7 @@
  *   adds it to its gallery       src/content/galleries.json
  *   clears it for publication    src/content/cleared-images.json
  *   records her alt text         src/content/alt.json
+ *   deletes the original         once the derivatives are verified fetchable
  *   empties the pending list
  *
  * Then commits, which builds, which deploys. The image appears on the site a
@@ -28,6 +29,15 @@
  * It walks the whole recovered library — 290 originals, 225MB that are not in
  * the repository — and would have to fetch all of them to derive one. This
  * fetches what is pending and nothing else.
+ *
+ * WHY THE ORIGINAL IS DELETED
+ *
+ * The bucket is the CDN origin, so allUsers can read it. GCS will not accept
+ * an IAM condition on an allUsers binding, and uniform bucket-level access
+ * rules out object ACLs, so one bucket cannot have a private prefix. An
+ * original left under uploads/ is a full-resolution photograph readable by
+ * anyone who knows its name. The site only ever serves derivatives, so once
+ * those are up the original has no reason to be there. See reap() below.
  */
 import { spawnSync } from 'node:child_process';
 import { readFile, writeFile, mkdir, rm, readdir } from 'node:fs/promises';
@@ -107,6 +117,7 @@ await mkdir(join(WORK, 'img'), { recursive: true });
 
 const done = [];
 const skipped = [];
+const redundant = [];
 for (const entry of pending) {
   // upload.go records the folder it filed the object under; trust that rather
   // than re-deriving it from the path, which would silently disagree if the
@@ -158,6 +169,9 @@ for (const entry of pending) {
   if (dupe) {
     console.log(`  skipped: identical to ${dupe}, which is already published`);
     skipped.push({ name: entry.originalName, why: `already published as ${dupe}` });
+    // The photograph is already on the site, so this original is redundant
+    // and there is no reason to leave it sitting in a public bucket.
+    redundant.push(entry.object);
     continue;
   }
   alreadyPublished.set(fingerprint(record), key);
@@ -175,7 +189,15 @@ for (const entry of pending) {
     // Her uploading her own work IS the consent the rights gate asks for.
     cleared.cleared.push(entry.object);
   }
-  done.push({ key, object: entry.object });
+  done.push({
+    key,
+    object: entry.object,
+    // Every object this image will occupy in the bucket. Checked below before
+    // the original is deleted.
+    objects: [...record.avif, ...record.webp, record.fallback]
+      .filter(Boolean)
+      .map((v) => v.src.replace(/^\//, '')),
+  });
   console.log(`  derived ${record.avif.length + record.webp.length + 1} files`);
 }
 
@@ -202,6 +224,55 @@ if (!dry) {
   await writeJson(PENDING, [], true);
 }
 await rm(WORK, { recursive: true, force: true });
+
+/**
+ * The original is deleted once its derivatives are serving.
+ *
+ * Not tidiness. The bucket is the CDN origin, so allUsers holds
+ * legacyObjectReader on it — and GCS refuses IAM conditions on an allUsers
+ * binding while uniform bucket-level access rules out object ACLs, so within
+ * one bucket there is no such thing as a private prefix. An original left in
+ * uploads/ is a full-resolution, unprocessed photograph readable by anyone who
+ * knows its name, and model and photographer releases are unresolved.
+ *
+ * The site never needs it: it serves derivatives only. She keeps the file she
+ * uploaded from, and the recovered library's masters are untouched.
+ *
+ * Verified before deleted, and each image independently — a derivative that is
+ * not actually fetchable means the original is still the only copy.
+ */
+async function reap(objects, why) {
+  for (const object of objects) {
+    if (dry) { console.log(`  would delete ${object} (${why})`); continue; }
+    try {
+      gcloud(['storage', 'rm', `${BUCKET}/${object}`], { quiet: true });
+      console.log(`  deleted ${object} — ${why}`);
+    } catch (err) {
+      // The derivatives are already published, so this is not a failure of the
+      // run. Say it loudly: the object is public until someone removes it.
+      console.log(`  COULD NOT DELETE ${object}: ${err.message}`);
+      skipped.push({ name: object, why: 'derived, but the original could not be deleted and is still public' });
+    }
+  }
+}
+
+if (done.length || redundant.length) console.log('\nremoving originals');
+
+for (const d of done) {
+  const missing = [];
+  for (const o of d.objects) {
+    const res = await fetch(`https://storage.googleapis.com/${BUCKET.replace('gs://', '')}/${o}`, { method: 'HEAD' });
+    if (!res.ok) missing.push(`${o} (${res.status})`);
+  }
+  if (missing.length) {
+    console.log(`  keeping ${d.object}: ${missing.length} derivative(s) not fetchable — ${missing[0]}`);
+    skipped.push({ name: d.key, why: 'derivatives not fetchable, original kept' });
+    continue;
+  }
+  await reap([d.object], `${d.objects.length} derivatives verified`);
+}
+
+await reap(redundant, 'already published under another key');
 
 console.log('');
 if (done.length) console.log(`derived ${done.length}: ${done.map((d) => d.key).join(', ')}`);
