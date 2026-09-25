@@ -16,12 +16,19 @@
  * it to be recreated. It also could not do this job: at header size it was
  * 98px of illegible flourish.
  *
- * "BEAUTY &" over "CRUOR", set in Archivo and converted to outlines. Outlines
- * rather than <text> because this is a CSS mask and the source the favicon is
- * composed from: it cannot depend on a font being present, and it has to be
- * addressable as geometry. Archivo is Open Font License, which permits
- * outlining and commercial use outright — the mark is unambiguously hers,
- * which a generated one would not have been.
+ * "BEAUTY &" over "CRUOR", set in Playfair Display with the ampersand in
+ * italic, converted to outlines.
+ *
+ * A high-contrast Didone because the name is the brand: cruor is spilled
+ * blood, and a fashion-masthead voice makes that juxtaposition deliberate
+ * rather than accidental. The first attempt at this was a plain grotesque —
+ * correct, legible, and it read like a software company.
+ *
+ * Outlines rather than <text> because this is a CSS mask and the source the
+ * favicon is composed from: it cannot depend on a font being present, and it
+ * has to be addressable as geometry. Playfair Display is Open Font License,
+ * which permits outlining and commercial use outright — the mark is
+ * unambiguously hers, which a generated one would not have been.
  */
 import { forwardRef, type CSSProperties } from "react";
 
@@ -30,7 +37,7 @@ import { forwardRef, type CSSProperties } from "react";
  * needs the same number, and two hand-copied ratios are how the header ended
  * up stretching a mark that had been redrawn.
  */
-export const LOGO_ASPECT = { w: 5756, h: 1890 } as const;
+export const LOGO_ASPECT = { w: 5940, h: 1941 } as const;
 
 type Props = {
   className?: string;
