@@ -155,7 +155,25 @@
   min-height: 273mm; display: flex; flex-direction: column;
 }
 .inv-band {
-  background: var(--inv-ink); padding: 28px 40px; display: flex;
+  /* Not jet. A solid slab of ink is heavier than anything in it: the mark
+     is 50px of cream and red sitting in it and the black wins, which is
+     what "the logo is dying" means. Letting the band down onto the white of
+     the paper takes the weight out of the field without touching the mark.
+
+     80% is a floor, not a preference. The artwork's red is L*42, so every
+     step lighter closes the gap between it and the field — 40 points of
+     separation on jet, 18 here, 7 by 70%. Below about 78% the slab is
+     quieter and the red goes with it, which is the same complaint again.
+
+     A fraction of the ink rather than a grey literal, so the band is
+     derived from the one token and composites identically on screen and in
+     the print export. It does not keep the ink's character: at 80% this
+     lands on #39393b, a chroma of 2, which is a neutral grey by any
+     measure. Tinted darks that would have kept some — a blue-black, an
+     oxblood — were drawn against the mark and turned down. The neutral is
+     the choice, not a side effect of the method. */
+  background: color-mix(in srgb, var(--inv-ink) 80%, transparent);
+  padding: 28px 40px; display: flex;
   align-items: center; justify-content: space-between; gap: 28px; flex-wrap: wrap;
   /* The one place the accent belongs: a hairline of cruor closing the band. */
   border-bottom: 2px solid var(--inv-cruor);
@@ -163,7 +181,11 @@
 .inv-title { text-align: right; }
 .inv-title .ref {
   font: 500 10px/1.6 var(--inv-mono); letter-spacing: .16em;
-  text-transform: uppercase; color: #8e8a84; margin-top: 9px;
+  /* 4.8:1 on the 80% band. #8e8a84, which this was when the band was jet,
+     measures 3.4:1 against the lighter field, and the obvious lift to
+     #a6a19a lands on 4.49 — under the line by a hundredth, which is not a
+     pass. Lifted until it clears with room to spare instead. */
+  text-transform: uppercase; color: #aca7a0; margin-top: 9px;
 }
 .inv-title .ref i { font-style: normal; padding: 0 7px; }
 .inv-lockup { display: grid; gap: 9px; justify-items: start; }
