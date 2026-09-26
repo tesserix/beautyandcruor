@@ -139,7 +139,13 @@
 }
 :root {
   --inv-ink: #07070a; --inv-chalk: #f2efea; --inv-cruor: #b3111d;
-  --inv-ash: #8c8780; --inv-hair: #e2ddd6;
+  /* The label grey. #8c8780 is the site's ash, which is tuned for text on
+     solid ink; on the invoice every one of these sits on white paper, where
+     it measures 3.56:1 and the captions — ISSUED TO, QTY, the line numbers,
+     the terms — fall under the 4.5 they need at 9.5 to 11px. Darkened along
+     its own hue, spread intact, to 4.98:1. Still well clear of the body ink
+     at 20:1, so the captions stay subordinate to what they label. */
+  --inv-ash: #746f68; --inv-hair: #e2ddd6;
   --inv-display: "Eczar Admin", Georgia, "Times New Roman", serif;
   --inv-mono: "Plex Admin", ui-monospace, SFMono-Regular, Menlo, monospace;
   --inv-sign: "Sign Admin", "Snell Roundhand", "Segoe Script", cursive;
