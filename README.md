@@ -3,10 +3,15 @@
 Rebuilding the portfolio of **Parimiti**, a hair, makeup and SFX prosthetics artist working
 between Sydney and Mumbai, replacing a WordPress + Elementor build that is being decommissioned.
 
-**Status:** deployed and publicly reachable at
-**<https://beautyandcruor.tesserix.app>** — a staging host on the GKE cluster. The production
-domain is untouched: `beautyandcruor.com` still serves the old WordPress site at Hostinger, and
-is cut over only when the rebuild is signed off (see `docs/OPEN-QUESTIONS.md`).
+**Status:** live at **<https://beautyandcruor.com>** since 28 September 2026. The WordPress site
+at Hostinger is no longer served; Hostinger remains the registrar and nothing else. The
+`beautyandcruor.tesserix.app` staging host is retired and no longer routes.
+
+DNS is in the estate Cloudflare account (`algin`/`nola`). The apex A record points at the
+ingress load balancer and the AAAA was **deleted** — the load balancer is IPv4-only, and leaving
+an AAAA at Hostinger would have kept every dual-stack visitor on WordPress. TLS is a Let's
+Encrypt certificate with two named SANs, issued by cert-manager through
+`letsencrypt-custom-domain`. See `docs/DECISIONS.md` D17 for what the cutover taught.
 
 Built to the D10 structure — credits as their own route, a "For Production" block, a showreel
 slot, the Journal demoted. 212 published images wired in, categorised from the live site's own
