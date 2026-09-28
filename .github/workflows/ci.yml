@@ -167,9 +167,10 @@ jobs:
       # runtime because this is a static export — there is no server to read
       # config. Unset, the analytics component renders nothing.
       #
-      # ASSET_BASE_URL is not passed: the Dockerfile's default is the bucket's
-      # native URL (D16). Override it here only when the custom asset host is
-      # live, and remember it is frozen into the HTML at build time.
+      # ASSET_BASE_URL is not passed: the Dockerfile's default is now the
+      # custom asset host, https://assets.beautyandcruor.com (D16). Override it
+      # here only to point a build somewhere else, and remember it is frozen
+      # into the HTML at build time — changing it is a rebuild, not a redeploy.
       - name: Build and push
         if: github.event_name != 'pull_request'
         run: |

@@ -407,11 +407,10 @@ func mountAdmin(mux *http.ServeMux) {
 		limiter:  newLimiter(loginAttempts, time.Hour),
 		// Where the pickers load thumbnails from. It must match the site's
 		// ASSET_BASE_URL build arg — public/img is excluded from the site
-		// image, so there is nothing same-origin to point at. The default is
-		// the same bucket the Dockerfile defaults to; both move together at
-		// the cutover, when the bucket is renamed to assets.beautyandcruor.com.
+		// image, so there is nothing same-origin to point at. Keep this default
+		// and the Dockerfile's in step; they moved together to the custom host.
 		assetBase: strings.TrimRight(
-			envOr("ADMIN_ASSET_BASE_URL", "https://storage.googleapis.com/beautyandcruor-prod-assets-in"), "/"),
+			envOr("ADMIN_ASSET_BASE_URL", "https://assets.beautyandcruor.com"), "/"),
 		gh: &github{
 			token:  secretEnv("ADMIN_GITHUB_TOKEN"),
 			repo:   repo,
