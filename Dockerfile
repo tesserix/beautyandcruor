@@ -55,15 +55,19 @@ ENV NEXT_TELEMETRY_DISABLED=1
 # emit same-origin /img/... paths and then 404 every image, which is a silent
 # failure that only shows up in a browser.
 #
-# INTERIM. The intended host is https://assets.beautyandcruor.com, which needs
-# the bucket renamed to match (GCS routes a CNAME by matching the Host header
-# to the bucket name) and that needs Google domain verification, which needs
-# the nameservers moved first. Until the site is ready to go live, serving from
-# the native URL avoids touching a client's live DNS just for asset hosting.
+# Now the custom host. GCS routes the CNAME by matching the Host header to the
+# bucket name, so the bucket is literally named assets.beautyandcruor.com —
+# which is why creating it required Google domain verification, which required
+# the nameservers moved first.
 #
-# Switching later is a rebuild, not a migration: change this default, rebuild,
-# redeploy. The ~2500 srcset URLs are frozen per build, so nothing else moves.
-ARG ASSET_BASE_URL="https://storage.googleapis.com/beautyandcruor-prod-assets-in"
+# The CNAME is PROXIED through Cloudflare, deliberately. GCS will not serve a
+# certificate for a custom domain — it presents *.storage.googleapis.com — so
+# DNS-only can answer HTTP but never HTTPS. Cloudflare terminates TLS with its
+# Universal SSL cert for *.beautyandcruor.com and passes the Host through
+# unchanged, which still matches the bucket name. No Host Header override is
+# needed, which matters because that is a paid feature and this zone is Free.
+# Turning the proxy off would break this.
+ARG ASSET_BASE_URL="https://assets.beautyandcruor.com"
 ENV NEXT_PUBLIC_ASSET_BASE_URL=$ASSET_BASE_URL
 
 # OpenPanel. The client id is public — it identifies the project to a script in
