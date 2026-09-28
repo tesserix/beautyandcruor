@@ -116,7 +116,7 @@ character work — and it is the first category a producer clicks.
 *Phase 4 — flip the production URL.*
 
 Only once the contact path works, alt text is authored, roles are in, and Film & TV is curated.
-The mechanics are staged and rehearsed — see "The cutover, already prepared" below.
+**Done on 28 September 2026** — see "The cutover, as it actually went" below.
 
 ---
 
@@ -195,9 +195,68 @@ the cutover.
 
 ---
 
-## The cutover, already prepared
+## The cutover, as it actually went
 
-The DNS work is staged and verified, so the flip is a sequence rather than a project.
+**Completed 28 September 2026.** `beautyandcruor.com` serves the new site; the WordPress site at
+Hostinger is no longer reachable through the domain. What follows is the plan as written, with
+what actually happened marked against it — the corrections are the useful part.
+
+### What the plan got wrong
+
+Three faults would each have failed silently. All three were caught **before** the address
+records moved, by resolving the real hostname straight to the ingress load balancer
+(`curl --resolve beautyandcruor.com:443:<INGRESS_IP>`) while the domain still pointed at
+Hostinger. None were visible from the staging host.
+
+1. **The issuer could never have issued.** The chart asked `letsencrypt-prod`, whose ACME solvers
+   are selector-scoped to `dnsZones: [mark8ly.com, tesserix.app]` and which has no HTTP-01 solver
+   at all. A Certificate for `beautyandcruor.com` matches no solver, so it never goes Ready and
+   nothing says why. The correct issuer is `letsencrypt-custom-domain`, the unscoped DNS-01 one
+   that `primasyss.com` and `yahvismartfarm.com` already use. Because it validates against the
+   zone, the certificate went Ready in 75 seconds while the domain still pointed at Hostinger —
+   so the address records moved onto a gateway already serving valid TLS.
+
+2. **The real hostnames were missing from `frontendApps`.** Istio's ALLOW semantics deny any host
+   matched by no policy before a route is consulted, so the cutover would have landed on
+   `403 RBAC: access denied`. The plan said only to *remove* the staging host afterwards and
+   never to *add* these. This is the same trap D17 records learning once already.
+
+3. **Every redirect on the site was broken.** nginx's default `absolute_redirect on` rebuilt each
+   relative `return 301 /path/` from what nginx itself sees — scheme `http`, because Istio
+   terminates TLS upstream, and port `8080`, the listener. `/about-me` answered
+   `http://beautyandcruor.com:8080/about-me/`: a downgraded scheme and a port that is not open on
+   the load balancer, where a connection does not refuse but **times out**. That was the whole
+   preserved URL contract — trailing-slash canonicalisation, `/category/` `/tag/` `/author/`,
+   `/beauty-cruor/`, both sitemap forms and the old WordPress permalinks. It cannot be reproduced
+   on `beautyandcruor.tesserix.app`, which arrives through the Cloudflare Tunnel: that normalises
+   the URL before nginx sees it, so the slashless form 404s there and never exercises the
+   redirect. Fixed with `absolute_redirect off`.
+
+A fourth, pre-existing and not ours: the custom-domain gateway emitted
+`Strict-Transport-Security: max-age=3.1536e+07` because an unquoted `31536000` in
+`charts/infrastructure/custom-domain-gateway/values.yaml` renders in scientific notation. RFC 6797
+requires digits, so browsers rejected the directive and HSTS was doing nothing on every custom
+domain, `yahvismartfarm.com` included. Fixed by quoting.
+
+Two process notes worth keeping. **ArgoCD reported `Synced | Healthy` at the previous revision
+with neither Gateway nor Certificate created** — it had not polled since the merge; the live
+objects, not the status, are the thing to check. And `frontendApps` lives in a *second*
+Application, so the chart syncing says nothing about whether the policy did.
+
+### The order it ran in
+
+Also note the AAAA. The plan said "A record → the cluster" and never mentioned it, but a live
+AAAA pointed at Hostinger; moving only the A would have kept every dual-stack visitor on
+WordPress. The ingress load balancer is IPv4-only, so the AAAA was deleted rather than repointed.
+
+The assets steps (4, 5, 7 below) were deliberately **deferred past the cutover**. Assets already
+serve correctly from `storage.googleapis.com/beautyandcruor-prod-assets-in`, so nothing depended
+on them, and holding the launch for a Google Search Console verification step would have bought
+nothing. Note also that step 4's "rename the assets bucket" is not possible: the bucket has
+hierarchical namespace off, so it is a create-and-copy of ~201 MB, and a domain-named bucket
+cannot be created until the domain is verified in Search Console.
+
+The plan as originally written follows.
 
 `beautyandcruor.com` is registered at Hostinger but its DNS was never managed there — the domain
 sits on Cloudflare nameservers that Hostinger assigned, in a Cloudflare account nobody here
@@ -229,8 +288,11 @@ Order on the day:
    are frozen per build, so this is a rebuild, not a migration.
 
 Rollback at any point is putting `kellen`/`zariyah` back at Hostinger. The old zone is never
-edited, only routed away from.
+edited, only routed away from. It still holds the pre-cutover records, so reverting is a
+nameserver change and nothing else.
 
 **Drop the staging host afterwards:** the `beautyandcruor` entry in the inline `frontendApps`
-block of `argocd/prod/infrastructure/istio-auth-policies.yaml`. The staging `noindex` needs no
-action — it is keyed on the host, so it stops applying by itself.
+block of `argocd/prod/infrastructure/istio-auth-policies.yaml`. Done. The staging `noindex`
+needed no action, as expected — nginx keys `X-Robots-Tag` off a `map $host` whose default is
+`noindex, nofollow` with empty values for the two production hosts, so it stopped applying to the
+live site by itself and still covers any other hostname reaching the pod.

@@ -342,12 +342,16 @@ renamed bucket lands, or it will prepend a bucket path onto a bucket-named host.
 
 ---
 
-## D17 — Deployed to a staging host, not the production domain
+## D17 — Deployed to a staging host, then cut over
 
-The site is live at `beautyandcruor.tesserix.app` rather than `beautyandcruor.com`, deliberately:
-the rebuild is not signed off, and moving a client's live DNS to host an unfinished site is the
-wrong order. The chart reaches the real domain through a values change — `domains.primary`, the
-`www` alias, `tls.enabled: true` — not a rewrite. Both states were rendered and verified.
+**Superseded 28 September 2026: the site is live at `beautyandcruor.com`.** The reasoning below
+stands as the reason for the delay, and the three "learned the hard way" notes are why the
+cutover itself went cleanly. What the cutover added is recorded after them.
+
+The site ran at `beautyandcruor.tesserix.app` rather than `beautyandcruor.com` until sign-off,
+deliberately: moving a client's live DNS to host an unfinished site is the wrong order. The chart
+reached the real domain through a values change — `domains.primary`, the `www` alias,
+`tls.enabled: true` — not a rewrite. Both states were rendered and verified.
 
 Three things were learned the hard way and are worth keeping.
 
@@ -361,6 +365,32 @@ learn to ignore alerts.
 **No tunnel or DNS change was needed.** A `*.tesserix.app` wildcard CNAME already points at the
 tunnel and a catch-all rule forwards to `istio-ingressgateway`. The hostname resolved and reached
 Istio from the first attempt.
+
+### What the cutover added
+
+**`letsencrypt-prod` is not a general-purpose issuer.** Its solvers are selector-scoped to
+`dnsZones: [mark8ly.com, tesserix.app]` and it carries no HTTP-01 solver, so a Certificate for any
+other domain matches *no solver* and hangs un-Ready with nothing to point at. External domains use
+`letsencrypt-custom-domain`. Check `.spec.acme.solvers` for a `selector.dnsZones` before assuming
+an issuer covers a domain — a chart comment claiming a challenge "would be retried" is not
+evidence the solver exists.
+
+**Being DNS-01 is what makes a cutover zero-downtime.** The certificate validates against the zone,
+so it goes Ready while the domain still points elsewhere, and the address records then move onto a
+gateway already serving valid TLS. An HTTP-01 issuer forces the opposite, worse order.
+
+**A staging host on the Cloudflare Tunnel cannot test the production path.** The tunnel normalises
+the URL before nginx sees it, which hid a broken `absolute_redirect` that would have sent every
+redirect to a timing-out port. Verify with `curl --resolve <real-host>:443:<ingress-ip>` before
+moving DNS, not after.
+
+**Check the live object, not the sync status.** ArgoCD reported `Synced | Healthy` at the previous
+revision with neither Gateway nor Certificate created, simply because it had not polled since the
+merge.
+
+**An address cutover is A *and* AAAA.** A live AAAA pointing at the old host keeps every
+dual-stack visitor there while the A record looks correct — an intermittent, cache-flavoured
+fault that reads like a half-finished cutover.
 
 **Every public hostname must be listed in `frontendApps`, and only one of the two copies counts.**
 The gateway answered 403 `RBAC: access denied` before consulting any route. The cause is Istio's
