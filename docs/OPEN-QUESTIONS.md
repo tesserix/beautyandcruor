@@ -249,10 +249,11 @@ Also note the AAAA. The plan said "A record → the cluster" and never mentioned
 AAAA pointed at Hostinger; moving only the A would have kept every dual-stack visitor on
 WordPress. The ingress load balancer is IPv4-only, so the AAAA was deleted rather than repointed.
 
-The assets steps (4, 5, 7 below) were deliberately **deferred past the cutover**. Assets already
-serve correctly from `storage.googleapis.com/beautyandcruor-prod-assets-in`, so nothing depended
-on them, and holding the launch for a Google Search Console verification step would have bought
-nothing. Note also that step 4's "rename the assets bucket" is not possible: the bucket has
+The assets steps (4, 5, 7 below) were deliberately **deferred past the cutover** and completed
+the same day. Nothing depended on them — assets already served correctly from the bucket's native
+URL — and holding the launch for a Google Search Console verification step would have bought
+nothing. Deferring them also meant the cutover changed two DNS records rather than a bucket, a
+CNAME, a ruleset and a rebuild at the same time. Note also that step 4's "rename the assets bucket" is not possible: the bucket has
 hierarchical namespace off, so it is a create-and-copy of ~201 MB, and a domain-named bucket
 cannot be created until the domain is verified in Search Console.
 
@@ -276,7 +277,10 @@ Order on the day:
    records that matter, and they are the reason the zone was copied rather than rebuilt.
 3. Google Search Console → verify the domain (a TXT record, addable via the API once the zone is
    live).
-4. Rename the assets bucket to `assets.beautyandcruor.com` and re-point the CNAME at
+4. **Done.** Not a rename — the bucket has hierarchical namespace off, so it was a create and a
+   copy of 2172 objects, verified identical by name, CRC32C and size. The old bucket
+   `beautyandcruor-prod-assets-in` is superseded and referenced by nothing.
+   Create the assets bucket as `assets.beautyandcruor.com` and re-point the CNAME at
    `c.storage.googleapis.com`. GCS matches the Host header to the bucket name, so this needs no
    Cloudflare rules — which matters, because Host Header override is a paid feature and this zone
    is Free. Delete the Transform Rule at the same time or it will prepend a bucket path onto a
@@ -284,7 +288,9 @@ Order on the day:
 5. Chart: `domains.primary` back to `beautyandcruor.com`, add the `www` alias, `tls.enabled: true`
    — which restores the chart's own Gateway and Certificate. Both states were rendered and checked.
 6. A record → the cluster. This is the actual site cutover and the only irreversible-feeling step.
-7. Rebuild with `ASSET_BASE_URL=https://assets.beautyandcruor.com` and redeploy. The srcset URLs
+7. **Done.** Verified on the live site: 622 references to the new host on the homepage and zero
+   to the old bucket across all eight pages.
+   Rebuild with `ASSET_BASE_URL=https://assets.beautyandcruor.com` and redeploy. The srcset URLs
    are frozen per build, so this is a rebuild, not a migration.
 
 Rollback at any point is putting `kellen`/`zariyah` back at Hostinger. The old zone is never

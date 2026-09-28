@@ -302,6 +302,26 @@ below the retina floor, so the layout constraint largely stands.
 
 ## D16 — Assets serve from the bucket's native URL until launch
 
+**Done 28 September 2026: assets now serve from `https://assets.beautyandcruor.com`.** The
+destination below was reached exactly as specified — a bucket named for the host, a proxied CNAME
+to `c.storage.googleapis.com`, no Origin Rule and no Transform Rule. 2172 objects were copied and
+verified identical by name, CRC32C and size. The reasoning that follows is why the work waited,
+and it was right to wait.
+
+Two corrections to the detail, both learned by doing it:
+
+**The CNAME must be proxied, and that is load-bearing.** GCS will not serve a certificate for a
+custom domain — it presents `*.storage.googleapis.com` — so a DNS-only record answers HTTP and can
+never answer HTTPS. Cloudflare terminates TLS with its Universal SSL cert for
+`*.beautyandcruor.com` and passes the Host through unchanged, which still matches the bucket name.
+Turning the orange cloud off breaks the host. It looks like a tidy-up and is not.
+
+**The zone is at SSL `full`, not `full (strict)`.** Strict would also work — Cloudflare connects to
+`c.storage.googleapis.com`, for which the origin certificate is genuinely valid — so this is worth
+tightening, but it is a zone-wide setting and was left alone during the cutover.
+
+The original decision follows.
+
 D15 specified `assets.beautyandcruor.com` fronted by Cloudflare. Two facts
 found while implementing it changed the order of work, not the destination.
 
