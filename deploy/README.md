@@ -78,51 +78,42 @@ It is **off unless configured**. A missing `ADMIN_PASSWORD_HASH` logs a line
 and leaves `/admin` unrouted, so the enquiry form — the launch-blocking half of
 this service — comes up either way.
 
-### Done
+### Production credentials
 
-- `prod-bac-admin-password-hash` — a PBKDF2-SHA256 verifier, 600k iterations.
-  The password itself was never stored: it is in `~/.beautyandcruor-admin-password`
-  on the machine that created it, mode 0600, to be passed to Parimiti and then
-  deleted. Round-tripped against the stored verifier — correct password 303,
-  wrong password 401.
-- `prod-bac-admin-session-key` — 32 random bytes. Signs session cookies and is
-  never shown to anyone. Supplying it rather than letting the service generate
-  one at startup is what keeps her signed in when the pod moves.
-- The chart wiring, in `tesserix-k8s` — a separate ExternalSecret for these
-  three, so that a typo in one cannot stop `RESEND_API_KEY` being written and
-  take the contact form down with it.
+OpenBao is the default. The namespace-bound reader in `tesserix-k8s` copies KV
+field `value` into `tesserix/beautyandcruor-admin`:
 
-### Outstanding
+| OpenBao path | Application variable |
+| --- | --- |
+| `beautyandcruor/app/beautyandcruor-admin-password-hash` | `ADMIN_PASSWORD_HASH` |
+| `beautyandcruor/app/beautyandcruor-admin-session-key` | `ADMIN_SESSION_KEY` |
+| `beautyandcruor/app/beautyandcruor-admin-github-token` | `ADMIN_GITHUB_TOKEN` |
 
-**1. A GitHub token.** Has to be created by hand; there is no API for
-fine-grained PATs. Settings → Developer settings → Personal access tokens →
-Fine-grained. Repository access: **only `tesserix/beautyandcruor`**.
-Permissions: **Contents: read and write**, nothing else. Then:
+Preserve the existing verifier and session key during storage migration. Password
+or signing-key rotation is a separate operation. The enquiry Resend credential
+already uses the existing `openbao-fe3dr-appdeps` reader; keep it unchanged.
 
-```
-printf '%s' 'github_pat_...' | gcloud secrets create prod-bac-admin-github-token \
-  --project=tesseracthub-480811 --replication-policy=automatic --data-file=-
-```
+For a new credential, obtain a short-lived exact-path writer and send the value
+through stdin, never a command argument or committed file. For example, the
+following command reads the GitHub token from stdin and refuses to overwrite an
+existing value (`-cas=0`):
 
-**`printf '%s'`, not a paste followed by Enter.** A trailing newline survives
-the whole chain: Secret Manager stores the byte, External Secrets copies it
-into the Kubernetes Secret verbatim, and the container receives it in the
-variable. Go's http client then refuses the Authorization header — a newline
-in a header value is how injection works — and every GitHub call fails with
-`invalid header field value` while the token itself is perfectly valid. That
-is exactly how this went wrong the first time.
-
-It also hides from the obvious check. Shell command substitution strips
-trailing newlines, so `TOK=$(gcloud secrets versions access ...)` inspects an
-already-cleaned value: the secret passes every test and is still broken in the
-cluster. Count bytes instead.
-
-```
-gcloud secrets versions access latest --secret=<name> --project=... | wc -c
+```sh
+bao kv put -mount=kv -cas=0 \
+  beautyandcruor/app/beautyandcruor-admin-github-token value=-
 ```
 
-The service trims its credentials on the way in, so this can no longer break
-it. The stored value should still be clean.
+Supply bytes without a trailing newline through a secure stdin source. Verify
+readback without printing the value and revoke the temporary token after use.
+Updates to an existing credential require a reviewed rotation and its current
+KV version. The GitHub token must be fine-grained, limited to
+`tesserix/beautyandcruor`, Contents read/write.
+
+The service trims credentials on ingestion; stored values should still be clean.
+Do not create new GCP Secret Manager readers, writers or provisioning commands.
+The residual Cloudflare source is reviewed separately in
+[tesserix-k8s#1209](https://github.com/tesserix/tesserix-k8s/issues/1209); this admin
+migration does not establish that it is unused.
 
 The narrow scope is the real boundary. The service refuses to write any path
 outside its own allowlist — credits, curation, alt text — so a stolen session
