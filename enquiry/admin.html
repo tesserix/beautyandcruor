@@ -357,10 +357,8 @@
       <input id="inv-no" placeholder="7101598"></div>
     <div class="c-production"><label for="inv-date">Date issued</label>
       <input id="inv-date" type="date"></div>
-    <div class="c-director"><label for="inv-event">Event name</label>
-      <input id="inv-event" placeholder="Comic Con"></div>
-    <div class="c-production"><label for="inv-where">Event location</label>
-      <input id="inv-where" placeholder="Jio World Convention Centre"></div>
+    <div class="c-title"><label for="inv-project">Project</label>
+      <input id="inv-project" placeholder="Skipper Pipes commercial"></div>
   </div>
 
   <button id="inv-add" type="button">Add a line</button>
@@ -408,8 +406,7 @@
       <!-- The job, not the payment: this belongs with the client rather than
            buried in the block at the foot. -->
       <div class="inv-job" id="d-job" hidden>
-        <div><span class="inv-k">Event</span><span class="inv-v" id="d-event"></span></div>
-        <div><span class="inv-k">Location</span><span class="inv-v" id="d-where"></span></div>
+        <div><span class="inv-k">Project</span><span class="inv-v" id="d-project"></span></div>
       </div>
     </div>
     <table>
@@ -1030,7 +1027,7 @@
   const MINE_DEFAULT = {
     name: "", contact: "", address: "", email: "",
     bank: "", acname: "", acno: "", ifsc: "", pan: "",
-    terms: "50% advance and 50% 7 days after event day",
+    terms: "50% advance and 50% 7 days after project day",
     sign: "",
   };
 
@@ -1131,10 +1128,9 @@
 
     // The job sits with the invoice details above; who to pay and how sits
     // at the foot. They used to be one column, which wrapped.
-    const ev = $("inv-event").value, wh = $("inv-where").value;
-    $("d-job").hidden = !(ev || wh);
-    $("d-event").textContent = ev;
-    $("d-where").textContent = wh;
+    const project = $("inv-project").value;
+    $("d-job").hidden = !project;
+    $("d-project").textContent = project;
 
     const m = {};
     for (const k of MINE) m[k] = $("my-" + k).value;
@@ -1178,7 +1174,7 @@
     for (const k of MINE) $("my-" + k).value = mine[k] ?? "";
     signData = mine.sign || "";
 
-    for (const id of ["inv-to","inv-toaddr","inv-togst","inv-no","inv-date","inv-event","inv-where"])
+    for (const id of ["inv-to","inv-toaddr","inv-togst","inv-no","inv-date","inv-project"])
       $(id).addEventListener("input", drawInvoice);
     for (const k of MINE)
       $("my-" + k).addEventListener("input", () => { mineSave(); drawInvoice(); });
