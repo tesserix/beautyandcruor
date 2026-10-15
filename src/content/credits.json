@@ -1,12 +1,19 @@
 [
   {
+    "title": "Skipper Pipes",
+    "director": "Sumit Ghildiyal",
+    "production": "Dentu Productions",
+    "year": "2026",
+    "location": "India",
+    "role": "Hair and Makeup Artist"
+  },
+  {
     "title": "Beco",
     "director": "Anirudh More",
     "production": "Dryfit production",
     "year": "2026",
     "location": "India",
-    "role": "Prosthetic Makeup Artist",
-    "type": "Commercial"
+    "role": "Prosthetic Makeup Artist"
   },
   {
     "title": "Asian Paints",
@@ -14,8 +21,7 @@
     "production": "BLTN",
     "year": "2026",
     "location": "India",
-    "role": "Prosthetic Makeup Artist",
-    "type": "Commercial"
+    "role": "Prosthetic Makeup Artist"
   },
   {
     "title": "Himalaya Baby CARE",
@@ -23,8 +29,7 @@
     "production": "Mothership Production",
     "year": "2026",
     "location": "India",
-    "role": "Prosthetic Makeup Artist",
-    "type": "Commercial"
+    "role": "Prosthetic Makeup Artist"
   },
   {
     "title": "Baby Sebamed",
@@ -32,8 +37,7 @@
     "production": "Leo Brunett",
     "year": "2026",
     "location": "India",
-    "role": "Prosthetic Makeup Artist",
-    "type": "Commercial"
+    "role": "Prosthetic Makeup Artist"
   },
   {
     "title": "Johnson Baby",
@@ -41,8 +45,7 @@
     "production": "Mothership Production",
     "year": "2025",
     "location": "India",
-    "role": "Prosthetic Makeup Artist",
-    "type": "Commercial"
+    "role": "Prosthetic Makeup Artist"
   },
   {
     "title": "Rakht Brahmand",
@@ -66,8 +69,7 @@
     "production": "A Square",
     "year": "2024",
     "location": "India",
-    "role": "Prosthetic Makeup Artist",
-    "type": "Series"
+    "role": "Prosthetic Makeup Artist"
   },
   {
     "title": "3 Monkeys",
@@ -75,8 +77,7 @@
     "production": "AV Pictures",
     "year": "2024",
     "location": "India",
-    "role": "Makeup Artist",
-    "type": "Poster"
+    "role": "Makeup Artist"
   },
   {
     "title": "ISSAC’S DREAM",
@@ -108,8 +109,7 @@
     "production": "Village Roadshow Pictures",
     "year": "2022",
     "location": "Australia",
-    "role": "Assistant Prosthetic Makeup Artist (uncredited)",
-    "type": "Feature"
+    "role": "Assistant Prosthetic Makeup Artist (uncredited)"
   },
   {
     "title": "Thief",
@@ -141,8 +141,7 @@
     "production": "Captain Cook Films",
     "year": "2019",
     "location": "Australia",
-    "role": "Look Designer",
-    "type": "Feature"
+    "role": "Look Designer"
   },
   {
     "title": "Savadhan India",
@@ -158,8 +157,7 @@
     "production": "",
     "year": "2021",
     "location": "India",
-    "role": "Makeup Artist",
-    "type": "Commercial"
+    "role": "Makeup Artist"
   },
   {
     "title": "7th Sense",
@@ -175,8 +173,7 @@
     "production": "Content Factory",
     "year": "2020",
     "location": "India",
-    "role": "Makeup Artist",
-    "type": "Commercial"
+    "role": "Makeup Artist"
   },
   {
     "title": "Danaher Corporate",
@@ -184,8 +181,7 @@
     "production": "Clematis Communications Pvt Ltd",
     "year": "2020",
     "location": "India",
-    "role": "Makeup Artist",
-    "type": "Commercial"
+    "role": "Makeup Artist"
   },
   {
     "title": "TMF Multi Asset",
@@ -193,8 +189,7 @@
     "production": "",
     "year": "2020",
     "location": "India",
-    "role": "Makeup Artist",
-    "type": "Commercial"
+    "role": "Makeup Artist"
   },
   {
     "title": "Panasonic A/C",
@@ -202,8 +197,7 @@
     "production": "Gibbous Films",
     "year": "2020",
     "location": "India",
-    "role": "Makeup Artist",
-    "type": "Commercial"
+    "role": "Makeup Artist"
   },
   {
     "title": "Sugar box",
