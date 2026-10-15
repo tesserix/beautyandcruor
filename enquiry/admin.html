@@ -291,7 +291,11 @@
   body { background: #fff; padding: 0; }
   body > *:not(main), main > *:not(#invoice), #invoice > *:not(.paper),
   .tabs, #bar { display: none !important; }
-  #invoice .paper { margin: 0; border-radius: 0; }
+  /* No page-height floor in print. Safari keeps its own margins and its
+     URL/page-number header whatever @page says, so a 273mm sheet overflowed
+     A4 and the signature and terms went to a second page. */
+  #invoice .paper { margin: 0; border-radius: 0; min-height: 0; }
+  #invoice .inv-foot { break-inside: avoid; }
   /* The band and the rules are the document, not decoration: without this
      the mark prints as nothing on white. */
   #invoice .inv-band, #invoice th, #invoice tr.total .amt {
@@ -1198,7 +1202,13 @@
       renderItems();
       drawInvoice();
     });
-    $("inv-print").addEventListener("click", () => window.print());
+    // The browser names the PDF after the page title, which is "Credits".
+    $("inv-print").addEventListener("click", () => {
+      const was = document.title;
+      document.title = [("Invoice " + $("inv-no").value).trim(), $("inv-to").value].filter(Boolean).join(" — ");
+      addEventListener("afterprint", () => { document.title = was; }, { once: true });
+      window.print();
+    });
 
     /* The counter is the one part of this tab that touches the server, and
        the only part that is stored. It is a POST because it consumes a
