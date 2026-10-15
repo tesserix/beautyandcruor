@@ -1203,12 +1203,13 @@
       drawInvoice();
     });
     // The browser names the PDF after the page title, which is "Credits".
-    $("inv-print").addEventListener("click", () => {
-      const was = document.title;
+    // On beforeprint, not the button: Ctrl+P and the browser's menu skip it.
+    const pageTitle = document.title;
+    addEventListener("beforeprint", () => {
       document.title = [("Invoice " + $("inv-no").value).trim(), $("inv-to").value].filter(Boolean).join(" — ");
-      addEventListener("afterprint", () => { document.title = was; }, { once: true });
-      window.print();
     });
+    addEventListener("afterprint", () => { document.title = pageTitle; });
+    $("inv-print").addEventListener("click", () => window.print());
 
     /* The counter is the one part of this tab that touches the server, and
        the only part that is stored. It is a POST because it consumes a
