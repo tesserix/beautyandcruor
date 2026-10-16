@@ -660,7 +660,7 @@
       const data = await res.json().catch(() => ({}));
       if (res.ok) {
         dirty = false;
-        say("Saved. It will be live in a few minutes.", false);
+        watchPublish(data.commit, say);
         $("state").textContent = "Saved";
         await load();
         return;
@@ -692,6 +692,38 @@
 
   let seq = null;       // { sha, hero, leads, covers, artist, galleries, byId }
   let seqLoaded = false;
+
+  /* "Saved" only means committed. The site is rebuilt from that commit by CI,
+     which can fail or never start — on 15 October a billing block refused
+     every build, and her credit sat saved but unpublished behind a message
+     saying it would be live in minutes. So follow the commit until CI hands
+     it to the deploy, and say plainly if that does not happen. */
+  let publishWatch = 0;
+  function watchPublish(commit, sayFn) {
+    const watch = ++publishWatch;
+    if (!commit) { sayFn("Saved. It will be live in a few minutes.", false); return; }
+    sayFn("Saved. Publishing to the site — this usually takes about ten minutes.", false);
+    const giveUp = Date.now() + 20 * 60 * 1000;
+    const check = async () => {
+      if (watch !== publishWatch) return; // a later save is being followed instead
+      try {
+        const res = await fetch("/admin/published?commit=" + commit, { headers: { Accept: "application/json" } });
+        const data = await res.json();
+        if (watch !== publishWatch) return;
+        if (res.ok && data.published) {
+          sayFn("Saved and built. It will be on the site within a few minutes.", false);
+          return;
+        }
+      } catch {} // a failed check is not a failed publish; ask again
+      if (Date.now() > giveUp) {
+        sayFn("Saved, but not on the site yet: it has not been rebuilt in 20 minutes, " +
+              "which usually means the publish step failed. Your changes are kept — nothing needs redoing.", true);
+        return;
+      }
+      setTimeout(check, 30 * 1000);
+    };
+    setTimeout(check, 30 * 1000);
+  }
 
   function seqSay(text, isError) {
     const el = $("seq-message");
@@ -884,7 +916,7 @@
       const data = await res.json().catch(() => ({}));
       if (res.ok) {
         dirty = false;
-        seqSay("Saved. It will be live in a few minutes.", false);
+        watchPublish(data.commit, seqSay);
         $("state").textContent = "Saved";
         seqLoaded = false;
         await loadSequence();

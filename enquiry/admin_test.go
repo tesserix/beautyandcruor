@@ -567,3 +567,75 @@ func TestUneditableFieldsSurviveASave(t *testing.T) {
 		t.Errorf("an empty type was written:\n%s", plain)
 	}
 }
+
+// A page that forgets type must not strip it: ad07614 lost all 14 that way.
+func TestSaveKeepsTypeThePageDidNotSend(t *testing.T) {
+	stub := &stubGitHub{body: []byte(`[{"title":"Beco","director":"D","production":"P","year":"2026","location":"India","type":"Commercial"}]`), sha: "s"}
+	srv := stub.server(t)
+	a := testAdmin(t)
+	a.gh = &github{token: "test-token", repo: "owner/name", branch: "main", client: srv.Client(), base: srv.URL}
+	mux := http.NewServeMux()
+	a.routes(mux)
+
+	// What the old page sent: the form's fields, a new credit, and no type.
+	save := `{"sha":"s","rows":[
+		{"title":"Skipper Pipes","director":"D","production":"P","year":"2026","location":"India"},
+		{"title":"Beco","director":"D","production":"P","year":"2026","location":"India"}]}`
+	rec := httptest.NewRecorder()
+	mux.ServeHTTP(rec, signedInRequest(a, http.MethodPut, "/admin/credits", save))
+	if rec.Code != http.StatusOK {
+		t.Fatalf("PUT credits: %d — %s", rec.Code, rec.Body)
+	}
+	var rows []credit
+	if err := json.Unmarshal(stub.gotBody, &rows); err != nil {
+		t.Fatal(err)
+	}
+	if rows[1].Type != "Commercial" {
+		t.Errorf("Beco lost its type: %+v", rows[1])
+	}
+	if rows[0].Type != "" {
+		t.Errorf("the new credit gained a type: %+v", rows[0])
+	}
+	if !strings.Contains(rec.Body.String(), `"commit":"new"`) {
+		t.Errorf("the save did not return its commit: %s", rec.Body)
+	}
+}
+
+func TestPublishedFollowsTheDeployBranch(t *testing.T) {
+	const commit = "0123456789abcdef0123456789abcdef01234567"
+	status := ""
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /repos/owner/name/compare/{spec}", func(w http.ResponseWriter, r *http.Request) {
+		if r.PathValue("spec") != commit+"...deploy" {
+			t.Errorf("compared %q", r.PathValue("spec"))
+		}
+		// status first, then a body far past the content limit: the check must
+		// stop reading at status rather than hold the whole thing.
+		w.Write([]byte(`{"base_commit":{"sha":"x"},"status":"` + status + `","files":[{"patch":"` +
+			strings.Repeat("a", maxContentSize+1) + `"}]}`))
+	})
+	srv := httptest.NewServer(mux)
+	t.Cleanup(srv.Close)
+	a := testAdmin(t)
+	a.gh = &github{token: "test-token", repo: "owner/name", branch: "main", client: srv.Client(), base: srv.URL}
+	routes := http.NewServeMux()
+	a.routes(routes)
+
+	for status_, want := range map[string]string{
+		"ahead": `{"published":true}`, "identical": `{"published":true}`,
+		"behind": `{"published":false}`, "diverged": `{"published":false}`,
+	} {
+		status = status_
+		rec := httptest.NewRecorder()
+		routes.ServeHTTP(rec, signedInRequest(a, http.MethodGet, "/admin/published?commit="+commit, ""))
+		if got := strings.TrimSpace(rec.Body.String()); rec.Code != http.StatusOK || got != want {
+			t.Errorf("%s: %d %s, want %s", status_, rec.Code, got, want)
+		}
+	}
+
+	rec := httptest.NewRecorder()
+	routes.ServeHTTP(rec, signedInRequest(a, http.MethodGet, "/admin/published?commit=main", ""))
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("a ref name was accepted as a commit: %d", rec.Code)
+	}
+}
