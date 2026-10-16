@@ -281,6 +281,7 @@
 
 .item { display: grid; gap: 10px; grid-template-columns: 1fr; align-items: end; }
 @media (min-width: 760px) { .item { grid-template-columns: minmax(0,1fr) 90px 140px 44px; } }
+.mine { margin-top: 22px; }
 .mine summary { cursor: pointer; color: var(--ash); padding: 10px 0; }
 .mine[open] summary { margin-bottom: 14px; }
 .inv-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 18px; }
@@ -291,10 +292,12 @@
   body { background: #fff; padding: 0; }
   body > *:not(main), main > *:not(#invoice), #invoice > *:not(.paper),
   .tabs, #bar { display: none !important; }
-  /* No page-height floor in print. Safari keeps its own margins and its
-     URL/page-number header whatever @page says, so a 273mm sheet overflowed
-     A4 and the signature and terms went to a second page. */
-  #invoice .paper { margin: 0; border-radius: 0; min-height: 0; }
+  /* 250mm, not the screen's 273mm, so the bank block still sits at the foot
+     of the page. Safari keeps its own margins and its URL/page-number header
+     whatever @page says and leaves about 257mm of A4, so 273mm sent the
+     signature and terms to a second page; with no floor at all the footer
+     rode up under the total. */
+  #invoice .paper { margin: 0; border-radius: 0; min-height: 250mm; }
   #invoice .inv-foot { break-inside: avoid; }
   /* The band and the rules are the document, not decoration: without this
      the mark prints as nothing on white. */
@@ -368,24 +371,6 @@
   <button id="inv-add" type="button">Add a line</button>
   <div id="inv-items" style="margin-top:12px"></div>
 
-  <details class="mine">
-    <summary>My details, bank and terms — remembered in this browser only</summary>
-    <div class="grid">
-      <div class="c-title"><label for="my-name">Name</label><input id="my-name"></div>
-      <div class="c-role"><label for="my-contact">Contact no.</label><input id="my-contact"></div>
-      <div class="c-title"><label for="my-address">Address</label><input id="my-address"></div>
-      <div class="c-role"><label for="my-email">Email</label><input id="my-email"></div>
-      <div class="c-director"><label for="my-bank">Bank name</label><input id="my-bank"></div>
-      <div class="c-production"><label for="my-acname">Account name</label><input id="my-acname"></div>
-      <div class="c-year"><label for="my-acno">Account no.</label><input id="my-acno"></div>
-      <div class="c-year"><label for="my-ifsc">IFSC code</label><input id="my-ifsc"></div>
-      <div class="c-year"><label for="my-pan">PAN no.</label><input id="my-pan"></div>
-      <div class="c-role"><label for="my-terms">Payment terms</label><input id="my-terms"></div>
-      <div class="c-title"><label for="my-sign">Signature image <span style="text-transform:none">(optional, stays in this browser)</span></label>
-        <input id="my-sign" type="file" accept="image/png,image/jpeg,image/webp"></div>
-    </div>
-  </details>
-
   <div class="paper" id="inv-doc">
     <div class="inv-band">
       <div class="inv-lockup">
@@ -445,6 +430,26 @@
     <button id="inv-next" type="button">Take the next number</button>
     <span id="inv-msg" class="sub" style="margin:0"></span>
   </div>
+
+  <!-- Filled in once and remembered, so it sits under the document rather
+       pushing it down the page every time. -->
+  <details class="mine">
+    <summary>My details, bank and terms — remembered in this browser only</summary>
+    <div class="grid">
+      <div class="c-title"><label for="my-name">Name</label><input id="my-name"></div>
+      <div class="c-role"><label for="my-contact">Contact no.</label><input id="my-contact"></div>
+      <div class="c-title"><label for="my-address">Address</label><input id="my-address"></div>
+      <div class="c-role"><label for="my-email">Email</label><input id="my-email"></div>
+      <div class="c-director"><label for="my-bank">Bank name</label><input id="my-bank"></div>
+      <div class="c-production"><label for="my-acname">Account name</label><input id="my-acname"></div>
+      <div class="c-year"><label for="my-acno">Account no.</label><input id="my-acno"></div>
+      <div class="c-year"><label for="my-ifsc">IFSC code</label><input id="my-ifsc"></div>
+      <div class="c-year"><label for="my-pan">PAN no.</label><input id="my-pan"></div>
+      <div class="c-role"><label for="my-terms">Payment terms</label><input id="my-terms"></div>
+      <div class="c-title"><label for="my-sign">Signature image <span style="text-transform:none">(optional, stays in this browser)</span></label>
+        <input id="my-sign" type="file" accept="image/png,image/jpeg,image/webp"></div>
+    </div>
+  </details>
 </section>
 
 <section id="images" hidden>
