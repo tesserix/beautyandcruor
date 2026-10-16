@@ -554,6 +554,9 @@
   function rowEl(row) {
     const wrap = document.createElement("div");
     wrap.className = "row";
+    // Not in the form, but collect() must send it back: a save without it
+    // strips every credit's format override.
+    if (row.type) wrap.dataset.type = row.type;
     const grid = document.createElement("div");
     grid.className = "grid";
     for (const [key, label, autocomplete] of FIELDS) {
@@ -614,6 +617,7 @@
     return [...$("rows").children].map((r) => {
       const row = {};
       for (const input of r.querySelectorAll("input")) row[input.dataset.key] = input.value.trim();
+      if (r.dataset.type) row.type = r.dataset.type;
       return row;
     });
   }
