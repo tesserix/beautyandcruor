@@ -151,11 +151,18 @@ func (g *github) fetch(path string) ([]byte, string, error) {
 // write if the file has moved since it was read, so two people editing at once
 // produces a refusal rather than one of them silently losing their work.
 func (g *github) write(path string, content []byte, sha, message string) error {
+	_, err := g.commit(path, content, sha, message)
+	return err
+}
+
+// commit is write, returning the sha of the commit it made so the editor can
+// follow that commit out to the site.
+func (g *github) commit(path string, content []byte, sha, message string) (string, error) {
 	if !writablePaths[path] {
-		return fmt.Errorf("refusing to write %q: not a content file", path)
+		return "", fmt.Errorf("refusing to write %q: not a content file", path)
 	}
 	if len(content) > maxContentSize {
-		return fmt.Errorf("refusing to write %d bytes to %s", len(content), path)
+		return "", fmt.Errorf("refusing to write %d bytes to %s", len(content), path)
 	}
 	resp, err := g.request(http.MethodPut,
 		fmt.Sprintf("/repos/%s/contents/%s", g.repo, path),
@@ -166,17 +173,73 @@ func (g *github) write(path string, content []byte, sha, message string) error {
 			"branch":  g.branch,
 		})
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer resp.Body.Close()
 	switch resp.StatusCode {
 	case http.StatusOK, http.StatusCreated:
-		return nil
+		var out struct {
+			Commit struct {
+				SHA string `json:"sha"`
+			} `json:"commit"`
+		}
+		// The write has landed either way; a missing sha only costs the editor
+		// its publish tracking.
+		_ = json.NewDecoder(io.LimitReader(resp.Body, maxContentSize)).Decode(&out)
+		return out.Commit.SHA, nil
 	case http.StatusConflict, http.StatusUnprocessableEntity:
-		return errConflict
+		return "", errConflict
 	default:
-		return fmt.Errorf("github write %s: %s", path, statusDetail(resp))
+		return "", fmt.Errorf("github write %s: %s", path, statusDetail(resp))
 	}
+}
+
+// deployBranch is the branch CI fast-forwards once a commit's images are
+// built and pushed (see "Advance the deploy branch" in ci.yml).
+const deployBranch = "deploy"
+
+// published reports whether deploy has reached commit, which is the first
+// point at which a save is on its way to the site rather than merely saved.
+//
+// Read through the compare API because that needs only Contents: read, the
+// permission the token already has. The Actions API would say why a build
+// failed, but needs a permission this token was deliberately not given.
+func (g *github) published(commit string) (bool, error) {
+	resp, err := g.request(http.MethodGet,
+		fmt.Sprintf("/repos/%s/compare/%s...%s", g.repo, commit, deployBranch), nil)
+	if err != nil {
+		return false, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return false, fmt.Errorf("github compare %s: %s", commit, statusDetail(resp))
+	}
+	// Read up to "status" and stop. The response goes on to carry every
+	// changed file's patch, which for a save far behind deploy can be larger
+	// than anything this server should hold.
+	dec := json.NewDecoder(resp.Body)
+	if _, err := dec.Token(); err != nil {
+		return false, err
+	}
+	for dec.More() {
+		key, err := dec.Token()
+		if err != nil {
+			return false, err
+		}
+		if key == "status" {
+			var status string
+			if err := dec.Decode(&status); err != nil {
+				return false, err
+			}
+			// "ahead": deploy has moved past the commit; "identical": it is it.
+			return status == "ahead" || status == "identical", nil
+		}
+		var skip json.RawMessage
+		if err := dec.Decode(&skip); err != nil {
+			return false, err
+		}
+	}
+	return false, fmt.Errorf("github compare %s: no status in the response", commit)
 }
 
 // statusDetail renders a failed response without letting a long or unexpected

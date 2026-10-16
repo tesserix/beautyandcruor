@@ -346,10 +346,11 @@ func (a *adminHandler) putSequence(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	switch err := a.gh.write(curationPath, encoded, save.SHA, "Update the running order"); {
+	commit, err := a.gh.commit(curationPath, encoded, save.SHA, "Update the running order")
+	switch {
 	case err == nil:
 		log.Printf("admin: committed the running order")
-		writeJSON(w, http.StatusOK, map[string]string{"status": "saved"})
+		writeJSON(w, http.StatusOK, map[string]string{"status": "saved", "commit": commit})
 	case err == errConflict:
 		writeJSON(w, http.StatusConflict, map[string]string{
 			"error": "Someone else saved while you were editing. Reload to get their changes, then make yours again.",

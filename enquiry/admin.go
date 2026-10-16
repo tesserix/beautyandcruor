@@ -34,6 +34,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
 	"unicode"
@@ -104,6 +105,7 @@ func (a *adminHandler) routes(mux *http.ServeMux) {
 	mux.HandleFunc("PUT /admin/sequence", a.putSequence)
 	mux.HandleFunc("POST /admin/images", a.postImage)
 	mux.HandleFunc("POST /admin/invoice-number", a.postInvoiceNumber)
+	mux.HandleFunc("GET /admin/published", a.getPublished)
 	// Unauthenticated on purpose: two open-licensed font files, and the
 	// login page is behind the same origin anyway.
 	mux.HandleFunc("GET /admin/fonts/", serveFont)
@@ -257,6 +259,20 @@ func (a *adminHandler) putCredits(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": problem})
 		return
 	}
+	// The form has no input for type, so it is only as safe as the page's
+	// memory of it: a page that forgot it stripped all 14 overrides in one
+	// save (ad07614). Carrying it over here holds whatever the page does.
+	committed, _, err := a.gh.read(creditsPath)
+	if err != nil {
+		log.Printf("admin: reading credits before a save: %v", err)
+		writeJSON(w, http.StatusBadGateway, map[string]string{"error": "Could not save. Nothing was changed."})
+		return
+	}
+	if err := carryTypes(save.Rows, committed); err != nil {
+		log.Printf("admin: credits.json will not parse: %v", err)
+		writeJSON(w, http.StatusBadGateway, map[string]string{"error": "Could not save. Nothing was changed."})
+		return
+	}
 
 	// Two-space indent and no trailing newline, matching the committed file, so
 	// a save that changes one field produces a one-field diff.
@@ -267,10 +283,11 @@ func (a *adminHandler) putCredits(w http.ResponseWriter, r *http.Request) {
 	}
 
 	message := fmt.Sprintf("Update credits (%d entries)", len(save.Rows))
-	switch err := a.gh.write(creditsPath, encoded, save.SHA, message); {
+	commit, err := a.gh.commit(creditsPath, encoded, save.SHA, message)
+	switch {
 	case err == nil:
 		log.Printf("admin: committed %d credits", len(save.Rows))
-		writeJSON(w, http.StatusOK, map[string]string{"status": "saved"})
+		writeJSON(w, http.StatusOK, map[string]string{"status": "saved", "commit": commit})
 	case err == errConflict:
 		writeJSON(w, http.StatusConflict, map[string]string{
 			"error": "Someone else saved while you were editing. Reload to get their changes, then make yours again.",
@@ -280,6 +297,50 @@ func (a *adminHandler) putCredits(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadGateway, map[string]string{"error": "Could not save. Nothing was changed."})
 	}
 }
+
+// carryTypes gives each row arriving without a type the one committed under the
+// same title. A row whose title was edited in the same save loses its override,
+// which is the cost of having no other identity to match on.
+func carryTypes(rows []credit, committed []byte) error {
+	var stored []credit
+	if err := json.Unmarshal(committed, &stored); err != nil {
+		return err
+	}
+	types := make(map[string]string, len(stored))
+	for _, s := range stored {
+		if t := strings.TrimSpace(s.Type); t != "" {
+			types[strings.TrimSpace(s.Title)] = t
+		}
+	}
+	for i := range rows {
+		if strings.TrimSpace(rows[i].Type) == "" {
+			rows[i].Type = types[strings.TrimSpace(rows[i].Title)]
+		}
+	}
+	return nil
+}
+
+// getPublished tells the editor whether a save it made has been built and
+// handed to the deploy, so it can say so — or say that it has not.
+func (a *adminHandler) getPublished(w http.ResponseWriter, r *http.Request) {
+	if !a.guard(w, r, false) {
+		return
+	}
+	commit := r.URL.Query().Get("commit")
+	if !commitSHA.MatchString(commit) {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "Not a commit."})
+		return
+	}
+	ok, err := a.gh.published(commit)
+	if err != nil {
+		log.Printf("admin: checking whether %s is published: %v", commit, err)
+		writeJSON(w, http.StatusBadGateway, map[string]string{"error": "Could not check."})
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]bool{"published": ok})
+}
+
+var commitSHA = regexp.MustCompile(`^[0-9a-f]{40}$`)
 
 // normaliseCredits trims every field, so a stray space cannot produce a diff
 // that says nothing.
