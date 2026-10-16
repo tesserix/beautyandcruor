@@ -11,10 +11,14 @@ export function WorkReel({
   imageKeys,
   label,
   priorityFirst = false,
+  whole = false,
 }: {
   imageKeys: string[];
   label: string;
   priorityFirst?: boolean;
+  /** Show each photo uncropped on phones, where a full-height frame cuts a
+      landscape photo down to a third of itself. */
+  whole?: boolean;
 }) {
   return (
     <Reel count={imageKeys.length} label={label}>
@@ -27,7 +31,7 @@ export function WorkReel({
             alt={altFor(key, `${label}, work ${i + 1} of ${imageKeys.length}`)}
             size="gallery"
             priority={priorityFirst && i === 0}
-            imgClassName="h-full w-full object-cover"
+            imgClassName={`h-full w-full ${whole ? "object-contain md:object-cover" : "object-cover"}`}
             aspectRatio="auto"
             className="block h-full w-full"
           />

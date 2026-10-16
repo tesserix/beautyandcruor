@@ -24,7 +24,7 @@ export function DisciplinePage({ discipline }: { discipline: Discipline }) {
 
         <section className="relative h-[100svh]" aria-label={discipline.title}>
           {keys.length > 0 ? (
-            <WorkReel imageKeys={keys} label={discipline.title} priorityFirst />
+            <WorkReel imageKeys={keys} label={discipline.title} priorityFirst whole />
           ) : (
             <div className="grid h-full place-items-center text-ash">No work selected yet</div>
           )}
